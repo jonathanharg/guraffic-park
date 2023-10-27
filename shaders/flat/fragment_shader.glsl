@@ -3,12 +3,18 @@
 //=== 'in' attributes are passed on from the vertex shader's 'out' attributes, and interpolated for each fragment
 in vec3 fragment_color;        // the fragment colour
 in vec3 position_view_space;   // the position in view coordinates of this fragment
+in vec2 fragment_texCoord;
 
 //=== 'out' attributes are the output image, usually only one for the colour of each pixel
-out vec3 final_color;
+out vec4 final_color;
 
 // === uniform here the texture object to sample from
 uniform int mode;	// the rendering mode (better to code different shaders!)
+
+uniform int has_texture;
+
+// texture samplers
+uniform sampler2D textureObject; // first texture object
 
 // material uniforms
 uniform vec3 Ka;
@@ -34,17 +40,25 @@ void main() {
       vec3 normal_view_space = normalize( cross( xTangent, yTangent ) );
 
       // 3. now we calculate light components
-      vec3 ambient = Ia*Ka;
-      vec3 diffuse = Id*Kd*max(0.0f,dot(light_direction, normal_view_space));
-      vec3 specular = Is*Ks*pow(max(0.0f, dot(reflect(light_direction, normal_view_space), -camera_direction)), Ns);
+      vec4 ambient = vec4(Ia*Ka,1.0f);
+      vec4 diffuse = vec4(Id*Kd*max(0.0f,dot(light_direction, normal_view_space)),1.0f);
+      vec4 specular = vec4(Is*Ks*pow(max(0.0f, dot(reflect(light_direction, normal_view_space), -camera_direction)), Ns), 1.0f);
 
       // 4. we calculate the attenuation function
       // in this formula, dist should be the distance between the surface and the light
       float dist = length(light - position_view_space);
       float attenuation =  min(1.0/(dist*dist*0.005) + 1.0/(dist*0.05), 1.0);
 
+      // 5. sample from the first texture
+
+      vec4 texval = vec4(1.0f);
+      if(has_texture == 1){
+          texval = texture2D(textureObject, fragment_texCoord);
+      }
+
       // 5. Finally, we combine the shading components
-      final_color = ambient + attenuation*(diffuse + specular);
+      // we do not apply the texture to the specular component.
+      final_color = texval*ambient + attenuation*(texval*diffuse + specular);
 }
 
 

@@ -125,16 +125,14 @@ def load_obj_file(file_name):
 	'''
 	print('Loading mesh(es) from Blender file: {}'.format(file_name))
 
-	vlist = []
-	tlist = []
-	flist = []
-	mlist = []
+	vlist = []	# list of vertices
+	tlist = []	# list of texture vectors
+	flist = []	# list of polygonal faces
+	mlist = []	# list of material names
 
-	# each mesh in the file uses continuous vertex indexing, we will store them as separate mesh.
-	voffset = 1
-
-	# list of meshes, indexed by the material name
-	meshes = []
+	lnlist = []
+	mesh_id = 0
+	mesh_list = []
 
 	# current material object
 	material = None
@@ -163,8 +161,24 @@ def load_obj_file(file_name):
 				tlist.append(data[1])
 
 			elif data[0] == 'face':
-				flist.append(data[1])
-				mlist.append(material)
+				if len(data[1]) == 3:
+					flist.append(data[1])
+					mesh_list.append(mesh_id)
+					mlist.append(material)
+					lnlist.append(line_nb)
+				else:
+					# converts quads into pairs of  triangles
+					face1 = [data[1][0], data[1][1], data[1][2]]
+					flist.append(face1)
+					mesh_list.append(mesh_id)
+					mlist.append(material)
+					lnlist.append(line_nb)
+
+					face2 = [data[1][0], data[1][2], data[1][3]]
+					flist.append(face2)
+					mesh_list.append(mesh_id)
+					mlist.append(material)
+					lnlist.append(line_nb)
 
 			elif data[0] == 'material library':
 				library = load_material_library('models/{}'.format(data[1]))
@@ -173,53 +187,95 @@ def load_obj_file(file_name):
 			# a new one.
 			elif data[0] == 'material':
 				material = library.names[data[1]]
+				mesh_id += 1
 				print('[l.{}] Loading mesh with material: {}'.format(line_nb, data[1]))
 
 	print('File read. Found {} vertices and {} faces.'.format(len(vlist), len(flist)))
-	return create_meshes_from_blender( vlist, flist, mlist, library )
+
+	return create_meshes_from_blender(vlist, flist, mlist, tlist, library, mesh_list, lnlist)
 
 
-def create_meshes_from_blender( vlist, flist, mlist, library ):
+def create_meshes_from_blender(vlist, flist, mlist, tlist, library, mesh_list, lnlist):
 	fstart = 0
-	material = None
+	mesh_id = 1
 	meshes = []
 
 	# we start by putting all vertices in one array
 	varray = np.array(vlist, dtype='f')
 
+	# and all texture vectors
+	tarray = np.array(tlist, dtype='f')
+
+	material = mlist[fstart]
+
 	for f in range(len(flist)):
-		if material is None:
-			material = mlist[f]
+		if mesh_id != mesh_list[f]:  # new mesh is denoted by change in material
+			print('Creating new mesh %i, faces %i-%i, line %i, with material %i: %s' % (mesh_id, fstart, f, lnlist[fstart], mlist[fstart], library.materials[mlist[fstart]].name))
+			try:
+				mesh = create_mesh(varray, tarray, flist, fstart, f, library, material)
+				meshes.append(mesh)
+			except Exception as e:
+				print('(W) could not load mesh!')
+				print(e)
+				raise
 
-		elif material != mlist[f]:  # new mesh is denoted by change in material
-			farray = np.array(flist[fstart:f], dtype=np.uint32)[:, :, 0]
-			vmax = np.max(farray.flatten())
-			vmin = np.min(farray.flatten())-1
-
-			#print('+++ vertices ID in range [{},{}] and vstart={} / vmax={}'.format(np.min(farray.flatten()), np.max(farray.flatten()), vstart, vmax))
-
-			meshes.append(
-				Mesh(
-					vertices=varray[vmin:vmax,:],
-					faces=farray - vmin - 1,
-					material=library.materials[material]
-				)
-			)
+			mesh_id = mesh_list[f]
 
 			# start the next mesh
 			fstart = f
+			material = mlist[fstart]
 
-	farray = np.array(flist[fstart:], dtype=np.uint32)[:, :, 0]
-	vmax = np.max(farray.flatten())
-	vmin = np.min(farray.flatten())-1
-
-	meshes.append(
-		Mesh(
-			vertices=varray[vmin:vmax,:],
-			faces=farray - vmin - 1,
-			material=library.materials[material]
-		)
-	)
+	# add the last mesh
+	try:
+		meshes.append(create_mesh(varray, tarray, flist, fstart, len(flist), library, material))
+	except:
+		print('(W) could not load mesh!')
+		raise
 
 	print('--- Created {} mesh(es) from Blender file.'.format(len(meshes)))
 	return meshes
+
+
+def create_mesh(varray, tarray, flist, fstart, f, library, material):
+	# select faces for this mesh
+	farray = np.array(flist[fstart:f], dtype=np.uint32)
+
+	# and vertices
+	vmax = np.max(farray[:, :, 0].flatten())
+	vmin = np.min(farray[:, :, 0].flatten()) - 1
+
+	# fix blender texture indexing
+	textures = fix_blender_textures(tarray, farray, varray)
+	if textures is not None:
+		textures = textures[vmin:vmax, :]
+
+	return Mesh(
+			vertices=varray[vmin:vmax, :],
+			faces=farray[:, :, 0] - vmin - 1,
+			material=library.materials[material],
+			textureCoords=textures
+		)
+
+
+def fix_blender_textures(textures, faces, vertices):
+	'''
+	Corrects the indexing of textures in Blender file for OpenGL.
+	Blender allows for multiple indexing of vertices and textures, which is not supported by OpenGL.
+	This function ensures that indexing is consistent.
+	:param textures: Original Blender texture UV values
+	:param faces: Blender faces multiple-index
+	:return: a new texture array indexed according to vertices.
+	'''
+	# (OpenGL, unlike Blender, does not allow for multiple indexing!)
+
+	if faces.shape[2] == 1:
+		print('(W) No texture indices provided, setting texture coordinate array as None!')
+		return None
+
+	new_textures = np.zeros((vertices.shape[0], 2), dtype='f')
+
+	for f in range(faces.shape[0]):
+		for j in range(faces.shape[1]):
+			new_textures[faces[f, j, 0] - 1, :] = textures[faces[f, j, 1] - 1, :]
+
+	return new_textures

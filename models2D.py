@@ -1,6 +1,4 @@
 from BaseModel import BaseModel
-import numpy as np
-# imports all openGL functions
 from OpenGL.GL import *
 from matutils import *
 

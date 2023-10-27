@@ -5,7 +5,7 @@ import pygame
 from OpenGL.GL import *
 
 # import the shader class
-from shaders import Shaders,Uniform
+from shaders import *
 
 # import the camera class
 from camera import Camera
@@ -53,59 +53,56 @@ class Scene:
         # enable depth test for clean output (see lecture on clipping & visibility for an explanation
         glEnable(GL_DEPTH_TEST)
 
-        # dictionary of shaders used in this scene
-        self.shaders_list = {
-            'Phong': Shaders('phong'),# WS7
-            'Gouraud': Shaders('gouraud'),# WS6
-            'Flat': Shaders('flat'),# WS6
-            'Blinn': Shaders('blinn') # WS7
-        }
-
-        # compile all shaders
-        for shader in self.shaders_list.values():
-            shader.compile()
-
-        self.shaders = self.shaders_list['Flat']
-
+        # set the default shader program (can be set on a per-mesh basis)
+        self.shaders = 'flat'
 
         # initialise the projective transform
-        near=1.5
-        far=20
-        left=-1.0
-        right=1.0
-        top=-1.0
-        bottom=1.0
+        near = 1.5
+        far = 50
+        left = -1.0
+        right = 1.0
+        top = -1.0
+        bottom = 1.0
 
-        # to start with, we use an orthographic projection;
+        # cycle through models
+        self.show_model = -1
+
+        # to start with, we use an orthographic projection; change this.
         self.P = frustumMatrix(left,right,top,bottom,near,far)
 
         # initialises the camera object
-        self.camera = Camera(self.window_size)
+        self.camera = Camera()
 
         # initialise the light source
-        self.light = LightSource(self, position=[5.,5.,5.])
+        self.light = LightSource(self, position=[5., 5., 5.])
 
         # rendering mode for the shaders
-        self.mode = 6 # initialise to full interpolated shading
+        self.mode = 1  # initialise to full interpolated shading
 
         # This class will maintain a list of models to draw in the scene,
         self.models = []
 
-    def add_model(self,model):
+    def add_model(self, model):
         '''
         This method just adds a model to the scene.
         :param model: The model object to add to the scene
         :return: None
         '''
+
+        # bind the default shader to the mesh
+        model.bind_shader(self.shaders)
+
+        # and add to the list
         self.models.append(model)
 
-    def add_models_list(self,models_list):
+    def add_models_list(self, models_list):
         '''
         This method just adds a model to the scene.
         :param model: The model object to add to the scene
         :return: None
         '''
-        self.models.extend(models_list)
+        for model in models_list:
+            self.add_model(model)
 
     def draw(self):
         '''
@@ -116,11 +113,12 @@ class Scene:
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+        # ensure that the camera view matrix is up to date
         self.camera.update()
 
         # then we loop over all models in the list and draw them
         for model in self.models:
-            model.draw(Mp=poseMatrix(), shaders=self.shaders)
+            model.draw()
 
         # once we are done drawing, we display the scene
         # Note that here we use double buffering to avoid artefacts:
@@ -128,8 +126,11 @@ class Scene:
         # and flip the two buffers once we are done drawing.
         pygame.display.flip()
 
-
     def keyboard(self, event):
+        '''
+        Method to process keyboard events. Check Pygame documentation for a list of key events
+        :param event: the event object that was raised
+        '''
         if event.key == pygame.K_q:
             self.running = False
 
@@ -144,24 +145,10 @@ class Scene:
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
                 self.wireframe = True
 
-        elif event.key == pygame.K_1:
-            print('--> using Flat shading')
-            self.shaders = self.shaders_list['Flat']
-
-        elif event.key == pygame.K_2:
-            print('--> using Gouraud shading')
-            self.shaders = self.shaders_list['Gouraud']
-
-        elif event.key == pygame.K_3:
-            print('--> using Phong shading')
-            self.shaders = self.shaders_list['Phong']
-
-        # WS7: Blinn-Phong shading
-        elif event.key == pygame.K_4:
-            print('--> using Blinn-Phong shading')
-            self.shaders = self.shaders_list['Blinn']
-
     def pygameEvents(self):
+        '''
+        Method to handle PyGame events for user interaction.
+        '''
         # check whether the window has been closed
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

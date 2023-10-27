@@ -5,7 +5,7 @@ class LightSource:
     Base class for maintaining a light source in the scene. Inheriting from Sphere allows to visualize the light
     source position easily.
     '''
-    def __init__(self, scene, position=[2.,2.,0.], Ia=[1.0,1.0,1.0], Id=[1.0,1.0,1.0], Is=[1.0,1.0,1.0]):
+    def __init__(self, scene, position=[2.,2.,0.], Ia=[0.2,0.2,0.2], Id=[0.9,0.9,0.9], Is=[1.0,1.0,1.0]):
         '''
         :param scene: The scene in which the light source exists.
         :param position: the position of the light source
