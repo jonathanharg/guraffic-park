@@ -6,8 +6,8 @@ import numpy as np
 class ImageWrapper:
     def __init__(self, name):
         # load the image from file using pyGame - any other image reading function could be used here.
-        print('Loading image: texture/{}'.format(name))
-        self.img = pygame.image.load('./textures/{}'.format(name))
+        print("Loading image: texture/{}".format(name))
+        self.img = pygame.image.load("./textures/{}".format(name))
 
     def width(self):
         return self.img.get_width()
@@ -24,10 +24,20 @@ class ImageWrapper:
 
 
 class Texture:
-    '''
+    """
     Class to handle texture loading.
-    '''
-    def __init__(self, name, img=None, wrap=GL_REPEAT, sample=GL_NEAREST, format=GL_RGBA, type=GL_UNSIGNED_BYTE, target=GL_TEXTURE_2D):
+    """
+
+    def __init__(
+        self,
+        name,
+        img=None,
+        wrap=GL_REPEAT,
+        sample=GL_NEAREST,
+        format=GL_RGBA,
+        type=GL_UNSIGNED_BYTE,
+        target=GL_TEXTURE_2D,
+    ):
         self.name = name
         self.format = format
         self.type = type
@@ -37,7 +47,11 @@ class Texture:
 
         self.textureid = glGenTextures(1)
 
-        print('* Loading texture {} at ID {}'.format('./textures/{}'.format(name), self.textureid))
+        print(
+            "* Loading texture {} at ID {}".format(
+                "./textures/{}".format(name), self.textureid
+            )
+        )
 
         self.bind()
 
@@ -45,11 +59,22 @@ class Texture:
             img = ImageWrapper(name)
 
             # load the texture in the buffer
-            glTexImage2D(self.target, 0, format, img.width(), img.height(), 0, format, type, img.data(format))
+            glTexImage2D(
+                self.target,
+                0,
+                format,
+                img.width(),
+                img.height(),
+                0,
+                format,
+                type,
+                img.data(format),
+            )
         else:
             # if a data array is provided use this
-            glTexImage2D(self.target, 0, format, img.shape[0], img.shape[1], 0, format, type, img)
-
+            glTexImage2D(
+                self.target, 0, format, img.shape[0], img.shape[1], 0, format, type, img
+            )
 
         # set what happens for texture coordinates outside [0,1]
         glTexParameteri(self.target, GL_TEXTURE_WRAP_S, wrap)
@@ -91,7 +116,9 @@ class Texture:
         self.bind()
 
         # load the texture in the buffer
-        glTexImage2D(self.target, 0, self.format, width, height, 0, self.format, self.type, data)
+        glTexImage2D(
+            self.target, 0, self.format, width, height, 0, self.format, self.type, data
+        )
 
         self.unbind()
 
