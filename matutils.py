@@ -1,14 +1,20 @@
 import numpy as np
 
-def scaleMatrix(s):
-    s.append(1)
-    return np.diag(s)
+
+def scaleMatrix(scale):
+    if np.isscalar(scale):
+        scale = [scale, scale, scale]
+
+    scale.append(1)
+    return np.diag(scale)
+
 
 def translationMatrix(t):
     n = len(t)
     T = np.identity(n+1,dtype='f')
     T[:n,-1] = t
     return T
+
 
 def rotationMatrixZ(angle):
     c = np.cos(angle)
@@ -20,6 +26,7 @@ def rotationMatrixZ(angle):
     R[1,1] = c
     return R
 
+
 def rotationMatrixX(angle):
     c = np.cos(angle)
     s = np.sin(angle)
@@ -29,6 +36,7 @@ def rotationMatrixX(angle):
     R[2,1] = -s
     R[2,2] = c
     return R
+
 
 def rotationMatrixY(angle):
     c = np.cos(angle)
@@ -54,9 +62,6 @@ def poseMatrix(position=[0,0,0], orientation=0, scale=1):
     T = translationMatrix(position)
 
     # ... and the scale factor
-    if np.isscalar(scale):
-        scale = [scale, scale, scale]
-
     S = scaleMatrix(scale)
     return np.matmul(np.matmul(T,R),S)
 

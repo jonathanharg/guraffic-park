@@ -11,6 +11,8 @@ from mesh import Mesh
 from shaders import *
 from texture import Texture
 
+import sys
+
 
 class BaseModel:
     '''
@@ -44,6 +46,8 @@ class BaseModel:
         self.mesh = mesh
         if self.mesh.textures == 1:
             self.mesh.textures.append(Texture('lena.bmp'))
+
+        self.name = self.mesh.name
         #self.vertices = None
         #self.indices = None
         #self.normals = None
@@ -161,6 +165,8 @@ class BaseModel:
                 M=np.matmul(Mp, self.M)
             )
 
+            #print('---> object {} rendered using shader {}'.format(self.name, self.shader.name))
+
             # bind all textures. Note that your shader needs to handle each one with a sampler object.
             for unit, tex in enumerate(self.mesh.textures):
                 glActiveTexture(GL_TEXTURE0 + unit)
@@ -177,14 +183,14 @@ class BaseModel:
             # unbind the shader to avoid side effects
             glBindVertexArray(0)
 
-    def __del__(self):
+    def vbo__del__(self):
         '''
         Release all VBO objects when finished.
         '''
         for vbo in self.vbos.items():
             glDeleteBuffers(1, vbo)
 
-        glDeleteVertexArrays(self.vao)
+        glDeleteVertexArrays(1,self.vao.tolist())
 
 
 class DrawModelFromMesh(BaseModel):
@@ -192,12 +198,15 @@ class DrawModelFromMesh(BaseModel):
     Base class for all models, inherit from this to create new models
     '''
 
-    def __init__(self, scene, M, mesh, shader=None):
+    def __init__(self, scene, M, mesh, name=None, shader=None, visible=True):
         '''
         Initialises the model data
         '''
 
-        BaseModel.__init__(self, scene=scene, M=M, mesh=mesh)
+        BaseModel.__init__(self, scene=scene, M=M, mesh=mesh, visible=visible)
+
+        if name is not None:
+            self.name = name
 
         # and we check which primitives we need to use for drawing
         if self.mesh.faces.shape[1] == 3:

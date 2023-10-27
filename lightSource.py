@@ -15,7 +15,7 @@ class LightSource:
         :param visible: Whether the light should be represented as a sphere in the scene (default: False)
         '''
 
-        self.position = np.array(position,'f')
+        self.position = np.array(position, 'f')
         self.Ia = Ia
         self.Id = Id
         self.Is = Is

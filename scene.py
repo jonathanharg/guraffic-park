@@ -57,8 +57,8 @@ class Scene:
         self.shaders = 'flat'
 
         # initialise the projective transform
-        near = 1.5
-        far = 50
+        near = 1.0
+        far = 20.0
         left = -1.0
         right = 1.0
         top = -1.0
@@ -68,7 +68,7 @@ class Scene:
         self.show_model = -1
 
         # to start with, we use an orthographic projection; change this.
-        self.P = frustumMatrix(left,right,top,bottom,near,far)
+        self.P = frustumMatrix(left, right, top, bottom, near, far)
 
         # initialises the camera object
         self.camera = Camera()
@@ -90,7 +90,7 @@ class Scene:
         '''
 
         # bind the default shader to the mesh
-        model.bind_shader(self.shaders)
+        #model.bind_shader(self.shaders)
 
         # and add to the list
         self.models.append(model)
@@ -104,17 +104,18 @@ class Scene:
         for model in models_list:
             self.add_model(model)
 
-    def draw(self):
+    def draw(self, framebuffer=False):
         '''
         Draw all models in the scene
         :return: None
         '''
 
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        if not framebuffer:
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        # ensure that the camera view matrix is up to date
-        self.camera.update()
+            # ensure that the camera view matrix is up to date
+            self.camera.update()
 
         # then we loop over all models in the list and draw them
         for model in self.models:
@@ -124,7 +125,8 @@ class Scene:
         # Note that here we use double buffering to avoid artefacts:
         # we draw on a different buffer than the one we display,
         # and flip the two buffers once we are done drawing.
-        pygame.display.flip()
+        if not framebuffer:
+            pygame.display.flip()
 
     def keyboard(self, event):
         '''
@@ -162,6 +164,7 @@ class Scene:
                 mods = pygame.key.get_mods()
                 if event.button == 4:
                     #pass
+                    #TODO: WS2
                     if mods & pygame.KMOD_CTRL:
                         self.light.position *= 1.1
                         self.light.update()
@@ -170,6 +173,7 @@ class Scene:
 
                 elif event.button == 5:
                     #pass
+                    #TODO: WS2
                     if mods & pygame.KMOD_CTRL:
                         self.light.position *= 0.9
                         self.light.update()
@@ -180,6 +184,7 @@ class Scene:
                 if pygame.mouse.get_pressed()[0]:
                     if self.mouse_mvt is not None:
                         self.mouse_mvt = pygame.mouse.get_rel()
+                        #TODO: WS2
                         self.camera.center[0] -= (float(self.mouse_mvt[0]) / self.window_size[0])
                         self.camera.center[1] -= (float(self.mouse_mvt[1]) / self.window_size[1])
                     else:
@@ -188,6 +193,7 @@ class Scene:
                 elif pygame.mouse.get_pressed()[2]:
                     if self.mouse_mvt is not None:
                         self.mouse_mvt = pygame.mouse.get_rel()
+                        #TODO: WS2
                         self.camera.phi -= (float(self.mouse_mvt[0]) / self.window_size[0])
                         self.camera.psi -= (float(self.mouse_mvt[1]) / self.window_size[1])
                     else:

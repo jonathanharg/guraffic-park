@@ -244,7 +244,7 @@ def create_mesh(varray, tarray, flist, fstart, f, library, material):
 	vmax = np.max(farray[:, :, 0].flatten())
 	vmin = np.min(farray[:, :, 0].flatten()) - 1
 
-	# fix blender texture indexing
+	# fix blender texture intexing
 	textures = fix_blender_textures(tarray, farray, varray)
 	if textures is not None:
 		textures = textures[vmin:vmax, :]

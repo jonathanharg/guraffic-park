@@ -6,13 +6,14 @@ class Material:
         self.Ks = Ks
         self.Ns = Ns
         self.texture = texture
+        self.alpha = 1.0
 
 class MaterialLibrary:
     def __init__(self):
         self.materials = []
         self.names = {}
 
-    def add_material(self,material):
+    def add_material(self, material):
         self.names[material.name] = len(self.materials)
         self.materials.append(material)
 

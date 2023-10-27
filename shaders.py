@@ -223,11 +223,13 @@ class PhongShader(BaseShaderProgram):
             'VM': Uniform('VM'),     # view model matrix (necessary for light computations)
             'VMiT': Uniform('VMiT'),  # inverse-transpose of the view model matrix (for normal transformation)
             'mode': Uniform('mode',0),  # rendering mode (only for illustration, in general you will want one shader program per mode)
+            'alpha': Uniform('alpha', 1.0),
+            # rendering mode (only for illustration, in general you will want one shader program per mode)
             'Ka': Uniform('Ka'),
             'Kd': Uniform('Kd'),
             'Ks': Uniform('Ks'),
             'Ns': Uniform('Ns'),
-            'light': Uniform('light', np.array([0.,0.,0.], 'f')),
+            'light': Uniform('light', np.array([0., 0., 0.], 'f')),
             'Ia': Uniform('Ia'),
             'Id': Uniform('Id'),
             'Is': Uniform('Is'),
@@ -242,11 +244,11 @@ class PhongShader(BaseShaderProgram):
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         '''
 
+        P = model.scene.P
+        V = model.scene.camera.V
+
         # tell OpenGL to use this shader program for rendering
         glUseProgram(self.program)
-
-        P = model.scene.P  # get projection matrix from the scene
-        V = model.scene.camera.V  # get view matrix from the camera
 
         # set the PVM matrix uniform
         self.uniforms['PVM'].bind(np.matmul(P, np.matmul(V, M)))
@@ -259,6 +261,8 @@ class PhongShader(BaseShaderProgram):
 
         # bind the mode to the program
         self.uniforms['mode'].bind(model.scene.mode)
+
+        self.uniforms['alpha'].bind(model.mesh.material.alpha)
 
         if len(model.mesh.textures) > 0:
             # bind the texture(s)
