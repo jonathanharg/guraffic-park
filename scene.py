@@ -3,19 +3,17 @@ import pygame
 
 # imports all openGL functions
 from OpenGL.GL import *
-from OpenGL.GLU import *
-
-# we will use numpy to store data in arrays
-import numpy as np
 
 # import the shader class
-from shaders import Shaders
+from shaders import Shaders,Uniform
 
 # import the camera class
 from camera import Camera
 
 # and we import a bunch of helper functions
 from matutils import *
+
+from lightSource import LightSource
 
 class Scene:
     '''
@@ -55,6 +53,21 @@ class Scene:
         # enable depth test for clean output (see lecture on clipping & visibility for an explanation
         glEnable(GL_DEPTH_TEST)
 
+        # dictionary of shaders used in this scene
+        self.shaders_list = {
+            'Phong': Shaders('phong'),# WS7
+            'Gouraud': Shaders('gouraud'),# WS6
+            'Flat': Shaders('flat'),# WS6
+            'Blinn': Shaders('blinn') # WS7
+        }
+
+        # compile all shaders
+        for shader in self.shaders_list.values():
+            shader.compile()
+
+        self.shaders = self.shaders_list['Flat']
+
+
         # initialise the projective transform
         near=1.5
         far=20
@@ -63,21 +76,19 @@ class Scene:
         top=-1.0
         bottom=1.0
 
-        # to start with, we use an orthographic projection; change this.
+        # to start with, we use an orthographic projection;
         self.P = frustumMatrix(left,right,top,bottom,near,far)
 
         # initialises the camera object
         self.camera = Camera(self.window_size)
 
-        # and compile the shaders
-        if shaders is not None:
-            self.shaders = Shaders(vertex_shader='shaders/{}/vertex_shader.glsl'.format(shaders), fragment_shader='shaders/{}/fragment_shader.glsl'.format(shaders))
-        else:
-            self.shaders = Shaders()
-        self.shaders.compile()
+        # initialise the light source
+        self.light = LightSource(self, position=[5.,5.,5.])
+
+        # rendering mode for the shaders
+        self.mode = 6 # initialise to full interpolated shading
 
         # This class will maintain a list of models to draw in the scene,
-        # we will initalise it to empty
         self.models = []
 
     def add_model(self,model):
@@ -105,11 +116,11 @@ class Scene:
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        #self.camera.update()
+        self.camera.update()
 
         # then we loop over all models in the list and draw them
         for model in self.models:
-            model.draw(Mp=poseMatrix())
+            model.draw(Mp=poseMatrix(), shaders=self.shaders)
 
         # once we are done drawing, we display the scene
         # Note that here we use double buffering to avoid artefacts:
@@ -125,43 +136,30 @@ class Scene:
         # flag to switch wireframe rendering
         elif event.key == pygame.K_0:
             if self.wireframe:
-                print('--> Rendering using colour wireframe')
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-                self.wireframe = False
-            else:
                 print('--> Rendering using colour fill')
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+                self.wireframe = False
+            else:
+                print('--> Rendering using colour wireframe')
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
                 self.wireframe = True
 
-        elif event.key == pygame.K_7:
-            glDisable(GL_CULL_FACE)
-
-        elif event.key == pygame.K_8:
-            glEnable(GL_CULL_FACE)
-            glCullFace(GL_BACK)
-
-        elif event.key == pygame.K_9:
-            glEnable(GL_CULL_FACE)
-            glCullFace(GL_FRONT)
-
-        # rendering mode, for now mediated by a uniform flag,
-        # in the future we probably want to associate different shaders to change the mode.
         elif event.key == pygame.K_1:
-            print('--> mode 1 display: vertex colour set using the model color array.')
-            self.shaders.set_mode(1)
+            print('--> using Flat shading')
+            self.shaders = self.shaders_list['Flat']
 
         elif event.key == pygame.K_2:
-            print('--> mode 2 display: vertex colour set from the position.')
-            self.shaders.set_mode(2)
+            print('--> using Gouraud shading')
+            self.shaders = self.shaders_list['Gouraud']
 
         elif event.key == pygame.K_3:
-            print('--> mode 3 display: vertex colour set from the normal.')
-            self.shaders.set_mode(3)
+            print('--> using Phong shading')
+            self.shaders = self.shaders_list['Phong']
 
+        # WS7: Blinn-Phong shading
         elif event.key == pygame.K_4:
-            print('--> mode 0 display (default: vertex colour set to black.')
-            self.shaders.set_mode(0)
-
+            print('--> using Blinn-Phong shading')
+            self.shaders = self.shaders_list['Blinn']
 
     def pygameEvents(self):
         # check whether the window has been closed
@@ -174,10 +172,22 @@ class Scene:
                 self.keyboard(event)
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                mods = pygame.key.get_mods()
                 if event.button == 4:
-                    self.camera.distance = max(1, self.camera.distance - 1)
+                    #pass
+                    if mods & pygame.KMOD_CTRL:
+                        self.light.position *= 1.1
+                        self.light.update()
+                    else:
+                        self.camera.distance = max(1, self.camera.distance - 1)
+
                 elif event.button == 5:
-                    self.camera.distance += 1
+                    #pass
+                    if mods & pygame.KMOD_CTRL:
+                        self.light.position *= 0.9
+                        self.light.update()
+                    else:
+                        self.camera.distance += 1
 
             elif event.type == pygame.MOUSEMOTION:
                 if pygame.mouse.get_pressed()[0]:

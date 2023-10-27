@@ -1,55 +1,13 @@
 import numpy as np
-import sys
+
+from material import Material,MaterialLibrary
+from mesh import Mesh
 
 '''
-Functions for reading models from blender.
-Source:
+Functions for reading models from blender. 
+Source: 
 https://en.wikipedia.org/wiki/Wavefront_.obj_file
 '''
-
-
-class Mesh:
-	'''
-	Simple class to hold a mesh data. For now we will only focus on vertices, faces (indices of vertices for each face)
-	and normals.
-	'''
-	def __init__(self, vertices, faces=None, normals=None):
-		self.vertices = vertices
-		self.faces = faces
-
-		if normals is None:
-			self.calculate_normals()
-		else:
-			self.normals = normals
-	
-	def calculate_normals(self):
-		'''
-		method to calculate normals from the mesh faces.
-		WS3 TODO: Fix this code to calculate the correct normals
-		Use the approach discussed in class:
-		1. calculate normal for each face using cross product
-		2. set each vertex normal as the average of the normals over all faces it belongs to.
-		'''
-		self.normals = np.zeros((self.vertices.shape[0], 3), dtype='f')
-
-		# === WS3 Calculate normals ===
-		for f in range(self.faces.shape[0]):
-			# first calculate the face normal using the cross product of the triangle's sides
-			a = self.vertices[self.faces[f, 1]] - self.vertices[self.faces[f, 0]]
-			b = self.vertices[self.faces[f, 2]] - self.vertices[self.faces[f, 0]]
-			face_normal = np.cross(a, b)
-
-			# we normalise the cross product output to make a normal vector
-			face_normal /= np.linalg.norm(face_normal)
-
-			# blend normal on all 3 vertices
-			for j in range(3):
-				self.normals[self.faces[f, j], :] += face_normal
-
-		# and normalise the vectors
-		self.normals /= np.linalg.norm(self.normals, axis=1, keepdims=True)
-		# === End WS3 ===
-
 
 def process_line(line):
 	'''
@@ -111,15 +69,53 @@ def process_line(line):
 		# where vi is the vertex index
 		# ti is the texture index
 		# ni is the normal index (optional)
-		# note that indexing in the file starts at 1, so we need to correct to start at zero
-		return ( label, [ [np.uint32(i)-1 for i in v.split('/')] for v in fields[1:] ] )
+		return ( label, [ [np.uint32(i) for i in v.split('/')] for v in fields[1:] ] )
 
 	else:
 		print('(E) Unknown line: {}'.format(fields))
 		return None
 
-
 	return (label, [float(token) for token in fields[1:]])
+
+
+def load_material_library(file_name):
+	library = MaterialLibrary()
+	material = None
+
+	print('-- Loading material library {}'.format(file_name))
+
+	mtlfile = open(file_name)
+	for line in mtlfile:
+		fields = line.split()
+		if len(fields) != 0:
+			if fields[0] == 'newmtl':
+				if material is not None:
+					library.add_material(material)
+
+				material = Material(fields[1])
+				print('Found material definition: {}'.format(material.name))
+			elif fields[0] == 'Ka':
+				material.Ka = np.array(fields[1:], 'f')
+			elif fields[0] == 'Kd':
+				material.Kd = np.array(fields[1:], 'f')
+			elif fields[0] == 'Ks':
+				material.Ks = np.array(fields[1:], 'f')
+			elif fields[0] == 'Ns':
+				material.Ns = float(fields[1])
+			elif fields[0] == 'd':
+				material.d = float(fields[1])
+			elif fields[0] == 'Tr':
+				material.d = 1.0 - float(fields[1])
+			elif fields[0] == 'illum':
+				material.illumination = int(fields[1])
+			elif fields[0] == 'map_Kd':
+				material.texture = fields[1]
+
+	library.add_material(material)
+
+	print('- Done, loaded {} materials'.format(len(library.materials)))
+
+	return library
 
 
 def load_obj_file(file_name):
@@ -127,14 +123,33 @@ def load_obj_file(file_name):
 	Function for loading a Blender3D object file. minimalistic, and partial,
 	but sufficient for this course. You do not really need to worry about it.
 	'''
+	print('Loading mesh(es) from Blender file: {}'.format(file_name))
+
 	vlist = []
 	tlist = []
 	flist = []
+	mlist = []
+
+	# each mesh in the file uses continuous vertex indexing, we will store them as separate mesh.
+	voffset = 1
+
+	# list of meshes, indexed by the material name
+	meshes = []
+
+	# current material object
+	material = None
 
 	with open(file_name) as objfile:
+		line_nb = 0 # count line number for easier error locating
+
+		# loop over all lines in the file
 		for line in objfile:
+			# process the line
 			data = process_line(line)
 
+			line_nb += 1 # increment line
+
+			# skip empty lines
 			if data is None:
 				continue
 
@@ -149,10 +164,62 @@ def load_obj_file(file_name):
 
 			elif data[0] == 'face':
 				flist.append(data[1])
+				mlist.append(material)
 
-	print('--> Model loaded: {} vertices, {} texture vectors and {} faces'.format(len(vlist), len(tlist), len(flist)))
+			elif data[0] == 'material library':
+				library = load_material_library('models/{}'.format(data[1]))
 
-	return Mesh(
-		vertices=np.array(vlist, dtype='f'),
-		faces=np.array(flist, dtype=np.uint32)[:,:,0]
+			# material indicate a new mesh in the file, so we store the previous one if not empty and start
+			# a new one.
+			elif data[0] == 'material':
+				material = library.names[data[1]]
+				print('[l.{}] Loading mesh with material: {}'.format(line_nb, data[1]))
+
+	print('File read. Found {} vertices and {} faces.'.format(len(vlist), len(flist)))
+	return create_meshes_from_blender( vlist, flist, mlist, library )
+
+
+def create_meshes_from_blender( vlist, flist, mlist, library ):
+	fstart = 0
+	material = None
+	meshes = []
+
+	# we start by putting all vertices in one array
+	varray = np.array(vlist, dtype='f')
+
+	for f in range(len(flist)):
+		if material is None:
+			material = mlist[f]
+
+		elif material != mlist[f]:  # new mesh is denoted by change in material
+			farray = np.array(flist[fstart:f], dtype=np.uint32)[:, :, 0]
+			vmax = np.max(farray.flatten())
+			vmin = np.min(farray.flatten())-1
+
+			#print('+++ vertices ID in range [{},{}] and vstart={} / vmax={}'.format(np.min(farray.flatten()), np.max(farray.flatten()), vstart, vmax))
+
+			meshes.append(
+				Mesh(
+					vertices=varray[vmin:vmax,:],
+					faces=farray - vmin - 1,
+					material=library.materials[material]
+				)
+			)
+
+			# start the next mesh
+			fstart = f
+
+	farray = np.array(flist[fstart:], dtype=np.uint32)[:, :, 0]
+	vmax = np.max(farray.flatten())
+	vmin = np.min(farray.flatten())-1
+
+	meshes.append(
+		Mesh(
+			vertices=varray[vmin:vmax,:],
+			faces=farray - vmin - 1,
+			material=library.materials[material]
+		)
 	)
+
+	print('--- Created {} mesh(es) from Blender file.'.format(len(meshes)))
+	return meshes

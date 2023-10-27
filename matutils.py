@@ -90,3 +90,17 @@ def frustumMatrix(l,r,t,b,n,f):
             [ 0,              0,          -1,             0 ]
             ]
     )
+
+
+# Homogeneous coordinates helpers
+def homog(v):
+    return np.hstack([v,1])
+
+def unhomog(vh):
+    return vh[:-1]/vh[-1]
+
+def matmul(L):
+    R = L[0]
+    for M in L[1:]:
+        R = np.matmul(R,M)
+    return R
