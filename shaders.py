@@ -1,5 +1,6 @@
 # imports all openGL functions
-from OpenGL.GL import *
+# from OpenGL.GL import *
+from OpenGL import GL as gl
 from OpenGL.GL import shaders
 from matutils import *
 
@@ -28,7 +29,7 @@ class Uniform:
         in the program from its name
         :param program: the GLSL program where the uniform is used
         """
-        self.location = glGetUniformLocation(program=program, name=self.name)
+        self.location = gl.glGetUniformLocation(program=program, name=self.name)
         if self.location == -1:
             print("(E) Warning, no uniform {}".format(self.name))
 
@@ -43,9 +44,9 @@ class Uniform:
         if M is not None:
             self.value = M
         if self.value.shape[0] == 4 and self.value.shape[1] == 4:
-            glUniformMatrix4fv(self.location, number, transpose, self.value)
+            gl.glUniformMatrix4fv(self.location, number, transpose, self.value)
         elif self.value.shape[0] == 3 and self.value.shape[1] == 3:
-            glUniformMatrix3fv(self.location, number, transpose, self.value)
+            gl.glUniformMatrix3fv(self.location, number, transpose, self.value)
         else:
             print(
                 "(E) Error: Trying to bind as uniform a matrix of shape {}".format(
@@ -72,22 +73,22 @@ class Uniform:
     def bind_int(self, value=None):
         if value is not None:
             self.value = value
-        glUniform1i(self.location, self.value)
+        gl.glUniform1i(self.location, self.value)
 
     def bind_float(self, value=None):
         if value is not None:
             self.value = value
-        glUniform1f(self.location, self.value)
+        gl.glUniform1f(self.location, self.value)
 
     def bind_vector(self, value=None):
         if value is not None:
             self.value = value
         if value.shape[0] == 2:
-            glUniform2fv(self.location, 1, value)
+            gl.glUniform2fv(self.location, 1, value)
         elif value.shape[0] == 3:
-            glUniform3fv(self.location, 1, value)
+            gl.glUniform3fv(self.location, 1, value)
         elif value.shape[0] == 4:
-            glUniform4fv(self.location, 1, value)
+            gl.glUniform4fv(self.location, 1, value)
         else:
             print(
                 "(E) Error in Uniform.bind_vector(): Vector should be of dimension 2,3 or 4, found {}".format(
@@ -169,14 +170,14 @@ class BaseShaderProgram:
         """
         print("Compiling GLSL shaders [{}]...".format(self.name))
         try:
-            self.program = glCreateProgram()
-            glAttachShader(
+            self.program = gl.glCreateProgram()
+            gl.glAttachShader(
                 self.program,
                 shaders.compileShader(
                     self.vertex_shader_source, shaders.GL_VERTEX_SHADER
                 ),
             )
-            glAttachShader(
+            gl.glAttachShader(
                 self.program,
                 shaders.compileShader(
                     self.fragment_shader_source, shaders.GL_FRAGMENT_SHADER
@@ -197,10 +198,10 @@ class BaseShaderProgram:
 
         self.bindAttributes(attributes)
 
-        glLinkProgram(self.program)
+        gl.glLinkProgram(self.program)
 
         # tell OpenGL to use this shader program for rendering
-        glUseProgram(self.program)
+        gl.glUseProgram(self.program)
 
         # link all uniforms
         for uniform in self.uniforms:
@@ -209,7 +210,7 @@ class BaseShaderProgram:
     def bindAttributes(self, attributes):
         # bind all shader attributes to the correct locations in the VAO
         for name, location in attributes.items():
-            glBindAttribLocation(self.program, location, name)
+            gl.glBindAttribLocation(self.program, location, name)
             print("Binding attribute {} to location {}".format(name, location))
 
     def bind(self, model, M):
@@ -218,7 +219,7 @@ class BaseShaderProgram:
         """
 
         # tell OpenGL to use this shader program for rendering
-        glUseProgram(self.program)
+        gl.glUseProgram(self.program)
 
         P = model.scene.P
         V = model.scene.camera.V
@@ -275,7 +276,7 @@ class PhongShader(BaseShaderProgram):
         V = model.scene.camera.V
 
         # tell OpenGL to use this shader program for rendering
-        glUseProgram(self.program)
+        gl.glUseProgram(self.program)
 
         # set the PVM matrix uniform
         self.uniforms["PVM"].bind(np.matmul(P, np.matmul(V, M)))
@@ -322,7 +323,7 @@ class PhongShader(BaseShaderProgram):
         self.uniforms[name] = Uniform(name)
 
     def unbind(self):
-        glUseProgram(0)
+        gl.glUseProgram(0)
 
 
 class FlatShader(PhongShader):

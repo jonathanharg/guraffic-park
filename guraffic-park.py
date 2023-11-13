@@ -3,8 +3,6 @@ import pygame
 # import the scene class
 from scene import Scene
 
-from OpenGL.GL import *
-
 from lightSource import LightSource
 
 from blender import load_obj_file
@@ -14,14 +12,14 @@ from BaseModel import DrawModelFromMesh
 from shaders import *
 
 
-class ExeterScene(Scene):
+class MainScene(Scene):
     def __init__(self):
         Scene.__init__(self)
 
         self.light = LightSource(self, position=[5.0, 3.0, 5.0])
 
-        ldn = load_obj_file("models/london.obj")
-        self.add_models_list([DrawModelFromMesh(scene=self, M=translationMatrix([0,0,0]),mesh=mesh,shader=FlatShader(),) for mesh in ldn])
+        # ldn = load_obj_file("models/london.obj")
+        # self.add_models_list([DrawModelFromMesh(scene=self, M=translationMatrix([0,0,0]),mesh=mesh,shader=FlatShader(),) for mesh in ldn])
 
         meshes = load_obj_file("models/scene.obj")
         self.add_models_list(
@@ -88,7 +86,7 @@ class ExeterScene(Scene):
         """
 
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         self.camera.update()
 
@@ -117,7 +115,7 @@ class ExeterScene(Scene):
 if __name__ == "__main__":
     # initialises the scene object
     # scene = Scene(shaders='gouraud')
-    scene = ExeterScene()
+    scene = MainScene()
 
     # starts drawing the scene
     scene.run()

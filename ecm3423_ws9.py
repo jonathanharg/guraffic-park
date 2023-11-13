@@ -3,6 +3,7 @@ import pygame
 # import the scene class
 from cubeMap import FlattenCubeMap
 from scene import Scene
+from OpenGL import GL as gl
 
 from lightSource import LightSource
 
@@ -166,7 +167,7 @@ class ExeterScene(Scene):
 
             self.environment.update(self)
 
-            self.bunny.draw()
+            # self.bunny.draw()
             # self.sphere.draw()
             # glDisable(GL_BLEND)
 

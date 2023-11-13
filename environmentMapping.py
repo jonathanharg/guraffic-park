@@ -2,6 +2,7 @@ from BaseModel import BaseModel, DrawModelFromMesh
 from mesh import *
 
 from OpenGL.GL.framebufferobjects import *
+from OpenGL.GL import *
 
 from cubeMap import CubeMap
 
