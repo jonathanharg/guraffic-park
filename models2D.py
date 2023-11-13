@@ -1,6 +1,8 @@
+import numpy as np
+from OpenGL import GL as gl
+
 from BaseModel import BaseModel
-from OpenGL.GL import *
-from matutils import *
+from matutils import poseMatrix
 
 
 class TriangleModel(BaseModel):
@@ -32,7 +34,7 @@ class ComplexModel(BaseModel):
 
 class SquareModel(BaseModel):
     def __init__(self, scene, M, color=[1.0, 1.0, 1.0]):
-        BaseModel.__init__(self, scene, M=M, color=color, primitive=GL_QUADS)
+        BaseModel.__init__(self, scene, M=M, color=color, primitive=gl.GL_QUADS)
         self.vertices = np.array(
             [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]], "f"
         )

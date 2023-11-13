@@ -1,6 +1,6 @@
-from material import Material
 import numpy as np
 
+from material import Material
 from texture import Texture
 
 
@@ -109,7 +109,6 @@ class Mesh:
 
 class CubeMesh(Mesh):
     def __init__(self, texture=None, inside=False):
-
         vertices = np.array(
             [
                 [-1.0, -1.0, -1.0],  # 0

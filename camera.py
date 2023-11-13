@@ -1,5 +1,7 @@
 # import a bunch of useful matrix functions (for translation, scaling etc)
-from matutils import *
+import numpy as np
+
+from matutils import rotationMatrixX, rotationMatrixY, translationMatrix
 
 
 class Camera:

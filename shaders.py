@@ -1,11 +1,8 @@
-# imports all openGL functions
-# from OpenGL.GL import *
+import numpy as np
 from OpenGL import GL as gl
 from OpenGL.GL import shaders
-from matutils import *
 
-# we will use numpy to store data in arrays
-import numpy as np
+from matutils import homog, unhomog
 
 
 class Uniform:
@@ -173,14 +170,12 @@ class BaseShaderProgram:
             self.program = gl.glCreateProgram()
             gl.glAttachShader(
                 self.program,
-                shaders.compileShader(
-                    self.vertex_shader_source, shaders.GL_VERTEX_SHADER
-                ),
+                shaders.compileShader(self.vertex_shader_source, gl.GL_VERTEX_SHADER),
             )
             gl.glAttachShader(
                 self.program,
                 shaders.compileShader(
-                    self.fragment_shader_source, shaders.GL_FRAGMENT_SHADER
+                    self.fragment_shader_source, gl.GL_FRAGMENT_SHADER
                 ),
             )
 

@@ -1,8 +1,9 @@
 import pygame
 from OpenGL import GL as gl
+
 from camera import Camera
-from matutils import frustumMatrix
 from lightSource import LightSource
+from matutils import frustumMatrix
 
 
 class Scene:
@@ -19,9 +20,7 @@ class Scene:
         self.wireframe = False
 
         pygame.init()
-        pygame.display.set_mode(
-            self.window_size, pygame.OPENGL | pygame.DOUBLEBUF, 24
-        )
+        pygame.display.set_mode(self.window_size, pygame.OPENGL | pygame.DOUBLEBUF, 24)
 
         # Here we start initialising the window from the OpenGL side
         gl.glViewport(0, 0, self.window_size[0], self.window_size[1])
@@ -206,7 +205,6 @@ class Scene:
         # We have a classic program loop
         self.running = True
         while self.running:
-
             self.pygameEvents()
 
             # otherwise, continue drawing

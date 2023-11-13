@@ -1,11 +1,12 @@
-from OpenGL.GL import *
-from matutils import *
+import numpy as np
+from OpenGL import GL as gl
 
-from mesh import Mesh
 from BaseModel import DrawModelFromMesh
+from framebuffer import Framebuffer
+from matutils import frustumMatrix, poseMatrix, scaleMatrix, translationMatrix
+from mesh import Mesh
 from shaders import BaseShaderProgram, PhongShader
 from texture import Texture
-from framebuffer import Framebuffer
 
 
 def normalize(v):
@@ -58,13 +59,13 @@ class ShadowMappingShader(PhongShader):
         self.uniforms["shadow_map"].bind(1)
         # self.uniforms['old_map'].bind(2)
 
-        glActiveTexture(GL_TEXTURE1)
+        gl.glActiveTexture(gl.GL_TEXTURE1)
         self.shadow_map.bind()
 
-        # glActiveTexture(GL_TEXTURE2)
+        # gl.glActiveTexture(gl.GL_TEXTURE2)
         # self.shadow_map.bind()
 
-        glActiveTexture(GL_TEXTURE0)
+        gl.glActiveTexture(gl.GL_TEXTURE0)
 
         # setup the shadow map matrix
         VsT = np.linalg.inv(model.scene.camera.V)
@@ -125,31 +126,30 @@ class ShowTexture(DrawModelFromMesh):
 
 class ShadowMap(Texture):
     def __init__(self, light=None, width=1000, height=1000):
-
         # In order to call parent constructor I would need to change it to allow for an empty texture object (poor design)
-        # Texture.__init__(self, "shadow", img=None, wrap=GL_CLAMP_TO_EDGE, sample=GL_NEAREST, format=GL_DEPTH_COMPONENT, type=GL_FLOAT, target=GL_TEXTURE_2D)
+        # Texture.__init__(self, "shadow", img=None, wrap=gl.GL_CLAMP_TO_EDGE, sample=gl.GL_NEAREST, format=gl.GL_DEPTH_COMPONENT, type=gl.GL_FLOAT, target=gl.GL_TEXTURE_2D)
 
         # we save the light source
         self.light = light
 
         # we'll just copy and modify the code here
         self.name = "shadow"
-        self.format = GL_DEPTH_COMPONENT
-        self.type = GL_FLOAT
-        self.wrap = GL_CLAMP_TO_EDGE
-        self.sample = GL_LINEAR
-        self.target = GL_TEXTURE_2D
+        self.format = gl.GL_DEPTH_COMPONENT
+        self.type = gl.GL_FLOAT
+        self.wrap = gl.GL_CLAMP_TO_EDGE
+        self.sample = gl.GL_LINEAR
+        self.target = gl.GL_TEXTURE_2D
         self.width = width
         self.height = height
 
         # create the texture
-        self.textureid = glGenTextures(1)
+        self.textureid = gl.glGenTextures(1)
 
         print("* Creating texture {} at ID {}".format(self.name, self.textureid))
 
         # initialise the texture memory
         self.bind()
-        glTexImage2D(
+        gl.glTexImage2D(
             self.target,
             0,
             self.format,
@@ -166,7 +166,7 @@ class ShadowMap(Texture):
         self.set_sampling_parameter(self.sample)
         self.set_shadow_comparison()
 
-        self.fbo = Framebuffer(attachment=GL_DEPTH_ATTACHMENT, texture=self)
+        self.fbo = Framebuffer(attachment=gl.GL_DEPTH_ATTACHMENT, texture=self)
 
         self.V = None
 
@@ -179,14 +179,14 @@ class ShadowMap(Texture):
             scene.camera.V = self.V
 
             # update the viewport for the image size
-            glViewport(0, 0, self.width, self.height)
+            gl.glViewport(0, 0, self.width, self.height)
 
             self.fbo.bind()
             scene.draw_shadow_map()
             self.fbo.unbind()
 
             # reset the viewport to the windows size
-            glViewport(0, 0, scene.window_size[0], scene.window_size[1])
+            gl.glViewport(0, 0, scene.window_size[0], scene.window_size[1])
 
             # restore the view matrix
             scene.camera.V = None

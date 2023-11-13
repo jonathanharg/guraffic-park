@@ -1,17 +1,10 @@
-# imports all openGL functions
-from OpenGL.GL import *
+import numpy as np
+from OpenGL import GL as gl
 
-# and we import a bunch of helper functions
-from matutils import *
-
-from material import Material
-
+from matutils import poseMatrix
 from mesh import Mesh
-
-from shaders import *
+from shaders import PhongShader
 from texture import Texture
-
-import sys
 
 
 class BaseModel:
@@ -26,7 +19,7 @@ class BaseModel:
         M=poseMatrix(),
         mesh=Mesh(),
         color=[1.0, 1.0, 1.0],
-        primitive=GL_TRIANGLES,
+        primitive=gl.GL_TRIANGLES,
         visible=True,
     ):
         """
@@ -73,7 +66,7 @@ class BaseModel:
         self.M = M
 
         # We use a Vertex Array Object to pack all buffers for rendering in the GPU (see lecture on OpenGL)
-        self.vao = glGenVertexArrays(1)
+        self.vao = gl.glGenVertexArrays(1)
 
         # this buffer will be used to store indices, if using shared vertex representation
         self.index_buffer = None
@@ -94,27 +87,27 @@ class BaseModel:
         self.attributes[name] = len(self.vbos)
 
         # create a buffer object...
-        self.vbos[name] = glGenBuffers(1)
+        self.vbos[name] = gl.glGenBuffers(1)
         # and bind it
-        glBindBuffer(GL_ARRAY_BUFFER, self.vbos[name])
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbos[name])
 
         # enable the attribute
-        glEnableVertexAttribArray(self.attributes[name])
+        gl.glEnableVertexAttribArray(self.attributes[name])
 
         # Associate the bound buffer to the corresponding input location in the shader
         # Each instance of the vertex shader will get one row of the array
         # so this can be processed in parallel!
-        glVertexAttribPointer(
+        gl.glVertexAttribPointer(
             index=self.attributes[name],
             size=data.shape[1],
-            type=GL_FLOAT,
+            type=gl.GL_FLOAT,
             normalized=False,
             stride=0,
             pointer=None,
         )
 
         # ... and we set the data in the buffer as the vertex array
-        glBufferData(GL_ARRAY_BUFFER, data, GL_STATIC_DRAW)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, data, gl.GL_STATIC_DRAW)
 
     def bind_shader(self, shader):
         """
@@ -136,7 +129,7 @@ class BaseModel:
         """
 
         # bind the VAO to retrieve all buffers and rendering context
-        glBindVertexArray(self.vao)
+        gl.glBindVertexArray(self.vao)
 
         if self.mesh.vertices is None:
             print(
@@ -155,13 +148,15 @@ class BaseModel:
 
         # if indices are provided, put them in a buffer too
         if self.mesh.faces is not None:
-            self.index_buffer = glGenBuffers(1)
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.index_buffer)
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, self.mesh.faces, GL_STATIC_DRAW)
+            self.index_buffer = gl.glGenBuffers(1)
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.index_buffer)
+            gl.glBufferData(
+                gl.GL_ELEMENT_ARRAY_BUFFER, self.mesh.faces, gl.GL_STATIC_DRAW
+            )
 
         # finally we unbind the VAO and VBO when we're done to avoid side effects
-        glBindVertexArray(0)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
     def draw(self, Mp=poseMatrix()):
         """
@@ -171,7 +166,6 @@ class BaseModel:
         """
 
         if self.visible:
-
             if self.mesh.vertices is None:
                 print(
                     "(W) Warning in {}.draw(): No vertex array!".format(
@@ -180,7 +174,7 @@ class BaseModel:
                 )
 
             # bind the Vertex Array Object so that all buffers are bound correctly and following operations affect them
-            glBindVertexArray(self.vao)
+            gl.glBindVertexArray(self.vao)
 
             # setup the shader program and provide it the Model, View and Projection matrices to use
             # for rendering this model
@@ -190,33 +184,33 @@ class BaseModel:
 
             # bind all textures. Note that your shader needs to handle each one with a sampler object.
             for unit, tex in enumerate(self.mesh.textures):
-                glActiveTexture(GL_TEXTURE0 + unit)
+                gl.glActiveTexture(gl.GL_TEXTURE0 + unit)
                 tex.bind()
 
             # check whether the data is stored as vertex array or index array
             if self.mesh.faces is not None:
                 # draw the data in the buffer using the index array
-                glDrawElements(
+                gl.glDrawElements(
                     self.primitive,
                     self.mesh.faces.flatten().shape[0],
-                    GL_UNSIGNED_INT,
+                    gl.GL_UNSIGNED_INT,
                     None,
                 )
             else:
                 # draw the data in the buffer using the vertex array ordering only.
-                glDrawArrays(self.primitive, 0, self.mesh.vertices.shape[0])
+                gl.glDrawArrays(self.primitive, 0, self.mesh.vertices.shape[0])
 
             # unbind the shader to avoid side effects
-            glBindVertexArray(0)
+            gl.glBindVertexArray(0)
 
     def vbo__del__(self):
         """
         Release all VBO objects when finished.
         """
         for vbo in self.vbos.items():
-            glDeleteBuffers(1, vbo)
+            gl.glDeleteBuffers(1, vbo)
 
-        glDeleteVertexArrays(1, self.vao.tolist())
+        gl.glDeleteVertexArrays(1, self.vao.tolist())
 
 
 class DrawModelFromMesh(BaseModel):
@@ -236,10 +230,10 @@ class DrawModelFromMesh(BaseModel):
 
         # and we check which primitives we need to use for drawing
         if self.mesh.faces.shape[1] == 3:
-            self.primitive = GL_TRIANGLES
+            self.primitive = gl.GL_TRIANGLES
 
         elif self.mesh.faces.shape[1] == 4:
-            self.primitive = GL_QUADS
+            self.primitive = gl.GL_QUADS
 
         else:
             print(

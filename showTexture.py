@@ -1,4 +1,8 @@
-from BaseModel import *
+import numpy as np
+
+from BaseModel import DrawModelFromMesh
+from matutils import poseMatrix, translationMatrix
+from shaders import BaseShaderProgram
 
 
 def normalize(v):

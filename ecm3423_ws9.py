@@ -1,25 +1,18 @@
 import pygame
+from OpenGL import GL as gl
+
+from BaseModel import DrawModelFromMesh
+from blender import load_obj_file
 
 # import the scene class
 from cubeMap import FlattenCubeMap
-from scene import Scene
-from OpenGL import GL as gl
-
-from lightSource import LightSource
-
-from blender import load_obj_file
-
-from BaseModel import DrawModelFromMesh
-
-from shaders import *
-
-from ShadowMapping import *
-
-from sphereModel import Sphere
-
-from skyBox import *
-
 from environmentMapping import *
+from lightSource import LightSource
+from scene import Scene
+from shaders import *
+from ShadowMapping import *
+from skyBox import *
+from sphereModel import Sphere
 
 
 class ExeterScene(Scene):

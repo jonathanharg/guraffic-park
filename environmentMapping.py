@@ -1,14 +1,10 @@
-from BaseModel import BaseModel, DrawModelFromMesh
-from mesh import *
-
-from OpenGL.GL.framebufferobjects import *
-from OpenGL.GL import *
+import numpy as np
+from OpenGL import GL as gl
 
 from cubeMap import CubeMap
-
-from shaders import *
-
 from framebuffer import Framebuffer
+from matutils import frustumMatrix, rotationMatrixX, rotationMatrixY, translationMatrix
+from shaders import BaseShaderProgram
 
 
 class EnvironmentShader(BaseShaderProgram):
@@ -25,11 +21,11 @@ class EnvironmentShader(BaseShaderProgram):
         if self.map is not None:
             # self.map.update(model.scene)
             unit = len(model.mesh.textures)
-            glActiveTexture(GL_TEXTURE0)
+            gl.glActiveTexture(gl.GL_TEXTURE0)
             self.map.bind()
             self.uniforms["sampler_cube"].bind(0)
 
-        glUseProgram(self.program)
+        gl.glUseProgram(self.program)
 
         P = model.scene.P  # get projection matrix from the scene
         V = model.scene.camera.V  # get view matrix from the camera
@@ -56,37 +52,37 @@ class EnvironmentMappingTexture(CubeMap):
         self.height = height
 
         self.fbos = {
-            GL_TEXTURE_CUBE_MAP_NEGATIVE_X: Framebuffer(),
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X: Framebuffer(),
-            GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: Framebuffer(),
-            GL_TEXTURE_CUBE_MAP_POSITIVE_Y: Framebuffer(),
-            GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: Framebuffer(),
-            GL_TEXTURE_CUBE_MAP_POSITIVE_Z: Framebuffer(),
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: Framebuffer(),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: Framebuffer(),
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: Framebuffer(),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: Framebuffer(),
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: Framebuffer(),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: Framebuffer(),
         }
 
         t = 0.0
         self.views = {
-            GL_TEXTURE_CUBE_MAP_NEGATIVE_X: np.matmul(
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: np.matmul(
                 translationMatrix([0, 0, t]), rotationMatrixY(-np.pi / 2.0)
             ),
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X: np.matmul(
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: np.matmul(
                 translationMatrix([0, 0, t]), rotationMatrixY(+np.pi / 2.0)
             ),
-            GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: np.matmul(
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: np.matmul(
                 translationMatrix([0, 0, t]), rotationMatrixX(+np.pi / 2.0)
             ),
-            GL_TEXTURE_CUBE_MAP_POSITIVE_Y: np.matmul(
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: np.matmul(
                 translationMatrix([0, 0, t]), rotationMatrixX(-np.pi / 2.0)
             ),
-            GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: np.matmul(
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: np.matmul(
                 translationMatrix([0, 0, t]), rotationMatrixY(-np.pi)
             ),
-            GL_TEXTURE_CUBE_MAP_POSITIVE_Z: translationMatrix([0, 0, t]),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: translationMatrix([0, 0, t]),
         }
 
         self.bind()
-        for (face, fbo) in self.fbos.items():
-            glTexImage2D(
+        for face, fbo in self.fbos.items():
+            gl.glTexImage2D(
                 face, 0, self.format, width, height, 0, self.format, self.type, None
             )
             fbo.prepare(self, face)
@@ -102,9 +98,9 @@ class EnvironmentMappingTexture(CubeMap):
 
         scene.P = frustumMatrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
 
-        glViewport(0, 0, self.width, self.height)
+        gl.glViewport(0, 0, self.width, self.height)
 
-        for (face, fbo) in self.fbos.items():
+        for face, fbo in self.fbos.items():
             fbo.bind()
             # scene.camera.V = np.identity(4)
             scene.camera.V = self.views[face]
@@ -115,7 +111,7 @@ class EnvironmentMappingTexture(CubeMap):
             fbo.unbind()
 
         # reset the viewport
-        glViewport(0, 0, scene.window_size[0], scene.window_size[1])
+        gl.glViewport(0, 0, scene.window_size[0], scene.window_size[1])
 
         scene.P = Pscene
 

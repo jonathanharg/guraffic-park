@@ -1,6 +1,6 @@
-import pygame
-from OpenGL.GL import *
 import numpy as np
+import pygame
+from OpenGL import GL as gl
 
 
 class ImageWrapper:
@@ -15,11 +15,11 @@ class ImageWrapper:
     def height(self):
         return self.img.get_height()
 
-    def data(self, format=GL_RGB):
+    def data(self, format=gl.GL_RGB):
         # convert the python image object to a plain byte array for passsing to OpenGL
-        if format == GL_RGBA:
+        if format == gl.GL_RGBA:
             return pygame.image.tostring(self.img, "RGBA", 1)
-        elif format == GL_RGB:
+        elif format == gl.GL_RGB:
             return pygame.image.tostring(self.img, "RGB", 1)
 
 
@@ -32,11 +32,11 @@ class Texture:
         self,
         name,
         img=None,
-        wrap=GL_REPEAT,
-        sample=GL_NEAREST,
-        format=GL_RGBA,
-        type=GL_UNSIGNED_BYTE,
-        target=GL_TEXTURE_2D,
+        wrap=gl.GL_REPEAT,
+        sample=gl.GL_NEAREST,
+        format=gl.GL_RGBA,
+        type=gl.GL_UNSIGNED_BYTE,
+        target=gl.GL_TEXTURE_2D,
     ):
         self.name = name
         self.format = format
@@ -45,7 +45,7 @@ class Texture:
         self.sample = sample
         self.target = target
 
-        self.textureid = glGenTextures(1)
+        self.textureid = gl.glGenTextures(1)
 
         print(
             "* Loading texture {} at ID {}".format(
@@ -59,7 +59,7 @@ class Texture:
             img = ImageWrapper(name)
 
             # load the texture in the buffer
-            glTexImage2D(
+            gl.glTexImage2D(
                 self.target,
                 0,
                 format,
@@ -72,40 +72,40 @@ class Texture:
             )
         else:
             # if a data array is provided use this
-            glTexImage2D(
+            gl.glTexImage2D(
                 self.target, 0, format, img.shape[0], img.shape[1], 0, format, type, img
             )
 
         # set what happens for texture coordinates outside [0,1]
-        glTexParameteri(self.target, GL_TEXTURE_WRAP_S, wrap)
-        glTexParameteri(self.target, GL_TEXTURE_WRAP_T, wrap)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_S, wrap)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_T, wrap)
 
         # set how sampling from the texture is done.
-        glTexParameteri(self.target, GL_TEXTURE_MAG_FILTER, sample)
-        glTexParameteri(self.target, GL_TEXTURE_MIN_FILTER, sample)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_MAG_FILTER, sample)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_MIN_FILTER, sample)
 
         self.unbind()
 
     def set_shadow_comparison(self):
-        self.set_parameter(GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE)
+        self.set_parameter(gl.GL_TEXTURE_COMPARE_MODE, gl.GL_COMPARE_REF_TO_TEXTURE)
 
     def set_parameter(self, param, value):
         self.bind()
-        glTexParameteri(self.target, param, value)
+        gl.glTexParameteri(self.target, param, value)
         self.unbind()
 
-    def set_wrap_parameter(self, wrap=GL_REPEAT):
+    def set_wrap_parameter(self, wrap=gl.GL_REPEAT):
         self.wrap = wrap
         self.bind()
-        glTexParameteri(self.target, GL_TEXTURE_WRAP_S, wrap)
-        glTexParameteri(self.target, GL_TEXTURE_WRAP_T, wrap)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_S, wrap)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_T, wrap)
         self.unbind()
 
-    def set_sampling_parameter(self, sample=GL_NEAREST):
+    def set_sampling_parameter(self, sample=gl.GL_NEAREST):
         self.sample = sample
         self.bind()
-        glTexParameteri(self.target, GL_TEXTURE_MAG_FILTER, sample)
-        glTexParameteri(self.target, GL_TEXTURE_MIN_FILTER, sample)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_MAG_FILTER, sample)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_MIN_FILTER, sample)
         self.unbind()
 
     def set_data_from_image(self, data, width=None, height=None):
@@ -116,14 +116,14 @@ class Texture:
         self.bind()
 
         # load the texture in the buffer
-        glTexImage2D(
+        gl.glTexImage2D(
             self.target, 0, self.format, width, height, 0, self.format, self.type, data
         )
 
         self.unbind()
 
     def bind(self):
-        glBindTexture(self.target, self.textureid)
+        gl.glBindTexture(self.target, self.textureid)
 
     def unbind(self):
-        glBindTexture(self.target, 0)
+        gl.glBindTexture(self.target, 0)

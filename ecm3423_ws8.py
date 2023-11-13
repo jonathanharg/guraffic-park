@@ -1,16 +1,12 @@
 import pygame
+from OpenGL.GL import *
+
+from BaseModel import DrawModelFromMesh
+from blender import load_obj_file
+from lightSource import LightSource
 
 # import the scene class
 from scene import Scene
-
-from OpenGL.GL import *
-
-from lightSource import LightSource
-
-from blender import load_obj_file
-
-from BaseModel import DrawModelFromMesh
-
 from shaders import *
 
 
@@ -21,7 +17,17 @@ class ExeterScene(Scene):
         self.light = LightSource(self, position=[5.0, 3.0, 5.0])
 
         ldn = load_obj_file("models/london.obj")
-        self.add_models_list([DrawModelFromMesh(scene=self, M=translationMatrix([0,0,0]),mesh=mesh,shader=FlatShader(),) for mesh in ldn])
+        self.add_models_list(
+            [
+                DrawModelFromMesh(
+                    scene=self,
+                    M=translationMatrix([0, 0, 0]),
+                    mesh=mesh,
+                    shader=FlatShader(),
+                )
+                for mesh in ldn
+            ]
+        )
 
         meshes = load_obj_file("models/scene.obj")
         self.add_models_list(

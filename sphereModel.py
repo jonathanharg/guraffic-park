@@ -1,12 +1,7 @@
-from BaseModel import BaseModel
-from matutils import poseMatrix
-
-# imports all openGL functions
-from OpenGL.GL import *
 import numpy as np
-from mesh import Mesh
+
 from material import Material
-from texture import Texture
+from mesh import Mesh
 
 
 class Sphere(Mesh):
@@ -49,7 +44,6 @@ class Sphere(Mesh):
         k = 0
 
         for i in range(nhoriz - 1):
-
             # top
             indices[k, 0] = 0
             indices[k, 2] = i + 1

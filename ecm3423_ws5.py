@@ -1,13 +1,10 @@
 # import the scene class
-from scene import Scene
-
-from blender import load_obj_file, Mesh
+import sys
 
 from BaseModel import *
-
+from blender import Mesh, load_obj_file
 from models2D import *
-
-import sys
+from scene import Scene
 
 
 class DrawModelFromObjFile(BaseModel):
@@ -143,7 +140,6 @@ class SphereModel(BaseModel):
         # we do the top and bottom crowns of the sphere first: they are peculiar
         # because all faces in the top and bottom link to one of the poles.
         for i in range(nhoriz - 1):
-
             # top, all faces link to the north pole
             self.indices[k, 0] = 0
             self.indices[k, 1] = i + 1

@@ -1,4 +1,4 @@
-from OpenGL.GL import *
+from OpenGL import GL as gl
 
 
 class Framebuffer:
@@ -6,23 +6,23 @@ class Framebuffer:
     Basic class to handle rendering to texture using a framebuffer object.
     """
 
-    def __init__(self, attachment=GL_COLOR_ATTACHMENT0, texture=None):
+    def __init__(self, attachment=gl.GL_COLOR_ATTACHMENT0, texture=None):
         """
         Initialise the framebuffer
-        :param attachment: Which output of the rendering process to save (GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT, ...)
+        :param attachment: Which output of the rendering process to save (gl.GL_COLOR_ATTACHMENT0, gl.GL_DEPTH_ATTACHMENT, ...)
         :param texture: (optional) if provided, link the framebuffer to the texture
         """
         self.attachment = attachment
-        self.fbo = glGenFramebuffers(1)
+        self.fbo = gl.glGenFramebuffers(1)
 
         if texture is not None:
             self.prepare(texture)
 
     def bind(self):
-        glBindFramebuffer(GL_FRAMEBUFFER, self.fbo)
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.fbo)
 
     def unbind(self):
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
 
     def prepare(self, texture, target=None, level=0):
         """
@@ -36,11 +36,11 @@ class Framebuffer:
             target = texture.target
 
         self.bind()
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, self.attachment, target, texture.textureid, level
+        gl.glFramebufferTexture2D(
+            gl.GL_FRAMEBUFFER, self.attachment, target, texture.textureid, level
         )
-        if self.attachment == GL_DEPTH_ATTACHMENT:
-            glDrawBuffer(GL_NONE)
-            glReadBuffer(GL_NONE)
+        if self.attachment == gl.GL_DEPTH_ATTACHMENT:
+            gl.glDrawBuffer(gl.GL_NONE)
+            gl.glReadBuffer(gl.GL_NONE)
 
         self.unbind()

@@ -1,15 +1,13 @@
+import numpy as np
 import pygame
-
-# import the scene class
-from scene import Scene
-
-from lightSource import LightSource
-
-from blender import load_obj_file
+from OpenGL import GL as gl
 
 from BaseModel import DrawModelFromMesh
-
-from shaders import *
+from blender import load_obj_file
+from lightSource import LightSource
+from matutils import scaleMatrix, translationMatrix
+from scene import Scene
+from shaders import FlatShader
 
 
 class MainScene(Scene):

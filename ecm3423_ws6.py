@@ -1,11 +1,8 @@
 # import the scene class
-from scene import Scene
-
-from blender import load_obj_file, Mesh
-
 from BaseModel import *
-
+from blender import Mesh, load_obj_file
 from models2D import *
+from scene import Scene
 
 
 class DrawModelFromMesh(BaseModel):

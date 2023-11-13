@@ -1,9 +1,11 @@
-from BaseModel import BaseModel, DrawModelFromMesh
-from mesh import *
-from matutils import *
-from texture import *
-from shaders import *
+import numpy as np
+from OpenGL import GL as gl
+
+from BaseModel import DrawModelFromMesh
 from cubeMap import CubeMap
+from matutils import poseMatrix
+from mesh import CubeMesh
+from shaders import BaseShaderProgram
 
 
 class SkyBoxShader(BaseShaderProgram):
@@ -34,6 +36,6 @@ class SkyBox(DrawModelFromMesh):
         )
 
     def draw(self):
-        glDepthMask(GL_FALSE)
+        gl.glDepthMask(gl.GL_FALSE)
         DrawModelFromMesh.draw(self)
-        glDepthMask(GL_TRUE)
+        gl.glDepthMask(gl.GL_TRUE)
