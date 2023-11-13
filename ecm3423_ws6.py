@@ -1,7 +1,10 @@
 # import the scene class
-from BaseModel import *
-from blender import Mesh, load_obj_file
-from models2D import *
+import numpy as np
+from OpenGL import Gl as gl
+
+from BaseModel import BaseModel
+from blender import load_obj_file
+from matutils import poseMatrix
 from scene import Scene
 
 
@@ -28,10 +31,10 @@ class DrawModelFromMesh(BaseModel):
         self.indices = mesh.faces
 
         if self.indices.shape[1] == 3:
-            self.primitive = GL_TRIANGLES
+            self.primitive = gl.GL_TRIANGLES
 
         elif self.indices.shape[1] == 4:
-            self.primitive = GL_QUADS
+            self.primitive = gl.GL_QUADS
 
         else:
             print("(E) Error: Mesh should have 3 or 4 vertices per face!")
@@ -47,10 +50,10 @@ class DrawModelFromMesh(BaseModel):
 
         # and we check which primitives we need to use for drawing
         if self.indices.shape[1] == 3:
-            self.primitive = GL_TRIANGLES
+            self.primitive = gl.GL_TRIANGLES
 
         elif self.indices.shape[1] == 4:
-            self.primitive = GL_QUADS
+            self.primitive = gl.GL_QUADS
 
         else:
             print(

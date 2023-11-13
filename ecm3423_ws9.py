@@ -3,16 +3,18 @@ from OpenGL import GL as gl
 
 from BaseModel import DrawModelFromMesh
 from blender import load_obj_file
-
-# import the scene class
 from cubeMap import FlattenCubeMap
-from environmentMapping import *
+from environmentMapping import EnvironmentMappingTexture, EnvironmentShader
 from lightSource import LightSource
+from material import Material
+from matutils import poseMatrix, scaleMatrix, translationMatrix
 from scene import Scene
-from shaders import *
-from ShadowMapping import *
-from skyBox import *
+from shaders import FlatShader
+from ShadowMapping import ShadowMap, ShadowMappingShader
+from showTexture import ShowTexture
+from skyBox import SkyBox
 from sphereModel import Sphere
+from texture import Texture
 
 
 class ExeterScene(Scene):
@@ -107,7 +109,7 @@ class ExeterScene(Scene):
 
     def draw_shadow_map(self):
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         # also all models from the table
         for model in self.table:
@@ -138,7 +140,7 @@ class ExeterScene(Scene):
         """
 
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         # when using a framebuffer, we do not update the camera to allow for arbitrary viewpoint.
         if not framebuffer:
@@ -242,25 +244,25 @@ class ExeterScene(Scene):
 
         elif event.key == pygame.K_7:
             print("--> no face culling")
-            glDisable(GL_CULL_FACE)
+            gl.glDisable(gl.GL_CULL_FACE)
 
         elif event.key == pygame.K_8:
             print("--> glCullFace(GL_FRONT)")
-            glEnable(GL_CULL_FACE)
-            glCullFace(GL_FRONT)
+            gl.glEnable(gl.GL_CULL_FACE)
+            gl.glCullFace(gl.GL_FRONT)
 
         elif event.key == pygame.K_9:
             print("--> glCullFace(GL_BACK)")
-            glEnable(GL_CULL_FACE)
-            glCullFace(GL_BACK)
+            gl.glEnable(gl.GL_CULL_FACE)
+            gl.glCullFace(gl.GL_BACK)
 
         elif event.key == pygame.K_BACKQUOTE:
-            if glIsEnabled(GL_DEPTH_TEST):
+            if gl.glIsEnabled(gl.GL_DEPTH_TEST):
                 print("--> disable GL_DEPTH_TEST")
-                glDisable(GL_DEPTH_TEST)
+                gl.glDisable(gl.GL_DEPTH_TEST)
             else:
                 print("--> enable GL_DEPTH_TEST")
-                glEnable(GL_DEPTH_TEST)
+                gl.glEnable(gl.GL_DEPTH_TEST)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
-# import the scene class
-import sys
+import numpy as np
+from OpenGL import GL as gl
 
-from BaseModel import *
+from BaseModel import BaseModel
 from blender import Mesh, load_obj_file
-from models2D import *
+from matutils import poseMatrix
 from scene import Scene
 
 
@@ -32,10 +32,10 @@ class DrawModelFromObjFile(BaseModel):
         self.normals = mesh.normals
 
         if self.indices.shape[1] == 3:
-            self.primitive = GL_TRIANGLES
+            self.primitive = gl.GL_TRIANGLES
 
         elif self.indices.shape[1] == 4:
-            self.primitive = GL_QUADS
+            self.primitive = gl.GL_QUADS
 
         else:
             print(
@@ -63,7 +63,7 @@ class ColorTestModel(BaseModel):
     """
 
     def __init__(self, scene, M, color=[1.0, 1.0, 1.0]):
-        BaseModel.__init__(self, scene, M=M, color=color, primitive=GL_QUADS)
+        BaseModel.__init__(self, scene, M=M, color=color, primitive=gl.GL_QUADS)
         # we draw a simple square
         self.vertices = np.array(
             [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]], "f"
@@ -90,7 +90,7 @@ class SphereModel(BaseModel):
     """
 
     def __init__(self, scene, M=poseMatrix(), nvert=10, nhoriz=20):
-        BaseModel.__init__(self, scene, M=M, primitive=GL_TRIANGLES)
+        BaseModel.__init__(self, scene, M=M, primitive=gl.GL_TRIANGLES)
 
         # we calculate the number of vertices given the number
         # of horizontal and vertical slices

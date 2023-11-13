@@ -1,13 +1,12 @@
 import pygame
-from OpenGL.GL import *
+from OpenGL import GL as gl
 
 from BaseModel import DrawModelFromMesh
 from blender import load_obj_file
 from lightSource import LightSource
-
-# import the scene class
+from matutils import scaleMatrix, translationMatrix
 from scene import Scene
-from shaders import *
+from shaders import FlatShader
 
 
 class ExeterScene(Scene):
@@ -94,7 +93,7 @@ class ExeterScene(Scene):
         """
 
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         self.camera.update()
 
