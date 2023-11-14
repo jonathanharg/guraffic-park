@@ -1,6 +1,6 @@
 # import the scene class
 import numpy as np
-from OpenGL import Gl as gl
+from OpenGL import GL as gl
 
 from BaseModel import BaseModel
 from blender import load_obj_file
