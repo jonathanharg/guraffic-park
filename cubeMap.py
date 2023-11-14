@@ -201,7 +201,6 @@ class CubeMap(Texture):
             self.files = files
 
         for key, value in self.files.items():
-            print("Loading texture: texture/{}/{}".format(name, value))
             img = ImageWrapper("{}/{}".format(name, value))
 
             # convert the python image object to a plain byte array for passsing to OpenGL

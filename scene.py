@@ -27,7 +27,7 @@ class Scene:
         # self.P = frustumMatrix(left, right, top, bottom, near, far)
         self.perspective_matrix = frustumMatrix(left, right, top, bottom, self.near_clipping, self.far_clipping)
 
-    def __init__(self, width=960, height=720, shaders=None):
+    def __init__(self, width=960, height=720):
         """
         Initialises the scene
         """
@@ -37,7 +37,7 @@ class Scene:
         self.fov = 90.0
         self.perspective_matrix = None
         self.near_clipping = 0.5
-        self.far_clipping = 100.0
+        self.far_clipping = 1000.0
 
         pygame.init()
 
@@ -62,8 +62,6 @@ class Scene:
         # set the default shader program (can be set on a per-mesh basis)
         self.shaders = "flat"
 
-        # cycle through models
-        self.show_model = -1
 
         # initialises the camera object
         self.camera = Camera()

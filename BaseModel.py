@@ -25,9 +25,6 @@ class BaseModel:
         """
         Initialises the model data
         """
-
-        print("+ Initializing {}".format(self.__class__.__name__))
-
         # if this flag is set to False, the model is not rendered
         self.visible = visible
 
@@ -72,8 +69,6 @@ class BaseModel:
         self.index_buffer = None
 
     def initialise_vbo(self, name, data):
-        print("Initialising VBO for attribute {}".format(name))
-
         if data is None:
             print(
                 "(W) Warning in {}.bind_attribute(): Data array for attribute {} is None!".format(

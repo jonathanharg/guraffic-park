@@ -29,19 +29,19 @@ class EnvironmentShader(BaseShaderProgram):
 
         gl.glUseProgram(self.program)
 
-        P = model.scene.P  # get projection matrix from the scene
-        V = model.scene.camera.V  # get view matrix from the camera
+        projection_matrix = model.scene.projection_matrix  # get projection matrix from the scene
+        view_matrix = model.scene.camera.view_matrix  # get view matrix from the camera
 
         # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(np.matmul(P, np.matmul(V, M)))
+        self.uniforms["PVM"].bind(np.matmul(projection_matrix, np.matmul(view_matrix, M)))
 
         # set the PVM matrix uniform
-        self.uniforms["VM"].bind(np.matmul(V, M))
+        self.uniforms["VM"].bind(np.matmul(view_matrix, M))
 
         # set the PVM matrix uniform
-        self.uniforms["VMiT"].bind(np.linalg.inv(np.matmul(V, M))[:3, :3].transpose())
+        self.uniforms["VMiT"].bind(np.linalg.inv(np.matmul(view_matrix, M))[:3, :3].transpose())
 
-        self.uniforms["VT"].bind(V.transpose()[:3, :3])
+        self.uniforms["VT"].bind(view_matrix.transpose()[:3, :3])
 
 
 class EnvironmentMappingTexture(CubeMap):

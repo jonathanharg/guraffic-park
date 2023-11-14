@@ -82,7 +82,7 @@ def load_material_library(file_name):
     library = MaterialLibrary()
     material = None
 
-    print("-- Loading material library {}".format(file_name))
+    # print("-- Loading material library {}".format(file_name))
 
     mtlfile = open(file_name)
     for line in mtlfile:
@@ -93,7 +93,7 @@ def load_material_library(file_name):
                     library.add_material(material)
 
                 material = Material(fields[1])
-                print("Found material definition: {}".format(material.name))
+                # print("Found material definition: {}".format(material.name))
             elif fields[0] == "Ka":
                 material.Ka = np.array(fields[1:], "f")
             elif fields[0] == "Kd":
@@ -113,7 +113,7 @@ def load_material_library(file_name):
 
     library.add_material(material)
 
-    print("- Done, loaded {} materials".format(len(library.materials)))
+    # print("- Done, loaded {} materials".format(len(library.materials)))
 
     return library
 
@@ -123,7 +123,7 @@ def load_obj_file(file_name):
     Function for loading a Blender3D object file. minimalistic, and partial,
     but sufficient for this course. You do not really need to worry about it.
     """
-    print("Loading mesh(es) from Blender file: {}".format(file_name))
+    # print("Loading mesh(es) from Blender file: {}".format(file_name))
 
     vlist = []  # list of vertices
     tlist = []  # list of texture vectors
@@ -188,9 +188,9 @@ def load_obj_file(file_name):
             elif data[0] == "material":
                 material = library.names[data[1]]
                 mesh_id += 1
-                print("[l.{}] Loading mesh with material: {}".format(line_nb, data[1]))
+                # print("[l.{}] Loading mesh with material: {}".format(line_nb, data[1]))
 
-    print("File read. Found {} vertices and {} faces.".format(len(vlist), len(flist)))
+    # print("File read. Found {} vertices and {} faces.".format(len(vlist), len(flist)))
 
     return create_meshes_from_blender(
         vlist, flist, mlist, tlist, library, mesh_list, lnlist
@@ -212,17 +212,17 @@ def create_meshes_from_blender(vlist, flist, mlist, tlist, library, mesh_list, l
 
     for f in range(len(flist)):
         if mesh_id != mesh_list[f]:  # new mesh is denoted by change in material
-            print(
-                "Creating new mesh %i, faces %i-%i, line %i, with material %i: %s"
-                % (
-                    mesh_id,
-                    fstart,
-                    f,
-                    lnlist[fstart],
-                    mlist[fstart],
-                    library.materials[mlist[fstart]].name,
-                )
-            )
+            # print(
+            #     "Creating new mesh %i, faces %i-%i, line %i, with material %i: %s"
+            #     % (
+            #         mesh_id,
+            #         fstart,
+            #         f,
+            #         lnlist[fstart],
+            #         mlist[fstart],
+            #         library.materials[mlist[fstart]].name,
+            #     )
+            # )
             try:
                 mesh = create_mesh(varray, tarray, flist, fstart, f, library, material)
                 meshes.append(mesh)
@@ -246,7 +246,7 @@ def create_meshes_from_blender(vlist, flist, mlist, tlist, library, mesh_list, l
         print("(W) could not load mesh!")
         raise
 
-    print("--- Created {} mesh(es) from Blender file.".format(len(meshes)))
+    # print("--- Created {} mesh(es) from Blender file.".format(len(meshes)))
     return meshes
 
 

@@ -13,13 +13,13 @@ class Framebuffer:
         :param texture: (optional) if provided, link the framebuffer to the texture
         """
         self.attachment = attachment
-        self.fbo = gl.glGenFramebuffers(1)
+        self.frame_buffer_object = gl.glGenFramebuffers(1)
 
         if texture is not None:
             self.prepare(texture)
 
     def bind(self):
-        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.fbo)
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.frame_buffer_object)
 
     def unbind(self):
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)

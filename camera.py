@@ -11,7 +11,7 @@ class Camera:
     """
 
     def __init__(self):
-        self.V = np.identity(4)
+        self.view_matrix = np.identity(4)
         self.phi = 0.0  # azimuth angle
         self.psi = 0.0  # zenith angle
         self.distance = 5.0  # distance of the camera to the centre point
@@ -27,14 +27,14 @@ class Camera:
         """
         # TODO WS1
         # calculate the translation matrix for the view center (the point we look at)
-        T0 = translationMatrix(self.center)
+        translation_0 = translationMatrix(self.center)
 
         # calculate the rotation matrix from the angles phi (azimuth) and psi (zenith) angles.
-        R = np.matmul(rotationMatrixX(self.psi), rotationMatrixY(self.phi))
+        rotation_matrix = np.matmul(rotationMatrixX(self.psi), rotationMatrixY(self.phi))
 
         # calculate translation for the camera distance to the center point
-        T = translationMatrix([0.0, 0.0, -self.distance])
+        translation_matrix = translationMatrix([0.0, 0.0, -self.distance])
 
         # finally we calculate the view matrix by combining the three matrices
         # The order matters!
-        self.V = np.matmul(np.matmul(T, R), T0)
+        self.view_matrix = np.matmul(np.matmul(translation_matrix, rotation_matrix), translation_0)

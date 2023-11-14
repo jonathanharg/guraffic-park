@@ -206,7 +206,7 @@ class BaseShaderProgram:
         # bind all shader attributes to the correct locations in the VAO
         for name, location in attributes.items():
             gl.glBindAttribLocation(self.program, location, name)
-            print("Binding attribute {} to location {}".format(name, location))
+            # print("Binding attribute {} to location {}".format(name, location))
 
     def bind(self, model, M):
         """
@@ -268,7 +268,7 @@ class PhongShader(BaseShaderProgram):
         """
 
         P = model.scene.perspective_matrix
-        V = model.scene.camera.V
+        V = model.scene.camera.view_matrix
 
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
