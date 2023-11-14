@@ -15,8 +15,8 @@ class SkyBoxShader(BaseShaderProgram):
 
     def bind(self, model, M):
         BaseShaderProgram.bind(self, model, M)
-        P = model.scene.P  # get projection matrix from the scene
-        V = model.scene.camera.V  # get view matrix from the camera
+        P = model.scene.perspective_matrix  # get projection matrix from the scene
+        V = model.scene.camera.view_matrix  # get view matrix from the camera
         Vr = np.identity(4)
         Vr[:3, :3] = V[:3, :3]
 

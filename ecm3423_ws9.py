@@ -147,10 +147,6 @@ class ExeterScene(Scene):
         Draw all models in the scene
         :return: None
         """
-
-        # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-
         # when using a framebuffer, we do not update the camera to allow for arbitrary viewpoint.
         if not framebuffer:
             self.camera.update()
@@ -171,7 +167,7 @@ class ExeterScene(Scene):
 
             self.environment.update(self)
 
-            self.bunny.draw()
+            # self.bunny.draw()
             self.sphere.draw()
             gl.glDisable(gl.GL_BLEND)
 
@@ -196,13 +192,6 @@ class ExeterScene(Scene):
             model.draw()
 
         self.show_light.draw()
-
-        # once we are done drawing, we display the scene
-        # Note that here we use double buffering to avoid artefacts:
-        # we draw on a different buffer than the one we display,
-        # and flip the two buffers once we are done drawing.
-        if not framebuffer:
-            pygame.display.flip()
 
     def keyboard(self, event):
         """

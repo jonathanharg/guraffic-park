@@ -87,7 +87,7 @@ class Scene:
         self.camera = Camera()
 
         # initialise the light source
-        self.light = LightSource(self, position=[5.0, 5.0, 5.0])
+        # self.light = LightSource(self, position=[5.0, 5.0, 5.0])
 
         # rendering mode for the shaders
         self.mode = 1  # initialise to full interpolated shading

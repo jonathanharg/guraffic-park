@@ -108,9 +108,9 @@ class EnvironmentMappingTexture(CubeMap):
 
         self.bind()
 
-        Pscene = scene.P
+        Pscene = scene.perspective_matrix
 
-        scene.P = frustumMatrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
+        scene.perspective_matrix = frustumMatrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
 
         gl.glViewport(0, 0, self.width, self.height)
 
