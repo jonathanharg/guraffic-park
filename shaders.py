@@ -267,7 +267,7 @@ class PhongShader(BaseShaderProgram):
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         """
 
-        P = model.scene.P
+        P = model.scene.perspective_matrix
         V = model.scene.camera.V
 
         # tell OpenGL to use this shader program for rendering

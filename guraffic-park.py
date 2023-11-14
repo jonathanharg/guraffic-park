@@ -82,10 +82,6 @@ class MainScene(Scene):
         Draw all models in the scene
         :return: None
         """
-
-        # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-
         self.camera.update()
 
         # then we loop over all models in the list and draw them
@@ -102,12 +98,6 @@ class MainScene(Scene):
 
         # for the bunny (it consists of a single mesh).
         self.bunny.draw()
-
-        # once we are done drawing, we display the scene
-        # Note that here we use double buffering to avoid artefacts:
-        # we draw on a different buffer than the one we display,
-        # and flip the two buffers once we are done drawing.
-        pygame.display.flip()
 
 
 if __name__ == "__main__":

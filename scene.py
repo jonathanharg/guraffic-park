@@ -1,5 +1,6 @@
 import pygame
 from OpenGL import GL as gl
+import numpy as np
 
 from camera import Camera
 from lightSource import LightSource
@@ -11,19 +12,36 @@ class Scene:
     This is the main class for drawing an OpenGL scene using the PyGame library
     """
 
-    def __init__(self, width=800, height=600, shaders=None):
+    def update_viewport(self):
+        pygame.display.set_mode(self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE)
+        gl.glViewport(0, 0, self.window_size[0], self.window_size[1])
+
+        aspect_ratio =  self.window_size[1] / self.window_size[0] 
+
+        right = self.near_clipping * np.tan(self.fov * np.pi / 360.0)
+        left = -right
+        top = -right * aspect_ratio
+        bottom = right * aspect_ratio
+
+        # to start with, we use an orthographic projection; change this.
+        # self.P = frustumMatrix(left, right, top, bottom, near, far)
+        self.perspective_matrix = frustumMatrix(left, right, top, bottom, self.near_clipping, self.far_clipping)
+
+    def __init__(self, width=960, height=720, shaders=None):
         """
         Initialises the scene
         """
 
         self.window_size = (width, height)
         self.wireframe = False
+        self.fov = 90.0
+        self.perspective_matrix = None
+        self.near_clipping = 0.5
+        self.far_clipping = 100.0
 
         pygame.init()
-        pygame.display.set_mode(self.window_size, pygame.OPENGL | pygame.DOUBLEBUF, 24)
 
-        # Here we start initialising the window from the OpenGL side
-        gl.glViewport(0, 0, self.window_size[0], self.window_size[1])
+        self.update_viewport()
 
         # this selects the background color
         gl.glClearColor(0.886, 0.91, 0.941, 1.0)
@@ -44,19 +62,8 @@ class Scene:
         # set the default shader program (can be set on a per-mesh basis)
         self.shaders = "flat"
 
-        # initialise the projective transform
-        near = 1.0
-        far = 100.0
-        left = -1.0
-        right = 1.0
-        top = -1.0
-        bottom = 1.0
-
         # cycle through models
         self.show_model = -1
-
-        # to start with, we use an orthographic projection; change this.
-        self.P = frustumMatrix(left, right, top, bottom, near, far)
 
         # initialises the camera object
         self.camera = Camera()
@@ -143,6 +150,10 @@ class Scene:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            
+            elif event.type == pygame.VIDEORESIZE:
+                self.window_size = (event.w, event.h)
+                self.update_viewport()
 
             # keyboard events
             elif event.type == pygame.KEYDOWN:
@@ -207,5 +218,9 @@ class Scene:
         while self.running:
             self.pygameEvents()
 
+            # first we need to clear the scene, we also clear the depth buffer to handle occlusions
+            gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+
             # otherwise, continue drawing
             self.draw()
+            pygame.display.flip()
