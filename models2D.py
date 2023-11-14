@@ -29,7 +29,7 @@ class ComplexModel(BaseModel):
     def draw(self, Mp):
         # draw all component primitives
         for component in self.components:
-            component.draw(np.matmul(Mp, self.M))
+            component.draw(np.matmul(Mp, self.position_matrix))
 
 
 class SquareModel(BaseModel):

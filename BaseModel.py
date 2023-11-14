@@ -27,16 +27,12 @@ class BaseModel:
         """
         # if this flag is set to False, the model is not rendered
         self.visible = visible
-
         # store the scene reference
         self.scene = scene
-
         # store the type of primitive to draw
         self.primitive = primitive
-
-        # store the object's color (deprecated now that we have per-vertex colors)
-        self.color = color
-
+        # # store the object's color (deprecated now that we have per-vertex colors)
+        # self.color = color
         # store the shader program for rendering this model
         self.shader = None
 
@@ -54,21 +50,21 @@ class BaseModel:
         # self.textures = []
 
         # dict of VBOs
-        self.vbos = {}
+        self.vertex_buffer_objects = {}
 
         # dict of attributes
         self.attributes = {}
 
         # store the position of the model in the scene, ...
-        self.M = M
+        self.position_matrix = M
 
         # We use a Vertex Array Object to pack all buffers for rendering in the GPU (see lecture on OpenGL)
-        self.vao = gl.glGenVertexArrays(1)
+        self.vertex_array_object = gl.glGenVertexArrays(1)
 
         # this buffer will be used to store indices, if using shared vertex representation
         self.index_buffer = None
 
-    def initialise_vbo(self, name, data):
+    def initialise_vertex_buffer_object(self, name, data):
         if data is None:
             print(
                 "(W) Warning in {}.bind_attribute(): Data array for attribute {} is None!".format(
@@ -79,12 +75,12 @@ class BaseModel:
 
         # bind the location of the attribute in the GLSL program to the next index
         # the name of the location must correspond to a 'in' variable in the GLSL vertex shader code
-        self.attributes[name] = len(self.vbos)
+        self.attributes[name] = len(self.vertex_buffer_objects)
 
         # create a buffer object...
-        self.vbos[name] = gl.glGenBuffers(1)
+        self.vertex_buffer_objects[name] = gl.glGenBuffers(1)
         # and bind it
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbos[name])
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertex_buffer_objects[name])
 
         # enable the attribute
         gl.glEnableVertexAttribArray(self.attributes[name])
@@ -124,7 +120,7 @@ class BaseModel:
         """
 
         # bind the VAO to retrieve all buffers and rendering context
-        gl.glBindVertexArray(self.vao)
+        gl.glBindVertexArray(self.vertex_array_object)
 
         if self.mesh.vertices is None:
             print(
@@ -134,12 +130,12 @@ class BaseModel:
             )
 
         # initialise vertex position VBO and link to shader program attribute
-        self.initialise_vbo("position", self.mesh.vertices)
-        self.initialise_vbo("normal", self.mesh.normals)
-        self.initialise_vbo("color", self.mesh.colors)
-        self.initialise_vbo("texCoord", self.mesh.textureCoords)
-        self.initialise_vbo("tangent", self.mesh.tangents)
-        self.initialise_vbo("binormal", self.mesh.binormals)
+        self.initialise_vertex_buffer_object("position", self.mesh.vertices)
+        self.initialise_vertex_buffer_object("normal", self.mesh.normals)
+        self.initialise_vertex_buffer_object("color", self.mesh.colors)
+        self.initialise_vertex_buffer_object("texCoord", self.mesh.textureCoords)
+        self.initialise_vertex_buffer_object("tangent", self.mesh.tangents)
+        self.initialise_vertex_buffer_object("binormal", self.mesh.binormals)
 
         # if indices are provided, put them in a buffer too
         if self.mesh.faces is not None:
@@ -169,11 +165,12 @@ class BaseModel:
                 )
 
             # bind the Vertex Array Object so that all buffers are bound correctly and following operations affect them
-            gl.glBindVertexArray(self.vao)
+            gl.glBindVertexArray(self.vertex_array_object)
 
             # setup the shader program and provide it the Model, View and Projection matrices to use
             # for rendering this model
-            self.shader.bind(model=self, M=np.matmul(Mp, self.M))
+            # TODO: FIXME: NOTE: THIS LINE BREAKS IMGUI
+            self.shader.bind(model=self, M=np.matmul(Mp, self.position_matrix))
 
             # print('---> object {} rendered using shader {}'.format(self.name, self.shader.name))
 
@@ -198,14 +195,17 @@ class BaseModel:
             # unbind the shader to avoid side effects
             gl.glBindVertexArray(0)
 
+            # TODO: FIXME: NOTE: THIS HAS BEEN ADDED AS A PREMTIVE FIX FOR IMGUI
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+
     def vbo__del__(self):
         """
         Release all VBO objects when finished.
         """
-        for vbo in self.vbos.items():
+        for vbo in self.vertex_buffer_objects.items():
             gl.glDeleteBuffers(1, vbo)
 
-        gl.glDeleteVertexArrays(1, self.vao.tolist())
+        gl.glDeleteVertexArrays(1, self.vertex_array_object.tolist())
 
 
 class DrawModelFromMesh(BaseModel):

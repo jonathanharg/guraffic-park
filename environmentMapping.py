@@ -1,10 +1,16 @@
 import numpy as np
 from OpenGL import GL as gl
-from BaseModel import DrawModelFromMesh
 
+from BaseModel import DrawModelFromMesh
 from cubeMap import CubeMap
 from framebuffer import Framebuffer
-from matutils import frustumMatrix, poseMatrix, rotationMatrixX, rotationMatrixY, translationMatrix
+from matutils import (
+    frustumMatrix,
+    poseMatrix,
+    rotationMatrixX,
+    rotationMatrixY,
+    translationMatrix,
+)
 from mesh import CubeMesh
 from shaders import BaseShaderProgram
 
@@ -29,17 +35,23 @@ class EnvironmentShader(BaseShaderProgram):
 
         gl.glUseProgram(self.program)
 
-        projection_matrix = model.scene.projection_matrix  # get projection matrix from the scene
+        projection_matrix = (
+            model.scene.projection_matrix
+        )  # get projection matrix from the scene
         view_matrix = model.scene.camera.view_matrix  # get view matrix from the camera
 
         # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(np.matmul(projection_matrix, np.matmul(view_matrix, M)))
+        self.uniforms["PVM"].bind(
+            np.matmul(projection_matrix, np.matmul(view_matrix, M))
+        )
 
         # set the PVM matrix uniform
         self.uniforms["VM"].bind(np.matmul(view_matrix, M))
 
         # set the PVM matrix uniform
-        self.uniforms["VMiT"].bind(np.linalg.inv(np.matmul(view_matrix, M))[:3, :3].transpose())
+        self.uniforms["VMiT"].bind(
+            np.linalg.inv(np.matmul(view_matrix, M))[:3, :3].transpose()
+        )
 
         self.uniforms["VT"].bind(view_matrix.transpose()[:3, :3])
 
@@ -125,4 +137,11 @@ class EnvironmentBox(DrawModelFromMesh):
         self.done = False
         self.map = EnvironmentMappingTexture(width, height)
 
-        DrawModelFromMesh.__init__(self, scene=scene, M=poseMatrix(), mesh=CubeMesh(shader.map), shader=shader, visible=False)
+        DrawModelFromMesh.__init__(
+            self,
+            scene=scene,
+            M=poseMatrix(),
+            mesh=CubeMesh(shader.map),
+            shader=shader,
+            visible=False,
+        )

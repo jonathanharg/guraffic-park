@@ -1,6 +1,8 @@
-import pygame
-from OpenGL import GL as gl
+import imgui
 import numpy as np
+import pygame
+from imgui.integrations.pygame import PygameRenderer
+from OpenGL import GL as gl
 
 from camera import Camera
 from lightSource import LightSource
@@ -13,10 +15,12 @@ class Scene:
     """
 
     def update_viewport(self):
-        pygame.display.set_mode(self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE)
+        pygame.display.set_mode(
+            self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
+        )
         gl.glViewport(0, 0, self.window_size[0], self.window_size[1])
 
-        aspect_ratio =  self.window_size[1] / self.window_size[0] 
+        aspect_ratio = self.window_size[1] / self.window_size[0]
 
         right = self.near_clipping * np.tan(self.fov * np.pi / 360.0)
         left = -right
@@ -25,7 +29,9 @@ class Scene:
 
         # to start with, we use an orthographic projection; change this.
         # self.P = frustumMatrix(left, right, top, bottom, near, far)
-        self.perspective_matrix = frustumMatrix(left, right, top, bottom, self.near_clipping, self.far_clipping)
+        self.perspective_matrix = frustumMatrix(
+            left, right, top, bottom, self.near_clipping, self.far_clipping
+        )
 
     def __init__(self, width=960, height=720):
         """
@@ -38,8 +44,23 @@ class Scene:
         self.perspective_matrix = None
         self.near_clipping = 0.5
         self.far_clipping = 1000.0
+        self.x_sensitivity = 3
+        self.y_sensitivity = 3
+        self.x_pan_amount = 10
+        self.y_pan_amount = 10
 
         pygame.init()
+        pygame.display.set_mode(
+            self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
+        )
+
+        imgui.create_context()
+        self.imgui_impl = PygameRenderer()
+        self.show_custom_window = False
+
+        io = imgui.get_io()
+        io.fonts.add_font_default()
+        io.display_size = self.window_size
 
         self.update_viewport()
 
@@ -61,7 +82,6 @@ class Scene:
 
         # set the default shader program (can be set on a per-mesh basis)
         self.shaders = "flat"
-
 
         # initialises the camera object
         self.camera = Camera()
@@ -148,10 +168,16 @@ class Scene:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            
+
             elif event.type == pygame.VIDEORESIZE:
                 self.window_size = (event.w, event.h)
                 self.update_viewport()
+
+            elif event.type == pygame.VIDEORESIZE:
+                pygame.display.set_mode(
+                    (event.w, event.h),
+                    pygame.DOUBLEBUF | pygame.OPENGL | pygame.RESIZABLE,
+                )
 
             # keyboard events
             elif event.type == pygame.KEYDOWN:
@@ -178,33 +204,34 @@ class Scene:
                         self.camera.distance += 1
 
             elif event.type == pygame.MOUSEMOTION:
-                if pygame.mouse.get_pressed()[0]:
+                if pygame.mouse.get_pressed()[2]:
                     if self.mouse_mvt is not None:
                         self.mouse_mvt = pygame.mouse.get_rel()
                         # TODO: WS2
-                        self.camera.center[0] -= (
-                            float(self.mouse_mvt[0]) / self.window_size[0]
+                        self.camera.center[0] += (
+                            float(self.mouse_mvt[0]) / self.window_size[0] * self.x_pan_amount
                         )
                         self.camera.center[1] -= (
-                            float(self.mouse_mvt[1]) / self.window_size[1]
+                            float(self.mouse_mvt[1]) / self.window_size[1] * self.y_pan_amount
                         )
                     else:
                         self.mouse_mvt = pygame.mouse.get_rel()
 
-                elif pygame.mouse.get_pressed()[2]:
+                elif pygame.mouse.get_pressed()[0]:
                     if self.mouse_mvt is not None:
                         self.mouse_mvt = pygame.mouse.get_rel()
                         # TODO: WS2
-                        self.camera.phi -= (
-                            float(self.mouse_mvt[0]) / self.window_size[0]
+                        self.camera.phi += (
+                            (float(self.mouse_mvt[0]) / self.window_size[0]) * self.x_sensitivity
                         )
                         self.camera.psi -= (
-                            float(self.mouse_mvt[1]) / self.window_size[1]
+                            (float(self.mouse_mvt[1]) / self.window_size[1]) * self.y_sensitivity
                         )
                     else:
                         self.mouse_mvt = pygame.mouse.get_rel()
                 else:
                     self.mouse_mvt = None
+            self.imgui_impl.process_event(event)
 
     def run(self):
         """
@@ -215,10 +242,14 @@ class Scene:
         self.running = True
         while self.running:
             self.pygameEvents()
+            self.imgui_impl.process_inputs()
 
-            # first we need to clear the scene, we also clear the depth buffer to handle occlusions
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-            # otherwise, continue drawing
+            imgui.new_frame()
             self.draw()
+
+            imgui.render()
+            self.imgui_impl.render(imgui.get_draw_data())
+
             pygame.display.flip()

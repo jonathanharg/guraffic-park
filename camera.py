@@ -30,11 +30,15 @@ class Camera:
         translation_0 = translationMatrix(self.center)
 
         # calculate the rotation matrix from the angles phi (azimuth) and psi (zenith) angles.
-        rotation_matrix = np.matmul(rotationMatrixX(self.psi), rotationMatrixY(self.phi))
+        rotation_matrix = np.matmul(
+            rotationMatrixX(self.psi), rotationMatrixY(self.phi)
+        )
 
         # calculate translation for the camera distance to the center point
         translation_matrix = translationMatrix([0.0, 0.0, -self.distance])
 
         # finally we calculate the view matrix by combining the three matrices
         # The order matters!
-        self.view_matrix = np.matmul(np.matmul(translation_matrix, rotation_matrix), translation_0)
+        self.view_matrix = np.matmul(
+            np.matmul(translation_matrix, rotation_matrix), translation_0
+        )

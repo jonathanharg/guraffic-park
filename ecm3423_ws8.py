@@ -1,6 +1,6 @@
+import numpy as np
 import pygame
 from OpenGL import GL as gl
-import numpy as np
 
 from BaseModel import DrawModelFromMesh
 from blender import load_obj_file

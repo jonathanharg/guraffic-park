@@ -1,11 +1,15 @@
+import numpy as np
 import pygame
 from OpenGL import GL as gl
-import numpy as np
 
 from BaseModel import DrawModelFromMesh
 from blender import load_obj_file
 from cubeMap import CubeMap, FlattenCubeMap
-from environmentMapping import EnvironmentBox, EnvironmentMappingTexture, EnvironmentShader
+from environmentMapping import (
+    EnvironmentBox,
+    EnvironmentMappingTexture,
+    EnvironmentShader,
+)
 from lightSource import LightSource
 from material import Material
 from matutils import poseMatrix, scaleMatrix, translationMatrix
@@ -88,7 +92,9 @@ class ExeterScene(Scene):
             mesh=Sphere(),
             shader=EnvironmentShader(map=self.environment),
         )
-        self.sphere = DrawModelFromMesh(scene=self, M=poseMatrix(), mesh=Sphere(), shader=FlatShader())
+        self.sphere = DrawModelFromMesh(
+            scene=self, M=poseMatrix(), mesh=Sphere(), shader=FlatShader()
+        )
 
         bunny = load_obj_file("models/bunny_world.obj")
         self.bunny = DrawModelFromMesh(
@@ -103,7 +109,9 @@ class ExeterScene(Scene):
 
         # this object allows to visualise the flattened cube
 
-        self.flattened_cube = FlattenCubeMap(scene=self, cube=CubeMap(name='skybox/ame_ash'))
+        self.flattened_cube = FlattenCubeMap(
+            scene=self, cube=CubeMap(name="skybox/ame_ash")
+        )
         self.flattened_cube = FlattenCubeMap(scene=self, cube=self.environment)
 
         self.show_texture = ShowTexture(self, Texture("lena.bmp"))
