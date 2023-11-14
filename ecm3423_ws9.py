@@ -1,10 +1,11 @@
 import pygame
 from OpenGL import GL as gl
+import numpy as np
 
 from BaseModel import DrawModelFromMesh
 from blender import load_obj_file
-from cubeMap import FlattenCubeMap
-from environmentMapping import EnvironmentMappingTexture, EnvironmentShader
+from cubeMap import CubeMap, FlattenCubeMap
+from environmentMapping import EnvironmentBox, EnvironmentMappingTexture, EnvironmentShader
 from lightSource import LightSource
 from material import Material
 from matutils import poseMatrix, scaleMatrix, translationMatrix
@@ -87,7 +88,7 @@ class ExeterScene(Scene):
             mesh=Sphere(),
             shader=EnvironmentShader(map=self.environment),
         )
-        # self.sphere = DrawModelFromMesh(scene=self, M=poseMatrix(), mesh=Sphere(), shader=FlatShader())
+        self.sphere = DrawModelFromMesh(scene=self, M=poseMatrix(), mesh=Sphere(), shader=FlatShader())
 
         bunny = load_obj_file("models/bunny_world.obj")
         self.bunny = DrawModelFromMesh(
@@ -98,11 +99,11 @@ class ExeterScene(Scene):
         )
 
         # environment box for reflections
-        # self.envbox = EnvironmentBox(scene=self)
+        self.envbox = EnvironmentBox(scene=self)
 
         # this object allows to visualise the flattened cube
 
-        # self.flattened_cube = FlattenCubeMap(scene=self, cube=CubeMap(name='skybox/ame_ash'))
+        self.flattened_cube = FlattenCubeMap(scene=self, cube=CubeMap(name='skybox/ame_ash'))
         self.flattened_cube = FlattenCubeMap(scene=self, cube=self.environment)
 
         self.show_texture = ShowTexture(self, Texture("lena.bmp"))
@@ -154,17 +155,17 @@ class ExeterScene(Scene):
 
         # when rendering the framebuffer we ignore the reflective object
         if not framebuffer:
-            # glEnable(GL_BLEND)
-            # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-            #            self.envbox.draw()
-            # self.environment.update(self)
-            # self.envbox.draw()
+            gl.glEnable(gl.GL_BLEND)
+            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+            self.envbox.draw()
+            self.environment.update(self)
+            self.envbox.draw()
 
             self.environment.update(self)
 
-            # self.bunny.draw()
-            # self.sphere.draw()
-            # glDisable(GL_BLEND)
+            self.bunny.draw()
+            self.sphere.draw()
+            gl.glDisable(gl.GL_BLEND)
 
             # if enabled, show flattened cube
             self.flattened_cube.draw()

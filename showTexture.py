@@ -2,6 +2,7 @@ import numpy as np
 
 from BaseModel import DrawModelFromMesh
 from matutils import poseMatrix, translationMatrix
+from mesh import Mesh
 from shaders import BaseShaderProgram
 
 

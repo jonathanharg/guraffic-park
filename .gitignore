@@ -2,6 +2,9 @@
 .gitignore
 31-ldn-loop/
 london.blend*
+textures/mk
+models/london.mtl
+models/london.obj
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

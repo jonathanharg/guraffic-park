@@ -1,9 +1,11 @@
 import numpy as np
 from OpenGL import GL as gl
+from BaseModel import DrawModelFromMesh
 
 from cubeMap import CubeMap
 from framebuffer import Framebuffer
-from matutils import frustumMatrix, rotationMatrixX, rotationMatrixY, translationMatrix
+from matutils import frustumMatrix, poseMatrix, rotationMatrixX, rotationMatrixY, translationMatrix
+from mesh import CubeMesh
 from shaders import BaseShaderProgram
 
 
@@ -118,10 +120,9 @@ class EnvironmentMappingTexture(CubeMap):
         self.unbind()
 
 
-# class EnvironmentBox(DrawModelFromMesh):
-#    def __init__(self, scene, shader=EnvironmentShader(), width=200, height=200):
-#        self.done = False
+class EnvironmentBox(DrawModelFromMesh):
+    def __init__(self, scene, shader=EnvironmentShader(), width=200, height=200):
+        self.done = False
+        self.map = EnvironmentMappingTexture(width, height)
 
-# self.map = EnvironmentMappingTexture(width, height)
-
-# DrawModelFromMesh.__init__(self, scene=scene, M=poseMatrix(), mesh=CubeMesh(shader.map), shader=shader, visible=False)
+        DrawModelFromMesh.__init__(self, scene=scene, M=poseMatrix(), mesh=CubeMesh(shader.map), shader=shader, visible=False)
