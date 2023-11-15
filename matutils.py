@@ -48,6 +48,28 @@ def rotationMatrixY(angle):
     R[2, 2] = c
     return R
 
+def rotationAxisAngle(u, angle):
+    c = np.cos(angle)
+    s = np.sin(angle)
+    R = np.identity(4)
+    # u = np.linalg.norm(u)
+
+    x = 0
+    y = 1
+    z = 2
+
+    R[0, 0] = c + (u[x]^2)*(1-c)
+    R[0,1] = u[y]*u[x]*(1-c)+u[z]*s
+    R[0,2] = u[z]*u[x]*(1-c)-u[y]*s
+
+    R[1,0] = u[x]*u[y]*(1-c)-u[z]*s
+    R[1,1] = c+(u[y]^2)*(1-c)
+    R[1,2] = u[z]*u[y]*(1-c)+u[x]*s
+
+    R[2,0] = u[x]*u[z]*(1-c)+u[y]*s
+    R[2,1] = u[x]*u[z]*(1-c)-u[x]*s
+    R[2,2] = c + (u[z]^2)*(1-c)
+    return R
 
 def poseMatrix(position=[0, 0, 0], orientation=0, scale=1):
     """

@@ -173,8 +173,8 @@ class BaseModel:
 
         # setup the shader program and provide it the Model, View and Projection matrices to use
         # for rendering this model
-        # TODO: FIXME: NOTE: THIS LINE BREAKS IMGUI
-        self.shader.bind(model=self, M=np.matmul(Mp, self.position_matrix))
+        if self.shader is not None:
+            self.shader.bind(model=self, M=np.matmul(Mp, self.position_matrix))
 
         # print('---> object {} rendered using shader {}'.format(self.name, self.shader.name))
 
@@ -198,6 +198,8 @@ class BaseModel:
 
         # unbind the shader to avoid side effects
         gl.glBindVertexArray(0)
+        if self.shader is not None:
+            self.shader.unbind()
 
     def vbo__del__(self):
         """

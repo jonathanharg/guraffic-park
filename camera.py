@@ -3,7 +3,7 @@ import numpy as np
 import pygame
 from pygame.event import Event
 
-from matutils import rotationMatrixX, rotationMatrixY, translationMatrix
+from matutils import rotationAxisAngle, rotationMatrixX, rotationMatrixY, translationMatrix
 
 
 class Camera:
@@ -85,8 +85,60 @@ class Camera:
 
 
 class NoclipCamera:
-    def __init__(self):
-        pass
+    def __init__(self, scene):
+        self.view_matrix = np.identity(4)
+        self.angle = 0.0  # azimuth angle
+        self.altitude = 0.0  # zenith angle
+        self.distance = 5.0  # distance of the camera to the centre point
+        self.center = [0.0, 0.0, 0.0]  # position of the centre
+        self.scene = scene
+        self.rotation_matrix = np.matmul(rotationMatrixX(0), rotationMatrixY(0))
+        self.x = 0
+        self.y = 0.0
+        self.z = -7.5
+        self.update()  # calculate the view matrix
 
     def update(self):
-        pass
+        self.translation_matrix = translationMatrix([self.x,self.y,self.z])
+        self.view_matrix = np.matmul(self.rotation_matrix, self.translation_matrix)
+
+
+    def handle_pygame_event(self, event: Event):
+        mods = pygame.key.get_mods()
+        mouse_movement = pygame.mouse.get_rel()
+        ctrl_shift_or_alt_pressed = mods & (
+            pygame.KMOD_ALT | pygame.KMOD_SHIFT | pygame.KMOD_CTRL
+        )
+        keys_pressed = pygame.key.get_pressed()
+
+        if event.type == pygame.MOUSEMOTION and not ctrl_shift_or_alt_pressed and pygame.mouse.get_pressed()[0]:
+            x_angle = -(float(mouse_movement[0]) / self.scene.window_size[0]) * self.scene.x_sensitivity
+            y_angle = -(float(mouse_movement[1]) / self.scene.window_size[1]) * self.scene.y_sensitivity
+            self.rotation_matrix = np.matmul(self.rotation_matrix, rotationAxisAngle([0,1,0], x_angle))
+            self.rotation_matrix = np.matmul(rotationAxisAngle([1,0,0], y_angle), self.rotation_matrix)
+        
+        # test_matrix = self.rotation_matrix
+        # test_matrix = np.linalg.inv(self.rotation_matrix)[:3, :3].transpose()
+        # relative_forward_vector = np.matmul(test_matrix, [0,0,1])
+        # relative_left_vector = np.matmul(test_matrix, [1,0,0])
+
+        if keys_pressed[pygame.K_w]:
+            self.z += 8 * self.scene.delta_time
+            # self.x += relative_forward_vector[0]
+            # self.y += relative_forward_vector[1]
+            # self.z += relative_forward_vector[2]
+        if keys_pressed[pygame.K_s]:
+            self.z -= 8 * self.scene.delta_time
+            # self.x -= relative_forward_vector[0]
+            # self.y -= relative_forward_vector[1]
+            # self.z -= relative_forward_vector[2]
+        if keys_pressed[pygame.K_d]:
+            self.x -= 8 * self.scene.delta_time
+            # self.x -= relative_left_vector[0]
+            # self.y -= relative_left_vector[1]
+            # self.z -= relative_left_vector[2]
+        if keys_pressed[pygame.K_a]:
+            self.x += 8 * self.scene.delta_time
+            # self.x += relative_left_vector[0]
+            # self.y += relative_left_vector[1]
+            # self.z += relative_left_vector[2]

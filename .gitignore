@@ -6,6 +6,9 @@ textures/mk
 models/london.mtl
 models/london.obj
 
+# Dear ImGui Configs
+imgui.ini
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

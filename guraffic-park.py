@@ -100,14 +100,14 @@ class MainScene(Scene):
         # for the bunny (it consists of a single mesh).
         self.bunny.draw()
 
-        # # open new window context
-        # imgui.begin("Your first window!", True)
+        # open new window context
+        imgui.begin("Your first window!", True)
 
-        # # draw text label inside of current window
-        # imgui.text("Hello world!")
+        # draw text label inside of current window
+        imgui.text("Hello world!")
 
-        # # close current window context
-        # imgui.end()
+        # close current window context
+        imgui.end()
 
 
 if __name__ == "__main__":

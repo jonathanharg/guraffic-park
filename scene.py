@@ -4,7 +4,7 @@ import pygame
 from imgui.integrations.pygame import PygameRenderer
 from OpenGL import GL as gl
 
-from camera import Camera
+from camera import Camera, NoclipCamera
 from lightSource import LightSource
 from matutils import frustumMatrix
 
@@ -48,11 +48,16 @@ class Scene:
         self.y_sensitivity = 3
         self.x_pan_amount = 10
         self.y_pan_amount = 10
+        self.noclip = False
+        self.fps_max = 60
+        self.clock = pygame.time.Clock()
+        self.delta_time = 0
 
         pygame.init()
         pygame.display.set_mode(
             self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
         )
+        pygame.key.set_repeat(10,10)
 
         imgui.create_context()
         self.imgui_impl = PygameRenderer()
@@ -159,6 +164,13 @@ class Scene:
                 print("--> Rendering using colour wireframe")
                 gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
                 self.wireframe = True
+        elif event.key == pygame.K_8:
+            if self.noclip:
+                self.camera = Camera(self)
+                self.noclip = False
+            else:
+                self.camera = NoclipCamera(self)
+                self.noclip = True
 
     def handle_pygame_events(self):
         """
@@ -199,6 +211,7 @@ class Scene:
         # We have a classic program loop
         self.running = True
         while self.running:
+            self.delta_time = self.clock.tick(self.fps_max)/1000
             self.handle_pygame_events()
             self.imgui_impl.process_inputs()
 
