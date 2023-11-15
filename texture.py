@@ -16,7 +16,7 @@ class ImageWrapper:
         return self.img.get_height()
 
     def data(self, format=gl.GL_RGB):
-        # convert the python image object to a plain byte array for passsing to OpenGL
+        # convert the python image object to a plain byte array for passing to OpenGL
         if format == gl.GL_RGBA:
             return pygame.image.tostring(self.img, "RGBA", 1)
         elif format == gl.GL_RGB:
@@ -31,21 +31,21 @@ class Texture:
     def __init__(
         self,
         name,
-        img=None,
+        img= None,
         wrap=gl.GL_REPEAT,
         sample=gl.GL_NEAREST,
-        format=gl.GL_RGBA,
-        type=gl.GL_UNSIGNED_BYTE,
+        image_format=gl.GL_RGBA,
+        image_type=gl.GL_UNSIGNED_BYTE,
         target=gl.GL_TEXTURE_2D,
     ):
         self.name = name
-        self.format = format
-        self.type = type
+        self.format = image_format
+        self.type = image_type
         self.wrap = wrap
         self.sample = sample
         self.target = target
 
-        self.textureid = gl.glGenTextures(1)
+        self.texture_id = gl.glGenTextures(1)
 
         self.bind()
 
@@ -56,18 +56,18 @@ class Texture:
             gl.glTexImage2D(
                 self.target,
                 0,
-                format,
+                image_format,
                 img.width(),
                 img.height(),
                 0,
-                format,
-                type,
-                img.data(format),
+                image_format,
+                image_type,
+                img.data(image_format),
             )
         else:
             # if a data array is provided use this
             gl.glTexImage2D(
-                self.target, 0, format, img.shape[0], img.shape[1], 0, format, type, img
+                self.target, 0, image_format, img.shape[0], img.shape[1], 0, image_format, image_type, img
             )
 
         # set what happens for texture coordinates outside [0,1]
@@ -79,13 +79,10 @@ class Texture:
         gl.glTexParameteri(self.target, gl.GL_TEXTURE_MIN_FILTER, sample)
 
         self.unbind()
-
+    
     def set_shadow_comparison(self):
-        self.set_parameter(gl.GL_TEXTURE_COMPARE_MODE, gl.GL_COMPARE_REF_TO_TEXTURE)
-
-    def set_parameter(self, param, value):
         self.bind()
-        gl.glTexParameteri(self.target, param, value)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_COMPARE_MODE, gl.GL_COMPARE_REF_TO_TEXTURE)
         self.unbind()
 
     def set_wrap_parameter(self, wrap=gl.GL_REPEAT):
@@ -117,7 +114,7 @@ class Texture:
         self.unbind()
 
     def bind(self):
-        gl.glBindTexture(self.target, self.textureid)
+        gl.glBindTexture(self.target, self.texture_id)
 
     def unbind(self):
         gl.glBindTexture(self.target, 0)

@@ -267,7 +267,7 @@ def create_mesh(varray, tarray, flist, fstart, f, library, material):
         vertices=varray[vmin:vmax, :],
         faces=farray[:, :, 0] - vmin - 1,
         material=library.materials[material],
-        textureCoords=textures,
+        texture_coords=textures,
     )
 
 

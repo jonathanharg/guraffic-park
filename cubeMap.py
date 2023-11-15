@@ -72,7 +72,7 @@ class FlattenCubeMap(DrawModelFromMesh):
             faces[2 * f + 1, :] = [0 + f * 4, 2 + f * 4, 3 + f * 4]
 
         # and set the texture coordinates to index in the cube map texture
-        textureCoords = np.array(
+        texture_coords = np.array(
             [
                 [-1, +1, -1],  # left
                 [-1, -1, -1],
@@ -103,7 +103,7 @@ class FlattenCubeMap(DrawModelFromMesh):
         )
 
         # create a mesh from the object
-        mesh = Mesh(vertices=vertices, faces=faces, textureCoords=textureCoords)
+        mesh = Mesh(vertices=vertices, faces=faces, texture_coords=texture_coords)
 
         # add the CubeMap object if provided (otherwise you need to call set() at a later stage)
         if cube is not None:
@@ -139,8 +139,8 @@ class CubeMap(Texture):
         files=None,
         wrap=gl.GL_CLAMP_TO_EDGE,
         sample=gl.GL_LINEAR,
-        format=gl.GL_RGBA,
-        type=gl.GL_UNSIGNED_BYTE,
+        texture_format=gl.GL_RGBA,
+        texture_type=gl.GL_UNSIGNED_BYTE,
     ):
         """
         Initialise the cube map texture object
@@ -153,8 +153,8 @@ class CubeMap(Texture):
         :param type: The data format for the texture. Default is gl.GL_UNSIGNED_BYTE (should not be changed)
         """
         self.name = name
-        self.format = format
-        self.type = type
+        self.texture_format = texture_format
+        self.texture_type = texture_type
         self.wrap = wrap
         self.sample = sample
         self.target = gl.GL_TEXTURE_CUBE_MAP  # we set the texture target as a cube map
@@ -170,7 +170,7 @@ class CubeMap(Texture):
         }
 
         # generate the texture.
-        self.textureid = gl.glGenTextures(1)
+        self.texture_id = gl.glGenTextures(1)
 
         # bind the texture
         self.bind()
@@ -207,13 +207,13 @@ class CubeMap(Texture):
             gl.glTexImage2D(
                 key,
                 0,
-                self.format,
+                self.texture_format,
                 img.width(),
                 img.height(),
                 0,
-                self.format,
-                self.type,
-                img.data(self.format),
+                self.texture_format,
+                self.texture_type,
+                img.data(self.texture_format),
             )
 
     def update(self, scene):

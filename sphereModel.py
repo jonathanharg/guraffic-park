@@ -88,6 +88,6 @@ class Sphere(Mesh):
             self,
             vertices=vertices,
             faces=indices,
-            textureCoords=textureCoords,
+            texture_coords=textureCoords,
             material=material,
         )

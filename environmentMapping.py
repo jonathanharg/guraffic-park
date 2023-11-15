@@ -97,7 +97,7 @@ class EnvironmentMappingTexture(CubeMap):
         self.bind()
         for face, fbo in self.fbos.items():
             gl.glTexImage2D(
-                face, 0, self.format, width, height, 0, self.format, self.type, None
+                face, 0, self.texture_format, width, height, 0, self.texture_format, self.texture_type, None
             )
             fbo.prepare(self, face)
         self.unbind()

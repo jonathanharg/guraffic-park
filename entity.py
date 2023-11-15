@@ -2,6 +2,9 @@
 class Entity:
     def __init__(self, position: tuple[float, float, float] = (0,0,0)) -> None:
         self.position = position
+        self.scale = 1
+        self.enable_shadow_casting = True
+        
     
     @property
     def x(self):

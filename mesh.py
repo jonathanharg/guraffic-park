@@ -15,7 +15,7 @@ class Mesh:
         vertices=None,
         faces=None,
         normals=None,
-        textureCoords=None,
+        texture_coords=None,
         material=Material(),
     ):
         """
@@ -25,25 +25,14 @@ class Mesh:
         :param normals: [optional] An array of normal vectors, calculated from the faces if not provided.
         :param material: [optional] An object containing the material information for this object
         """
-        self.name = "Unknown"
         self.vertices = vertices
         self.faces = faces
         self.material = material
         self.colors = None
-        self.textureCoords = textureCoords
+        self.texture_coords = texture_coords
         self.textures = []
         self.tangents = None
         self.binormals = None
-
-        # if vertices is not None:
-        #     print("Creating mesh")
-        #     print("- {} vertices".format(self.vertices.shape[0]))
-        #     if faces is not None:
-        #         print("- {} faces".format(self.faces.shape[0]))
-
-        # if faces is not None:
-        #    print('- {} vertices per face'.format(self.faces.shape[1]))
-        # print('- vertices ID in range [{},{}]'.format(np.min(self.faces.flatten()), np.max(self.faces.flatten())))
 
         if normals is None:
             if faces is None:
@@ -69,7 +58,7 @@ class Mesh:
         """
 
         self.normals = np.zeros((self.vertices.shape[0], 3), dtype="f")
-        if self.textureCoords is not None:
+        if self.texture_coords is not None:
             self.tangents = np.zeros((self.vertices.shape[0], 3), dtype="f")
             self.binormals = np.zeros((self.vertices.shape[0], 3), dtype="f")
 
@@ -81,14 +70,14 @@ class Mesh:
             face_normal = np.cross(a, b)
 
             # tangent
-            if self.textureCoords is not None:
+            if self.texture_coords is not None:
                 txa = (
-                    self.textureCoords[self.faces[f, 1], :]
-                    - self.textureCoords[self.faces[f, 0], :]
+                    self.texture_coords[self.faces[f, 1], :]
+                    - self.texture_coords[self.faces[f, 0], :]
                 )
                 txb = (
-                    self.textureCoords[self.faces[f, 2], :]
-                    - self.textureCoords[self.faces[f, 2], :]
+                    self.texture_coords[self.faces[f, 2], :]
+                    - self.texture_coords[self.faces[f, 2], :]
                 )
                 face_tangent = txb[0] * a - txa[0] * b
                 face_binormal = -txb[1] * a + txa[1] * b
@@ -96,13 +85,13 @@ class Mesh:
             # blend normal on all 3 vertices
             for j in range(3):
                 self.normals[self.faces[f, j], :] += face_normal
-                if self.textureCoords is not None:
+                if self.texture_coords is not None:
                     self.tangents[self.faces[f, j], :] += face_tangent
                     self.binormals[self.faces[f, j], :] += face_binormal
 
         # finally we need to normalize the vectors
         self.normals /= np.linalg.norm(self.normals, axis=1, keepdims=True)
-        if self.textureCoords is not None:
+        if self.texture_coords is not None:
             self.tangents /= np.linalg.norm(self.tangents, axis=1, keepdims=True)
             self.binormals /= np.linalg.norm(self.binormals, axis=1, keepdims=True)
 
@@ -150,9 +139,9 @@ class CubeMesh(Mesh):
         if inside:
             faces = faces[:, np.argsort([0, 2, 1])]
 
-        textureCoords = None  # np.array([], dtype='f')
+        texture_coords = None  # np.array([], dtype='f')
 
-        Mesh.__init__(self, vertices=vertices, faces=faces, textureCoords=textureCoords)
+        Mesh.__init__(self, vertices=vertices, faces=faces, texture_coords=texture_coords)
 
         if texture is not None:
             self.textures = [texture]

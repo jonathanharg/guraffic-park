@@ -87,7 +87,7 @@ class ShowTexture(DrawModelFromMesh):
         textureCoords = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype="f")  # left
 
         # create a mesh from the object
-        mesh = Mesh(vertices=vertices, faces=faces, textureCoords=textureCoords)
+        mesh = Mesh(vertices=vertices, faces=faces, texture_coords=textureCoords)
 
         # add the CubeMap object if provided (otherwise you need to call set() at a later stage)
         if texture is not None:
