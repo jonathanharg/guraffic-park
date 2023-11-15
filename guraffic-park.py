@@ -101,10 +101,10 @@ class MainScene(Scene):
         self.bunny.draw()
 
         # open new window context
-        imgui.begin("Your first window!", True)
+        imgui.begin("Scene")
 
         # draw text label inside of current window
-        imgui.text("Hello world!")
+        imgui.text(f"FPS: {self.clock.get_fps()}")
 
         # close current window context
         imgui.end()

@@ -52,12 +52,15 @@ class Scene:
         self.fps_max = 60
         self.clock = pygame.time.Clock()
         self.delta_time = 0
+        self.mouse_locked = True
 
         pygame.init()
         pygame.display.set_mode(
             self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
         )
-        pygame.key.set_repeat(10,10)
+        pygame.event.set_grab(True)     # Stops the mouse from being able to leave the window
+        pygame.mouse.set_visible(False)
+        pygame.key.set_repeat(10,10)    # Increase key repeat window, Makes WASD movement smoother
 
         imgui.create_context()
         self.imgui_impl = PygameRenderer()
@@ -154,8 +157,14 @@ class Scene:
         if event.key == pygame.K_q:
             self.running = False
 
+        if event.key == pygame.K_ESCAPE and self.mouse_locked:
+            self.mouse_locked = False
+            pygame.event.set_grab(False)     # Allow the mouse to leave the window
+            pygame.mouse.set_visible(True)
+            self.mouse_locked = False
+
         # flag to switch wireframe rendering
-        elif event.key == pygame.K_0:
+        if event.key == pygame.K_0:
             if self.wireframe:
                 print("--> Rendering using colour fill")
                 gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
@@ -164,7 +173,8 @@ class Scene:
                 print("--> Rendering using colour wireframe")
                 gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
                 self.wireframe = True
-        elif event.key == pygame.K_8:
+
+        if event.key == pygame.K_8:
             if self.noclip:
                 self.camera = Camera(self)
                 self.noclip = False
@@ -180,12 +190,13 @@ class Scene:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            
+            self.imgui_impl.process_event(event)
 
             if event.type == pygame.VIDEORESIZE:
                 self.window_size = (event.w, event.h)
                 self.update_viewport()
 
-            # keyboard events
             if event.type == pygame.KEYDOWN:
                 self.keyboard(event)
 
@@ -201,7 +212,15 @@ class Scene:
                     if mods & pygame.KMOD_CTRL:
                         self.light.position *= 0.9
                         self.light.update()
-            self.imgui_impl.process_event(event)
+            
+            if self.mouse_locked:
+                pygame.mouse.set_pos((self.window_size[0] /2, self.window_size[1]/2)) # Re-center the mouse after every frame
+            else:
+                if (not imgui.get_io().want_capture_mouse) and pygame.mouse.get_pressed()[0]:
+                    # We've clicked on the 3d scene and not the UI
+                    pygame.event.set_grab(True)     # Stops the mouse from being able to leave the window
+                    pygame.mouse.set_visible(False)
+                    self.mouse_locked = True
 
     def run(self):
         """

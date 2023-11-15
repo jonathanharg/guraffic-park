@@ -1,6 +1,7 @@
 # import a bunch of useful matrix functions (for translation, scaling etc)
 import numpy as np
 import pygame
+import imgui
 from pygame.event import Event
 
 from matutils import rotationAxisAngle, rotationMatrixX, rotationMatrixY, translationMatrix
@@ -47,6 +48,10 @@ class Camera:
         )
 
     def handle_pygame_event(self, event: Event):
+        # Ignore mouse events if we're interacting with the GUI
+        if imgui.get_io().want_capture_mouse or not self.scene.mouse_locked:
+            return
+        
         mods = pygame.key.get_mods()
         mouse_movement = pygame.mouse.get_rel()
         ctrl_shift_or_alt_pressed = mods & (
@@ -60,7 +65,7 @@ class Camera:
                 self.distance += 1
 
         elif event.type == pygame.MOUSEMOTION and not ctrl_shift_or_alt_pressed:
-            if pygame.mouse.get_pressed()[2]:
+            if pygame.mouse.get_pressed()[0]:
                 self.center[0] += (
                     float(mouse_movement[0])
                     / self.scene.window_size[0]
@@ -72,7 +77,7 @@ class Camera:
                     * self.scene.y_pan_amount
                 )
 
-            elif pygame.mouse.get_pressed()[0]:
+            else:
                 self.angle += (
                     float(mouse_movement[0]) / self.scene.window_size[0]
                 ) * self.scene.x_sensitivity
@@ -104,6 +109,10 @@ class NoclipCamera:
 
 
     def handle_pygame_event(self, event: Event):
+        # Ignore mouse events if we're interacting with the GUI
+        if imgui.get_io().want_capture_mouse or not self.scene.mouse_locked:
+            return
+        
         mods = pygame.key.get_mods()
         mouse_movement = pygame.mouse.get_rel()
         ctrl_shift_or_alt_pressed = mods & (
@@ -111,7 +120,7 @@ class NoclipCamera:
         )
         keys_pressed = pygame.key.get_pressed()
 
-        if event.type == pygame.MOUSEMOTION and not ctrl_shift_or_alt_pressed and pygame.mouse.get_pressed()[0]:
+        if event.type == pygame.MOUSEMOTION and not ctrl_shift_or_alt_pressed:
             x_angle = -(float(mouse_movement[0]) / self.scene.window_size[0]) * self.scene.x_sensitivity
             y_angle = -(float(mouse_movement[1]) / self.scene.window_size[1]) * self.scene.y_sensitivity
             self.rotation_matrix = np.matmul(self.rotation_matrix, rotationAxisAngle([0,1,0], x_angle))
