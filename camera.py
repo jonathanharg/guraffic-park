@@ -1,8 +1,9 @@
 # import a bunch of useful matrix functions (for translation, scaling etc)
 import numpy as np
+import pygame
+from pygame.event import Event
 
 from matutils import rotationMatrixX, rotationMatrixY, translationMatrix
-
 
 class Camera:
     """
@@ -10,12 +11,13 @@ class Camera:
     TODO WS2: Implement this class to allow moving the mouse
     """
 
-    def __init__(self):
+    def __init__(self, scene):
         self.view_matrix = np.identity(4)
-        self.phi = 0.0  # azimuth angle
-        self.psi = 0.0  # zenith angle
+        self.angle = 0.0  # azimuth angle
+        self.altitude = 0.0  # zenith angle
         self.distance = 5.0  # distance of the camera to the centre point
         self.center = [0.0, 0.0, 0.0]  # position of the centre
+        self.scene = scene
         self.update()  # calculate the view matrix
 
     def update(self):
@@ -31,7 +33,7 @@ class Camera:
 
         # calculate the rotation matrix from the angles phi (azimuth) and psi (zenith) angles.
         rotation_matrix = np.matmul(
-            rotationMatrixX(self.psi), rotationMatrixY(self.phi)
+            rotationMatrixX(self.altitude), rotationMatrixY(self.angle)
         )
 
         # calculate translation for the camera distance to the center point
@@ -42,3 +44,52 @@ class Camera:
         self.view_matrix = np.matmul(
             np.matmul(translation_matrix, rotation_matrix), translation_0
         )
+    
+    def handle_pygame_event(self, event: Event):
+        mods = pygame.key.get_mods()
+        mouse_movement = pygame.mouse.get_rel()
+        # ctrl_shift_or_alt_pressed = (mods & pygame.KMOD_ALT) or (mods & pygame.KMOD_SHIFT) or (mods & pygame.KMOD_CTRL)
+        ctrl_shift_or_alt_pressed = mods & ( pygame.KMOD_ALT | pygame.KMOD_SHIFT | pygame.KMOD_CTRL)
+        if event.type == pygame.MOUSEBUTTONDOWN and not ctrl_shift_or_alt_pressed:
+            if (event.button) == 4:
+                self.distance = max(1, self.distance - 1)
+
+            elif (event.button == 5):
+                self.distance += 1
+
+        elif event.type == pygame.MOUSEMOTION and not ctrl_shift_or_alt_pressed:
+            if pygame.mouse.get_pressed()[2]:
+                if self.mouse_mvt is not None:
+                    self.mouse_mvt = pygame.mouse.get_rel()
+                    self.center[0] += (
+                        float(self.mouse_mvt[0]) / self.scene.window_size[0] * self.scene.x_pan_amount
+                    )
+                    self.center[1] -= (
+                        float(self.mouse_mvt[1]) / self.scene.window_size[1] * self.scene.y_pan_amount
+                    )
+                else:
+                    self.mouse_mvt = pygame.mouse.get_rel()
+
+            elif pygame.mouse.get_pressed()[0]:
+                if self.mouse_mvt is not None:
+                    self.mouse_mvt = pygame.mouse.get_rel()
+                    self.angle += (
+                        (float(self.mouse_mvt[0]) / self.scene.window_size[0]) * self.scene.x_sensitivity
+                    )
+                    self.altitude -= (
+                        (float(self.mouse_mvt[1]) / self.scene.window_size[1]) * self.scene.y_sensitivity
+                    )
+
+                    # Clamp the altitude to stop the camera from going upside down
+                    self.altitude = max(min(self.altitude, np.pi/2), -np.pi/2)
+                else:
+                    self.mouse_mvt = pygame.mouse.get_rel()
+            else:
+                self.mouse_mvt = None
+
+class NoclipCamera():
+    def __init__(self):
+        pass
+
+    def update(self):
+        pass

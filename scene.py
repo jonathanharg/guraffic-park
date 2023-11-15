@@ -84,7 +84,7 @@ class Scene:
         self.shaders = "flat"
 
         # initialises the camera object
-        self.camera = Camera()
+        self.camera = Camera(self)
 
         # initialise the light source
         # self.light = LightSource(self, position=[5.0, 5.0, 5.0])
@@ -160,7 +160,7 @@ class Scene:
                 gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
                 self.wireframe = True
 
-    def pygameEvents(self):
+    def handle_pygame_events(self):
         """
         Method to handle PyGame events for user interaction.
         """
@@ -169,68 +169,26 @@ class Scene:
             if event.type == pygame.QUIT:
                 self.running = False
 
-            elif event.type == pygame.VIDEORESIZE:
+            if event.type == pygame.VIDEORESIZE:
                 self.window_size = (event.w, event.h)
                 self.update_viewport()
 
-            elif event.type == pygame.VIDEORESIZE:
-                pygame.display.set_mode(
-                    (event.w, event.h),
-                    pygame.DOUBLEBUF | pygame.OPENGL | pygame.RESIZABLE,
-                )
-
             # keyboard events
-            elif event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN:
                 self.keyboard(event)
+            
+            self.camera.handle_pygame_event(event)
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 mods = pygame.key.get_mods()
                 if event.button == 4:
-                    # pass
-                    # TODO: WS2
                     if mods & pygame.KMOD_CTRL:
                         self.light.position *= 1.1
                         self.light.update()
-                    else:
-                        self.camera.distance = max(1, self.camera.distance - 1)
-
                 elif event.button == 5:
-                    # pass
-                    # TODO: WS2
                     if mods & pygame.KMOD_CTRL:
                         self.light.position *= 0.9
                         self.light.update()
-                    else:
-                        self.camera.distance += 1
-
-            elif event.type == pygame.MOUSEMOTION:
-                if pygame.mouse.get_pressed()[2]:
-                    if self.mouse_mvt is not None:
-                        self.mouse_mvt = pygame.mouse.get_rel()
-                        # TODO: WS2
-                        self.camera.center[0] += (
-                            float(self.mouse_mvt[0]) / self.window_size[0] * self.x_pan_amount
-                        )
-                        self.camera.center[1] -= (
-                            float(self.mouse_mvt[1]) / self.window_size[1] * self.y_pan_amount
-                        )
-                    else:
-                        self.mouse_mvt = pygame.mouse.get_rel()
-
-                elif pygame.mouse.get_pressed()[0]:
-                    if self.mouse_mvt is not None:
-                        self.mouse_mvt = pygame.mouse.get_rel()
-                        # TODO: WS2
-                        self.camera.phi += (
-                            (float(self.mouse_mvt[0]) / self.window_size[0]) * self.x_sensitivity
-                        )
-                        self.camera.psi -= (
-                            (float(self.mouse_mvt[1]) / self.window_size[1]) * self.y_sensitivity
-                        )
-                    else:
-                        self.mouse_mvt = pygame.mouse.get_rel()
-                else:
-                    self.mouse_mvt = None
             self.imgui_impl.process_event(event)
 
     def run(self):
@@ -241,7 +199,7 @@ class Scene:
         # We have a classic program loop
         self.running = True
         while self.running:
-            self.pygameEvents()
+            self.handle_pygame_events()
             self.imgui_impl.process_inputs()
 
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
