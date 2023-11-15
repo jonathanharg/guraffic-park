@@ -160,7 +160,7 @@ class BaseModel:
 
         if not self.visible:
             return
-        
+
         if self.mesh.vertices is None:
             print(
                 "(W) Warning in {}.draw(): No vertex array!".format(
@@ -198,7 +198,6 @@ class BaseModel:
 
         # unbind the shader to avoid side effects
         gl.glBindVertexArray(0)
-
 
     def vbo__del__(self):
         """

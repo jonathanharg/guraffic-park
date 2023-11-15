@@ -176,7 +176,7 @@ class Scene:
             # keyboard events
             if event.type == pygame.KEYDOWN:
                 self.keyboard(event)
-            
+
             self.camera.handle_pygame_event(event)
 
             if event.type == pygame.MOUSEBUTTONDOWN:

@@ -31,7 +31,7 @@ class Texture:
     def __init__(
         self,
         name,
-        img= None,
+        img=None,
         wrap=gl.GL_REPEAT,
         sample=gl.GL_NEAREST,
         image_format=gl.GL_RGBA,
@@ -67,7 +67,15 @@ class Texture:
         else:
             # if a data array is provided use this
             gl.glTexImage2D(
-                self.target, 0, image_format, img.shape[0], img.shape[1], 0, image_format, image_type, img
+                self.target,
+                0,
+                image_format,
+                img.shape[0],
+                img.shape[1],
+                0,
+                image_format,
+                image_type,
+                img,
             )
 
         # set what happens for texture coordinates outside [0,1]
@@ -79,10 +87,12 @@ class Texture:
         gl.glTexParameteri(self.target, gl.GL_TEXTURE_MIN_FILTER, sample)
 
         self.unbind()
-    
+
     def set_shadow_comparison(self):
         self.bind()
-        gl.glTexParameteri(self.target, gl.GL_TEXTURE_COMPARE_MODE, gl.GL_COMPARE_REF_TO_TEXTURE)
+        gl.glTexParameteri(
+            self.target, gl.GL_TEXTURE_COMPARE_MODE, gl.GL_COMPARE_REF_TO_TEXTURE
+        )
         self.unbind()
 
     def set_wrap_parameter(self, wrap=gl.GL_REPEAT):

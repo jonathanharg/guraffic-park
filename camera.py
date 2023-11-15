@@ -5,6 +5,7 @@ from pygame.event import Event
 
 from matutils import rotationMatrixX, rotationMatrixY, translationMatrix
 
+
 class Camera:
     """
     Base class for handling the camera.
@@ -44,50 +45,46 @@ class Camera:
         self.view_matrix = np.matmul(
             np.matmul(translation_matrix, rotation_matrix), translation_0
         )
-    
+
     def handle_pygame_event(self, event: Event):
         mods = pygame.key.get_mods()
         mouse_movement = pygame.mouse.get_rel()
-        # ctrl_shift_or_alt_pressed = (mods & pygame.KMOD_ALT) or (mods & pygame.KMOD_SHIFT) or (mods & pygame.KMOD_CTRL)
-        ctrl_shift_or_alt_pressed = mods & ( pygame.KMOD_ALT | pygame.KMOD_SHIFT | pygame.KMOD_CTRL)
+        ctrl_shift_or_alt_pressed = mods & (
+            pygame.KMOD_ALT | pygame.KMOD_SHIFT | pygame.KMOD_CTRL
+        )
         if event.type == pygame.MOUSEBUTTONDOWN and not ctrl_shift_or_alt_pressed:
             if (event.button) == 4:
                 self.distance = max(1, self.distance - 1)
 
-            elif (event.button == 5):
+            elif event.button == 5:
                 self.distance += 1
 
         elif event.type == pygame.MOUSEMOTION and not ctrl_shift_or_alt_pressed:
             if pygame.mouse.get_pressed()[2]:
-                if self.mouse_mvt is not None:
-                    self.mouse_mvt = pygame.mouse.get_rel()
-                    self.center[0] += (
-                        float(self.mouse_mvt[0]) / self.scene.window_size[0] * self.scene.x_pan_amount
-                    )
-                    self.center[1] -= (
-                        float(self.mouse_mvt[1]) / self.scene.window_size[1] * self.scene.y_pan_amount
-                    )
-                else:
-                    self.mouse_mvt = pygame.mouse.get_rel()
+                self.center[0] += (
+                    float(mouse_movement[0])
+                    / self.scene.window_size[0]
+                    * self.scene.x_pan_amount
+                )
+                self.center[1] -= (
+                    float(mouse_movement[1])
+                    / self.scene.window_size[1]
+                    * self.scene.y_pan_amount
+                )
 
             elif pygame.mouse.get_pressed()[0]:
-                if self.mouse_mvt is not None:
-                    self.mouse_mvt = pygame.mouse.get_rel()
-                    self.angle += (
-                        (float(self.mouse_mvt[0]) / self.scene.window_size[0]) * self.scene.x_sensitivity
-                    )
-                    self.altitude -= (
-                        (float(self.mouse_mvt[1]) / self.scene.window_size[1]) * self.scene.y_sensitivity
-                    )
+                self.angle += (
+                    float(mouse_movement[0]) / self.scene.window_size[0]
+                ) * self.scene.x_sensitivity
+                self.altitude -= (
+                    float(mouse_movement[1]) / self.scene.window_size[1]
+                ) * self.scene.y_sensitivity
 
-                    # Clamp the altitude to stop the camera from going upside down
-                    self.altitude = max(min(self.altitude, np.pi/2), -np.pi/2)
-                else:
-                    self.mouse_mvt = pygame.mouse.get_rel()
-            else:
-                self.mouse_mvt = None
+                # Clamp the altitude to stop the camera from going upside down
+                self.altitude = max(min(self.altitude, np.pi / 2), -np.pi / 2)
 
-class NoclipCamera():
+
+class NoclipCamera:
     def __init__(self):
         pass
 
