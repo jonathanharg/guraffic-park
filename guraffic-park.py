@@ -5,11 +5,11 @@ from OpenGL import GL as gl
 
 from BaseModel import DrawModelFromMesh
 from blender import load_obj_file
+from camera import Camera, NoclipCamera
 from lightSource import LightSource
 from matutils import scaleMatrix, translationMatrix
 from scene import Scene
 from shaders import FlatShader
-from camera import NoclipCamera, Camera
 
 
 class MainScene(Scene):
@@ -72,7 +72,7 @@ class MainScene(Scene):
 
         if event.key == pygame.K_1:
             print("Number 1 detected")
-            
+
         #     print("--> using Flat shading")
         #     self.bunny.use_textures = True
         #     self.bunny.bind_shader("flat")
@@ -106,7 +106,7 @@ class MainScene(Scene):
         if self.show_imgui_demo:
             self.show_imgui_demo = imgui.show_demo_window(True)
 
-        with imgui.begin("Scene", ):
+        with imgui.begin("Scene"):
             imgui.text("Press ESC to interact with the menu")
             imgui.text(f"FPS: {self.clock.get_fps():.2f}")
             imgui.text(f"Frametime: {self.clock.get_time():.2f}ms")
@@ -127,7 +127,7 @@ class MainScene(Scene):
                     self.camera = NoclipCamera(self)
                 else:
                     self.camera = Camera(self)
-            
+
             if imgui.button("Debug camera"):
                 self.debug_camera = True
 

@@ -1,10 +1,15 @@
 # import a bunch of useful matrix functions (for translation, scaling etc)
+import imgui
 import numpy as np
 import pygame
-import imgui
 from pygame.event import Event
 
-from matutils import rotationAxisAngle, rotationMatrixX, rotationMatrixY, translationMatrix
+from matutils import (
+    rotationAxisAngle,
+    rotationMatrixX,
+    rotationMatrixY,
+    translationMatrix,
+)
 
 
 class Camera:
@@ -53,7 +58,9 @@ class Camera:
 
             # draw text label inside of current window
             imgui.text("Mode: Orbit")
-            imgui.text(f"angle: {self.angle:.2f} altitude: {self.altitude:.2f} distance: {self.distance:.2f} center: {self.center}")
+            imgui.text(
+                f"angle: {self.angle:.2f} altitude: {self.altitude:.2f} distance: {self.distance:.2f} center: {self.center}"
+            )
             np.set_printoptions(precision=3, suppress=True)
             imgui.text(f"Rotation Matrix:\n {rotation_matrix}")
             imgui.text(f"View Matrix:\n {self.view_matrix}")
@@ -66,7 +73,7 @@ class Camera:
         # Ignore mouse events if we're interacting with the GUI
         if imgui.get_io().want_capture_mouse or not self.scene.mouse_locked:
             return
-        
+
         mods = pygame.key.get_mods()
         mouse_movement = pygame.mouse.get_rel()
         ctrl_shift_or_alt_pressed = mods & (
@@ -119,7 +126,7 @@ class NoclipCamera:
         self.update()  # calculate the view matrix
 
     def update(self):
-        self.translation_matrix = translationMatrix([self.x,self.y,self.z])
+        self.translation_matrix = translationMatrix([self.x, self.y, self.z])
         self.view_matrix = np.matmul(self.rotation_matrix, self.translation_matrix)
 
         if self.scene.debug_camera:
@@ -137,12 +144,11 @@ class NoclipCamera:
             # close current window context
             imgui.end()
 
-
     def handle_pygame_event(self, event: Event):
         # Ignore mouse events if we're interacting with the GUI
         if imgui.get_io().want_capture_mouse or not self.scene.mouse_locked:
             return
-        
+
         mods = pygame.key.get_mods()
         mouse_movement = pygame.mouse.get_rel()
         ctrl_shift_or_alt_pressed = mods & (
@@ -151,11 +157,21 @@ class NoclipCamera:
         keys_pressed = pygame.key.get_pressed()
 
         if event.type == pygame.MOUSEMOTION and not ctrl_shift_or_alt_pressed:
-            x_angle = -(float(mouse_movement[0]) / self.scene.window_size[0]) * self.scene.x_sensitivity
-            y_angle = -(float(mouse_movement[1]) / self.scene.window_size[1]) * self.scene.y_sensitivity
-            self.rotation_matrix = np.matmul(self.rotation_matrix, rotationAxisAngle([0,1,0], x_angle))
-            self.rotation_matrix = np.matmul(rotationAxisAngle([1,0,0], y_angle), self.rotation_matrix)
-        
+            x_angle = (
+                -(float(mouse_movement[0]) / self.scene.window_size[0])
+                * self.scene.x_sensitivity
+            )
+            y_angle = (
+                -(float(mouse_movement[1]) / self.scene.window_size[1])
+                * self.scene.y_sensitivity
+            )
+            self.rotation_matrix = np.matmul(
+                self.rotation_matrix, rotationAxisAngle([0, 1, 0], x_angle)
+            )
+            self.rotation_matrix = np.matmul(
+                rotationAxisAngle([1, 0, 0], y_angle), self.rotation_matrix
+            )
+
         # test_matrix = self.rotation_matrix
         # test_matrix = np.linalg.inv(self.rotation_matrix)[:3, :3].transpose()
         # relative_forward_vector = np.matmul(test_matrix, [0,0,1])

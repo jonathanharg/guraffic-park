@@ -60,9 +60,11 @@ class Scene:
         pygame.display.set_mode(
             self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
         )
-        pygame.event.set_grab(True)     # Stops the mouse from being able to leave the window
+        # Stops the mouse from being able to leave the window
+        pygame.event.set_grab(True)
         pygame.mouse.set_visible(False)
-        pygame.key.set_repeat(10,10)    # Increase key repeat window, Makes WASD movement smoother
+        # Increase key repeat window, Makes WASD movement smoother
+        pygame.key.set_repeat(10, 10)
 
         imgui.create_context()
         self.imgui_impl = PygameRenderer()
@@ -161,7 +163,7 @@ class Scene:
 
         if event.key == pygame.K_ESCAPE and self.mouse_locked:
             self.mouse_locked = False
-            pygame.event.set_grab(False)     # Allow the mouse to leave the window
+            pygame.event.set_grab(False)  # Allow the mouse to leave the window
             pygame.mouse.set_visible(True)
             self.mouse_locked = False
 
@@ -173,7 +175,7 @@ class Scene:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            
+
             self.imgui_impl.process_event(event)
 
             if event.type == pygame.VIDEORESIZE:
@@ -195,13 +197,19 @@ class Scene:
                     if mods & pygame.KMOD_CTRL:
                         self.light.position *= 0.9
                         self.light.update()
-            
+
             if self.mouse_locked:
-                pygame.mouse.set_pos((self.window_size[0] /2, self.window_size[1]/2)) # Re-center the mouse after every frame
+                pygame.mouse.set_pos(
+                    (self.window_size[0] / 2, self.window_size[1] / 2)
+                )  # Re-center the mouse after every frame
             else:
-                if (not imgui.get_io().want_capture_mouse) and pygame.mouse.get_pressed()[0]:
+                if (
+                    not imgui.get_io().want_capture_mouse
+                ) and pygame.mouse.get_pressed()[0]:
                     # We've clicked on the 3d scene and not the UI
-                    pygame.event.set_grab(True)     # Stops the mouse from being able to leave the window
+                    pygame.event.set_grab(
+                        True
+                    )  # Stops the mouse from being able to leave the window
                     pygame.mouse.set_visible(False)
                     self.mouse_locked = True
 
@@ -213,7 +221,7 @@ class Scene:
         # We have a classic program loop
         self.running = True
         while self.running:
-            self.delta_time = self.clock.tick(self.fps_max)/1000
+            self.delta_time = self.clock.tick(self.fps_max) / 1000
             self.handle_pygame_events()
             self.imgui_impl.process_inputs()
             imgui.new_frame()
