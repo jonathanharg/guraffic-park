@@ -9,6 +9,7 @@ from lightSource import LightSource
 from matutils import scaleMatrix, translationMatrix
 from scene import Scene
 from shaders import FlatShader
+from camera import NoclipCamera, Camera
 
 
 class MainScene(Scene):
@@ -70,13 +71,15 @@ class MainScene(Scene):
         Scene.keyboard(self, event)
 
         if event.key == pygame.K_1:
-            print("--> using Flat shading")
-            self.bunny.use_textures = True
-            self.bunny.bind_shader("flat")
+            print("Number 1 detected")
+            
+        #     print("--> using Flat shading")
+        #     self.bunny.use_textures = True
+        #     self.bunny.bind_shader("flat")
 
-        elif event.key == pygame.K_2:
-            print("--> using Texture shading")
-            self.bunny.bind_shader("texture")
+        # elif event.key == pygame.K_2:
+        #     print("--> using Texture shading")
+        #     self.bunny.bind_shader("texture")
 
     def draw(self):
         """
@@ -100,14 +103,36 @@ class MainScene(Scene):
         # for the bunny (it consists of a single mesh).
         self.bunny.draw()
 
-        # open new window context
-        imgui.begin("Scene")
+        if self.show_imgui_demo:
+            self.show_imgui_demo = imgui.show_demo_window(True)
 
-        # draw text label inside of current window
-        imgui.text(f"FPS: {self.clock.get_fps()}")
+        with imgui.begin("Scene", ):
+            imgui.text("Press ESC to interact with the menu")
+            imgui.text(f"FPS: {self.clock.get_fps():.2f}")
+            imgui.text(f"Frametime: {self.clock.get_time():.2f}ms")
 
-        # close current window context
-        imgui.end()
+            (fov_changed, self.fov) = imgui.slider_float("FOV", self.fov, 30, 150)
+            if fov_changed:
+                self.update_viewport()
+
+            _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
+            if self.wireframe:
+                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+            else:
+                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+
+            clicked_noclip_checkbox, self.noclip = imgui.checkbox("Noclip", self.noclip)
+            if clicked_noclip_checkbox:
+                if self.noclip:
+                    self.camera = NoclipCamera(self)
+                else:
+                    self.camera = Camera(self)
+            
+            if imgui.button("Debug camera"):
+                self.debug_camera = True
+
+            if imgui.button("Open ImGui Demo"):
+                self.show_imgui_demo = True
 
 
 if __name__ == "__main__":

@@ -47,6 +47,21 @@ class Camera:
             np.matmul(translation_matrix, rotation_matrix), translation_0
         )
 
+        # open new window context
+        if self.scene.debug_camera:
+            _, self.scene.debug_camera = imgui.begin("Camera", True)
+
+            # draw text label inside of current window
+            imgui.text("Mode: Orbit")
+            imgui.text(f"angle: {self.angle:.2f} altitude: {self.altitude:.2f} distance: {self.distance:.2f} center: {self.center}")
+            np.set_printoptions(precision=3, suppress=True)
+            imgui.text(f"Rotation Matrix:\n {rotation_matrix}")
+            imgui.text(f"View Matrix:\n {self.view_matrix}")
+            imgui.text(f"Translation Matrix:\n {translation_matrix}")
+
+            # close current window context
+            imgui.end()
+
     def handle_pygame_event(self, event: Event):
         # Ignore mouse events if we're interacting with the GUI
         if imgui.get_io().want_capture_mouse or not self.scene.mouse_locked:
@@ -65,7 +80,7 @@ class Camera:
                 self.distance += 1
 
         elif event.type == pygame.MOUSEMOTION and not ctrl_shift_or_alt_pressed:
-            if pygame.mouse.get_pressed()[0]:
+            if pygame.mouse.get_pressed()[2]:
                 self.center[0] += (
                     float(mouse_movement[0])
                     / self.scene.window_size[0]
@@ -106,6 +121,21 @@ class NoclipCamera:
     def update(self):
         self.translation_matrix = translationMatrix([self.x,self.y,self.z])
         self.view_matrix = np.matmul(self.rotation_matrix, self.translation_matrix)
+
+        if self.scene.debug_camera:
+            # open new window context
+            _, self.scene.debug_camera = imgui.begin("Camera", True)
+
+            # draw text label inside of current window
+            imgui.text("Mode: Noclip")
+            imgui.text(f"x: {self.x:.2f} y: {self.y:.2f} z: {self.z:.2f}")
+            np.set_printoptions(precision=3, suppress=True)
+            imgui.text(f"Rotation Matrix:\n {self.rotation_matrix}")
+            imgui.text(f"View Matrix:\n {self.view_matrix}")
+            imgui.text(f"Translation Matrix:\n {self.translation_matrix}")
+
+            # close current window context
+            imgui.end()
 
 
     def handle_pygame_event(self, event: Event):

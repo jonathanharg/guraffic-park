@@ -53,6 +53,8 @@ class Scene:
         self.clock = pygame.time.Clock()
         self.delta_time = 0
         self.mouse_locked = True
+        self.show_imgui_demo = False
+        self.debug_camera = False
 
         pygame.init()
         pygame.display.set_mode(
@@ -163,25 +165,6 @@ class Scene:
             pygame.mouse.set_visible(True)
             self.mouse_locked = False
 
-        # flag to switch wireframe rendering
-        if event.key == pygame.K_0:
-            if self.wireframe:
-                print("--> Rendering using colour fill")
-                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
-                self.wireframe = False
-            else:
-                print("--> Rendering using colour wireframe")
-                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-                self.wireframe = True
-
-        if event.key == pygame.K_8:
-            if self.noclip:
-                self.camera = Camera(self)
-                self.noclip = False
-            else:
-                self.camera = NoclipCamera(self)
-                self.noclip = True
-
     def handle_pygame_events(self):
         """
         Method to handle PyGame events for user interaction.
@@ -233,10 +216,10 @@ class Scene:
             self.delta_time = self.clock.tick(self.fps_max)/1000
             self.handle_pygame_events()
             self.imgui_impl.process_inputs()
+            imgui.new_frame()
 
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-            imgui.new_frame()
             self.draw()
 
             imgui.render()
