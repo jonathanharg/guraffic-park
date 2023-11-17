@@ -1,14 +1,16 @@
 import os
-from OpenGL import GL as gl
+from typing import Self
+
 import imgui
 import numpy as np
-from blender import find_file, load_obj_file
+from OpenGL import GL as gl
 
+from blender import find_file, load_obj_file
 from entity import Entity
 from matutils import rotationMatrixXYZ
 from mesh import Mesh
-from shaders import BaseShaderProgram, PhongShader, FlatShader
-from typing import Self
+from shaders import BaseShaderProgram, FlatShader, PhongShader
+
 
 class Model(Entity):
     untitled_model_count = 0
@@ -19,7 +21,7 @@ class Model(Entity):
         super().__init__(**kwargs)
         self.visible = True
         self.primitive = gl.GL_TRIANGLES
-        self.shader:BaseShaderProgram = FlatShader()
+        self.shader: BaseShaderProgram = FlatShader()
         self.mesh = meshes
         self.vertex_buffer_objects = {}
         self.attributes = {}
@@ -35,12 +37,12 @@ class Model(Entity):
 
         if self.mesh.faces.shape[1] == 4:
             self.primitive = gl.GL_QUADS
-        
+
         self.bind()
 
         if self.shader is not None:
             self.bind_shader(self.shader)
-    
+
     @classmethod
     def from_obj(self, obj_path: str, **kwargs) -> Self:
         file_path = find_file(obj_path, ["models/"])
@@ -64,26 +66,40 @@ class Model(Entity):
             texture.bind()
 
         if self.mesh.faces is not None:
-            gl.glDrawElements(self.primitive, self.mesh.faces.flatten().shape[0], gl.GL_UNSIGNED_INT, None)
+            gl.glDrawElements(
+                self.primitive,
+                self.mesh.faces.flatten().shape[0],
+                gl.GL_UNSIGNED_INT,
+                None,
+            )
         else:
             gl.glDrawArrays(self.primitive, 0, self.mesh.vertices.shape[0])
-        
+
         gl.glBindVertexArray(0)
         if self.shader is not None:
             self.shader.unbind()
-        
+
         with imgui.begin(f"Debug {self.name}"):
             _, self.position = imgui.drag_float3("Position", self.x, self.y, self.z)
 
-            rotation_changed, rotation = imgui.drag_float3("Rotation", np.degrees(self.x_rot()), np.degrees(self.y_rot()), np.degrees(self.z_rot()))
+            rotation_changed, rotation = imgui.drag_float3(
+                "Rotation",
+                np.degrees(self.x_rot()),
+                np.degrees(self.y_rot()),
+                np.degrees(self.z_rot()),
+            )
             if rotation_changed:
-                self.rotation = rotationMatrixXYZ(np.deg2rad(rotation[0]), np.deg2rad(rotation[1]), np.deg2rad(rotation[2]))
+                self.rotation = rotationMatrixXYZ(
+                    np.deg2rad(rotation[0]),
+                    np.deg2rad(rotation[1]),
+                    np.deg2rad(rotation[2]),
+                )
 
             _, scale = imgui.drag_float("Scale", self.scale)
             self.scale = scale if scale != 0 else 0.0001
 
             imgui.text(f"Rotation Matrix: {self.rotation}")
-    
+
     def vbo__del__(self):
         """
         Release all VBO objects when finished.
@@ -92,7 +108,7 @@ class Model(Entity):
             gl.glDeleteBuffers(1, vbo)
 
         gl.glDeleteVertexArrays(1, self.vertex_array_object.tolist())
-    
+
     def bind(self):
         """
         This method stores the vertex data in a Vertex Buffer Object (VBO) that can be uploaded
@@ -103,9 +119,7 @@ class Model(Entity):
         gl.glBindVertexArray(self.vertex_array_object)
 
         if self.mesh.vertices is None:
-            print(
-                "(W) Warning: No vertex array!"
-            )
+            print("(W) Warning: No vertex array!")
 
         # initialise vertex position VBO and link to shader program attribute
         self.initialise_vertex_buffer_object("position", self.mesh.vertices)
@@ -126,10 +140,12 @@ class Model(Entity):
         # finally we unbind the VAO and VBO when we're done to avoid side effects
         gl.glBindVertexArray(0)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-    
+
     def initialise_vertex_buffer_object(self, attribute, data):
         if data is None:
-            print(f"(W) Warning bind_attribute(): Data array for attribute {attribute} is None!")
+            print(
+                f"(W) Warning bind_attribute(): Data array for attribute {attribute} is None!"
+            )
             return
 
         # bind the location of the attribute in the GLSL program to the next index

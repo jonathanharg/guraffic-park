@@ -1,9 +1,11 @@
+from typing import Self
+
 import imgui
 import numpy as np
 import pygame
 from imgui.integrations.pygame import PygameRenderer
 from OpenGL import GL as gl
-from typing import Self
+
 from camera import Camera, NoclipCamera
 from lightSource import LightSource
 from matutils import frustumMatrix
@@ -13,7 +15,8 @@ class Scene:
     """
     This is the main class for drawing an OpenGL scene using the PyGame library
     """
-    current_scene:Self = None
+
+    current_scene: Self = None
 
     def update_viewport(self):
         pygame.display.set_mode(

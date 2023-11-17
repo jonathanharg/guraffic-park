@@ -5,6 +5,7 @@ from OpenGL.GL import shaders
 from matutils import homog, unhomog
 from scene import Scene
 
+
 class Uniform:
     """
     We create a simple class to handle uniforms, this is not necessary,

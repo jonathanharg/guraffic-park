@@ -1,5 +1,6 @@
-import numpy as np
 import os
+
+import numpy as np
 
 from material import Material, MaterialLibrary
 from mesh import Mesh
@@ -10,17 +11,19 @@ Source:
 https://en.wikipedia.org/wiki/Wavefront_.obj_file
 """
 
+
 def find_file(name: str, subfolders: list[str] = ["textures/", "models/"]):
     main_dir = os.path.dirname(__file__)
 
     if os.path.isfile(os.path.join(main_dir, name)):
         return os.path.join(main_dir, name)
-    
+
     for folder in subfolders:
         if os.path.isfile(os.path.join(main_dir, folder, name)):
             return os.path.join(main_dir, folder, name)
-    
+
     raise FileNotFoundError(f" (E) File {name} not found!")
+
 
 def process_line(line):
     """
@@ -197,11 +200,19 @@ def load_obj_file(file_name):
                 mesh_id += 1
 
     return create_meshes_from_blender(
-        vertices, faces, material_names, vertex_textures, library, mesh_list, line_no_list
+        vertices,
+        faces,
+        material_names,
+        vertex_textures,
+        library,
+        mesh_list,
+        line_no_list,
     )
 
 
-def create_meshes_from_blender(vertices, faces, material_names, vertex_textures, library, mesh_list, line_no_list):
+def create_meshes_from_blender(
+    vertices, faces, material_names, vertex_textures, library, mesh_list, line_no_list
+):
     start_face = 0
     mesh_id = 1
     meshes = []
@@ -228,7 +239,15 @@ def create_meshes_from_blender(vertices, faces, material_names, vertex_textures,
             #     )
             # )
             try:
-                mesh = create_mesh(vertex_array, texture_array, faces, start_face, face, library, material)
+                mesh = create_mesh(
+                    vertex_array,
+                    texture_array,
+                    faces,
+                    start_face,
+                    face,
+                    library,
+                    material,
+                )
                 meshes.append(mesh)
             except Exception as e:
                 print("(W) could not load mesh!")
@@ -244,7 +263,15 @@ def create_meshes_from_blender(vertices, faces, material_names, vertex_textures,
     # add the last mesh
     try:
         meshes.append(
-            create_mesh(vertex_array, texture_array, faces, start_face, len(faces), library, material)
+            create_mesh(
+                vertex_array,
+                texture_array,
+                faces,
+                start_face,
+                len(faces),
+                library,
+                material,
+            )
         )
     except:
         print("(W) could not load mesh!")

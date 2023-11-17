@@ -43,10 +43,11 @@ def rotationMatrixY(angle):
     s = np.sin(angle)
     R = np.identity(4)
     R[0, 0] = c
-    R[0, 2] =- s
+    R[0, 2] = -s
     R[2, 0] = s
     R[2, 2] = c
     return R
+
 
 def rotationMatrixXYZ(x_angle, y_angle, z_angle):
     x = rotationMatrixX(x_angle)
@@ -54,6 +55,7 @@ def rotationMatrixXYZ(x_angle, y_angle, z_angle):
     z = rotationMatrixZ(z_angle)
     R = np.matmul(z, np.matmul(y, x))
     return R
+
 
 def rotationAxisAngle(u, angle):
     c = np.cos(angle)

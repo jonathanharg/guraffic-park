@@ -8,9 +8,9 @@ from blender import load_obj_file
 from camera import Camera, NoclipCamera
 from lightSource import LightSource
 from matutils import scaleMatrix, translationMatrix
+from model import Model
 from scene import Scene
 from shaders import FlatShader
-from model import Model
 
 
 class MainScene(Scene):

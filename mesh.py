@@ -138,9 +138,7 @@ class CubeMesh(Mesh):
 
         texture_coords = None  # np.array([], dtype='f')
 
-        Mesh.__init__(
-            self, "cube", vertices, faces,texture_coords
-        )
+        Mesh.__init__(self, "cube", vertices, faces, texture_coords)
 
         if texture is not None:
             self.textures = [texture]
