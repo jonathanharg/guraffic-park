@@ -5,6 +5,7 @@ from OpenGL import GL as gl
 
 class ImageWrapper:
     def __init__(self, name):
+        # TODO: BETTER FILE LOADING
         # load the image from file using pyGame - any other image reading function could be used here.
         # print("Loading image: texture/{}".format(name))
         self.img = pygame.image.load("./textures/{}".format(name))
@@ -15,11 +16,11 @@ class ImageWrapper:
     def height(self):
         return self.img.get_height()
 
-    def data(self, format=gl.GL_RGB):
+    def data(self, image_format=gl.GL_RGB):
         # convert the python image object to a plain byte array for passing to OpenGL
-        if format == gl.GL_RGBA:
+        if image_format == gl.GL_RGBA:
             return pygame.image.tostring(self.img, "RGBA", 1)
-        elif format == gl.GL_RGB:
+        elif image_format == gl.GL_RGB:
             return pygame.image.tostring(self.img, "RGB", 1)
 
 

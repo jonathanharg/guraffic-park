@@ -3,7 +3,7 @@ from OpenGL import GL as gl
 from OpenGL.GL import shaders
 
 from matutils import homog, unhomog
-
+from scene import Scene
 
 class Uniform:
     """
@@ -266,9 +266,10 @@ class PhongShader(BaseShaderProgram):
         """
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         """
-
-        P = model.scene.perspective_matrix
-        V = model.scene.camera.view_matrix
+        P = Scene.current_scene.perspective_matrix
+        V = Scene.current_scene.camera.view_matrix
+        # P = model.scene.perspective_matrix
+        # V = model.scene.camera.view_matrix
 
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
@@ -283,7 +284,7 @@ class PhongShader(BaseShaderProgram):
         self.uniforms["VMiT"].bind(np.linalg.inv(np.matmul(V, M))[:3, :3].transpose())
 
         # bind the mode to the program
-        self.uniforms["mode"].bind(model.scene.mode)
+        self.uniforms["mode"].bind(Scene.current_scene.mode)
 
         self.uniforms["alpha"].bind(model.mesh.material.alpha)
 
@@ -298,7 +299,7 @@ class PhongShader(BaseShaderProgram):
         self.bind_material_uniforms(model.mesh.material)
 
         # bind the light properties
-        self.bind_light_uniforms(model.scene.light, V)
+        self.bind_light_uniforms(Scene.current_scene.light, V)
 
     def bind_light_uniforms(self, light, V):
         self.uniforms["light"].bind_vector(unhomog(np.dot(V, homog(light.position))))

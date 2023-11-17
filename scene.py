@@ -3,7 +3,7 @@ import numpy as np
 import pygame
 from imgui.integrations.pygame import PygameRenderer
 from OpenGL import GL as gl
-
+from typing import Self
 from camera import Camera, NoclipCamera
 from lightSource import LightSource
 from matutils import frustumMatrix
@@ -13,6 +13,7 @@ class Scene:
     """
     This is the main class for drawing an OpenGL scene using the PyGame library
     """
+    current_scene:Self = None
 
     def update_viewport(self):
         pygame.display.set_mode(
@@ -37,7 +38,7 @@ class Scene:
         """
         Initialises the scene
         """
-
+        Scene.current_scene = self
         self.window_size = (width, height)
         self.wireframe = False
         self.fov = 90.0
@@ -64,7 +65,7 @@ class Scene:
         pygame.event.set_grab(True)
         pygame.mouse.set_visible(False)
         # Increase key repeat window, Makes WASD movement smoother
-        pygame.key.set_repeat(10, 10)
+        pygame.key.set_repeat(0)
 
         imgui.create_context()
         self.imgui_impl = PygameRenderer()

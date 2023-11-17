@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 from material import Material, MaterialLibrary
 from mesh import Mesh
@@ -9,6 +10,17 @@ Source:
 https://en.wikipedia.org/wiki/Wavefront_.obj_file
 """
 
+def find_file(name: str, subfolders: list[str] = ["textures/", "models/"]):
+    main_dir = os.path.dirname(__file__)
+
+    if os.path.isfile(os.path.join(main_dir, name)):
+        return os.path.join(main_dir, name)
+    
+    for folder in subfolders:
+        if os.path.isfile(os.path.join(main_dir, folder, name)):
+            return os.path.join(main_dir, folder, name)
+    
+    raise FileNotFoundError(f" (E) File {name} not found!")
 
 def process_line(line):
     """
@@ -17,14 +29,29 @@ def process_line(line):
     """
     label = None
     fields = line.split()
-    if len(fields) == 0:
+
+    # If line is empty or its a comment or enables/disables smooth shading
+    # NOTE: No smooth shading support
+    if len(fields) == 0 or fields[0] == "#" or fields[0] == "s":
         return None
 
-    if fields[0] == "#":
-        label = "comment"
-        return (label, fields[1:])
+    if fields[0] == "mtllib":
+        label = "material library"
+        if len(fields) != 2:
+            print("(E) Error, material library file name missing")
+            return None
+        else:
+            return (label, fields[1])
 
-    elif fields[0] == "v":
+    if fields[0] == "usemtl":
+        label = "material"
+        if len(fields) != 2:
+            print("(E) Error, material file name missing")
+            return None
+        else:
+            return (label, fields[1])
+
+    if fields[0] == "v":
         label = "vertex"
         if len(fields) != 4:
             print("(E) Error, 3 entries expected for vertex")
@@ -35,27 +62,6 @@ def process_line(line):
         if len(fields) != 3:
             print("(E) Error, 2 entries expected for vertex texture")
             return None
-
-    elif fields[0] == "mtllib":
-        label = "material library"
-        if len(fields) != 2:
-            print("(E) Error, material library file name missing")
-            return None
-        else:
-            return (label, fields[1])
-
-    elif fields[0] == "usemtl":
-        label = "material"
-        if len(fields) != 2:
-            print("(E) Error, material file name missing")
-            return None
-        else:
-            return (label, fields[1])
-
-    # check this
-    elif fields[0] == "s":
-        label = "s???"
-        return None
 
     elif fields[0] == "f":
         label = "face"
@@ -84,7 +90,7 @@ def load_material_library(file_name):
 
     # print("-- Loading material library {}".format(file_name))
 
-    mtlfile = open(file_name)
+    mtlfile = open(file_name, encoding="utf-8")
     for line in mtlfile:
         fields = line.split()
         if len(fields) != 0:
@@ -123,95 +129,93 @@ def load_obj_file(file_name):
     Function for loading a Blender3D object file. minimalistic, and partial,
     but sufficient for this course. You do not really need to worry about it.
     """
-    # print("Loading mesh(es) from Blender file: {}".format(file_name))
+    vertices = []  # list of vertices
+    vertex_textures = []  # list of texture vectors
+    faces = []  # list of polygonal faces
+    material_names = []  # list of material names
 
-    vlist = []  # list of vertices
-    tlist = []  # list of texture vectors
-    flist = []  # list of polygonal faces
-    mlist = []  # list of material names
-
-    lnlist = []
+    line_no_list = []
     mesh_id = 0
     mesh_list = []
 
     # current material object
     material = None
 
-    with open(file_name) as objfile:
-        line_nb = 0  # count line number for easier error locating
+    file = find_file(file_name, ["models/"])
+
+    with open(file, encoding="utf-8") as obj_file:
+        line_no = 0  # count line number for easier error locating
 
         # loop over all lines in the file
-        for line in objfile:
+        for line in obj_file:
             # process the line
             data = process_line(line)
 
-            line_nb += 1  # increment line
+            line_no += 1  # increment line
 
             # skip empty lines
             if data is None:
                 continue
 
             elif data[0] == "vertex":
-                vlist.append(data[1])
+                vertices.append(data[1])
 
             elif data[0] == "normal":
-                vlist.append(data[1])
+                vertices.append(data[1])
 
             elif data[0] == "vertex texture":
-                tlist.append(data[1])
+                vertex_textures.append(data[1])
 
             elif data[0] == "face":
                 if len(data[1]) == 3:
-                    flist.append(data[1])
+                    faces.append(data[1])
                     mesh_list.append(mesh_id)
-                    mlist.append(material)
-                    lnlist.append(line_nb)
+                    material_names.append(material)
+                    line_no_list.append(line_no)
                 else:
                     # converts quads into pairs of  triangles
                     face1 = [data[1][0], data[1][1], data[1][2]]
-                    flist.append(face1)
+                    faces.append(face1)
                     mesh_list.append(mesh_id)
-                    mlist.append(material)
-                    lnlist.append(line_nb)
+                    material_names.append(material)
+                    line_no_list.append(line_no)
 
                     face2 = [data[1][0], data[1][2], data[1][3]]
-                    flist.append(face2)
+                    faces.append(face2)
                     mesh_list.append(mesh_id)
-                    mlist.append(material)
-                    lnlist.append(line_nb)
+                    material_names.append(material)
+                    line_no_list.append(line_no)
 
             elif data[0] == "material library":
-                library = load_material_library("models/{}".format(data[1]))
+                library_path = find_file(data[1], ["models/"])
+                library = load_material_library(library_path)
 
             # material indicate a new mesh in the file, so we store the previous one if not empty and start
             # a new one.
             elif data[0] == "material":
                 material = library.names[data[1]]
                 mesh_id += 1
-                # print("[l.{}] Loading mesh with material: {}".format(line_nb, data[1]))
-
-    # print("File read. Found {} vertices and {} faces.".format(len(vlist), len(flist)))
 
     return create_meshes_from_blender(
-        vlist, flist, mlist, tlist, library, mesh_list, lnlist
+        vertices, faces, material_names, vertex_textures, library, mesh_list, line_no_list
     )
 
 
-def create_meshes_from_blender(vlist, flist, mlist, tlist, library, mesh_list, lnlist):
-    fstart = 0
+def create_meshes_from_blender(vertices, faces, material_names, vertex_textures, library, mesh_list, line_no_list):
+    start_face = 0
     mesh_id = 1
     meshes = []
 
     # we start by putting all vertices in one array
-    varray = np.array(vlist, dtype="f")
+    vertex_array = np.array(vertices, dtype="f")
 
     # and all texture vectors
-    tarray = np.array(tlist, dtype="f")
+    texture_array = np.array(vertex_textures, dtype="f")
 
-    material = mlist[fstart]
+    material = material_names[start_face]
 
-    for f in range(len(flist)):
-        if mesh_id != mesh_list[f]:  # new mesh is denoted by change in material
+    for face in range(len(faces)):
+        if mesh_id != mesh_list[face]:  # new mesh is denoted by change in material
             # print(
             #     "Creating new mesh %i, faces %i-%i, line %i, with material %i: %s"
             #     % (
@@ -224,23 +228,23 @@ def create_meshes_from_blender(vlist, flist, mlist, tlist, library, mesh_list, l
             #     )
             # )
             try:
-                mesh = create_mesh(varray, tarray, flist, fstart, f, library, material)
+                mesh = create_mesh(vertex_array, texture_array, faces, start_face, face, library, material)
                 meshes.append(mesh)
             except Exception as e:
                 print("(W) could not load mesh!")
                 print(e)
                 raise
 
-            mesh_id = mesh_list[f]
+            mesh_id = mesh_list[face]
 
             # start the next mesh
-            fstart = f
-            material = mlist[fstart]
+            start_face = face
+            material = material_names[start_face]
 
     # add the last mesh
     try:
         meshes.append(
-            create_mesh(varray, tarray, flist, fstart, len(flist), library, material)
+            create_mesh(vertex_array, texture_array, faces, start_face, len(faces), library, material)
         )
     except:
         print("(W) could not load mesh!")

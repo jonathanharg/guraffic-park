@@ -100,7 +100,7 @@ class Camera:
                 )
 
             else:
-                self.angle += (
+                self.angle -= (
                     float(mouse_movement[0]) / self.scene.window_size[0]
                 ) * self.scene.x_sensitivity
                 self.altitude -= (
@@ -140,6 +140,11 @@ class NoclipCamera:
             imgui.text(f"Rotation Matrix:\n {self.rotation_matrix}")
             imgui.text(f"View Matrix:\n {self.view_matrix}")
             imgui.text(f"Translation Matrix:\n {self.translation_matrix}")
+            keys_pressed = pygame.key.get_pressed()
+            imgui.text(f"W: {keys_pressed[pygame.K_w]}")
+            imgui.text(f"A: {keys_pressed[pygame.K_a]}")
+            imgui.text(f"S: {keys_pressed[pygame.K_s]}")
+            imgui.text(f"D: {keys_pressed[pygame.K_d]}")
 
             # close current window context
             imgui.end()

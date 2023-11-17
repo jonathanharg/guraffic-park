@@ -10,6 +10,7 @@ from lightSource import LightSource
 from matutils import scaleMatrix, translationMatrix
 from scene import Scene
 from shaders import FlatShader
+from model import Model
 
 
 class MainScene(Scene):
@@ -52,6 +53,9 @@ class MainScene(Scene):
             mesh=bunny[0],
             shader=FlatShader(),
         )
+
+        # self.bunny_new = Model(bunny[0], position=(2.0,2.0,0.0), rotation=rotationMatrixY(0))
+        self.bunny_new = Model(bunny[0]).from_obj("bunny_world.obj")
 
         box = load_obj_file("models/fluid_border.obj")
         self.box = [
@@ -102,6 +106,7 @@ class MainScene(Scene):
 
         # for the bunny (it consists of a single mesh).
         self.bunny.draw()
+        self.bunny_new.draw()
 
         if self.show_imgui_demo:
             self.show_imgui_demo = imgui.show_demo_window(True)
