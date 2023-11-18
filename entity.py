@@ -79,7 +79,7 @@ class Entity:
         if self.parent is None:
             return self.rotation
         else:
-            return np.matmul(self.parent.rotation, self.rotation)
+            return np.matmul(self.parent.get_world_rotation_matrix(), self.rotation)
 
     def get_world_pose_matrix(self):
         pose_matrix = np.matmul(
