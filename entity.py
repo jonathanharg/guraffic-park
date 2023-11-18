@@ -1,3 +1,5 @@
+from typing import Self
+
 import numpy as np
 
 from matutils import scaleMatrix, translationMatrix
@@ -9,11 +11,14 @@ class Entity:
         position: tuple[float, float, float] = (0.0, 0.0, 0.0),
         scale: float = 1.0,
         rotation=None,
+        parent: Self = None,
     ) -> None:
         self.position = position
         self.scale = scale
-        # self.enable_shadow_casting = True
+        self.parent = parent
         self.rotation = rotation if rotation is not None else np.identity(4)
+
+        # print(f"Creating {self.__class__.__name__}({self.name if hasattr(self, "name") else ""}): {self.position} x{self.scale}")
 
     @property
     def x(self):
@@ -51,14 +56,37 @@ class Entity:
     def z(self, value: float):
         self.position = (self.x, self.y, value)
 
-    def get_translation_matrix(self):
-        return translationMatrix([self.x, self.y, self.z])
+    # TODO: Clean this up
+    def get_world_translation_matrix(self):
+        translation_matrix = translationMatrix([self.x, self.y, self.z])
 
-    def get_scale_matrix(self):
-        return scaleMatrix(self.scale)
+        if self.parent is not None:
+            translation_matrix = np.matmul(
+                self.parent.get_world_translation_matrix(), translation_matrix
+            )
 
-    def get_pose_matrix(self):
-        return np.matmul(
-            np.matmul(self.get_translation_matrix(), self.rotation),
-            self.get_scale_matrix(),
+        return translation_matrix
+
+    def get_world_scale_matrix(self):
+        scale_matrix = scaleMatrix(self.scale)
+
+        if self.parent is not None:
+            scale_matrix = np.matmul(self.parent.get_world_scale_matrix(), scale_matrix)
+
+        return scale_matrix
+
+    def get_world_rotation_matrix(self):
+        if self.parent is None:
+            return self.rotation
+        else:
+            return np.matmul(self.parent.rotation, self.rotation)
+
+    def get_world_pose_matrix(self):
+        pose_matrix = np.matmul(
+            np.matmul(
+                self.get_world_translation_matrix(), self.get_world_rotation_matrix()
+            ),
+            self.get_world_scale_matrix(),
         )
+
+        return pose_matrix

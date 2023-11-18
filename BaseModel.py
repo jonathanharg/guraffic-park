@@ -67,11 +67,12 @@ class BaseModel:
 
     def initialise_vertex_buffer_object(self, property, data):
         if data is None:
-            print(
-                "(W) Warning in {}.bind_attribute(): Data array for attribute {} is None!".format(
-                    self.__class__.__name__, property
-                )
-            )
+            # TODO: FIX THIS
+            # print(
+            #     "(W) Warning in {}.bind_attribute(): Data array for attribute {} is None!".format(
+            #         self.__class__.__name__, property
+            #     )
+            # )
             return
 
         # bind the location of the attribute in the GLSL program to the next index

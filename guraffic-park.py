@@ -1,16 +1,11 @@
 import imgui
-import numpy as np
 import pygame
 from OpenGL import GL as gl
 
-from BaseModel import DrawModelFromMesh
-from blender import load_obj_file
 from camera import Camera, NoclipCamera
 from lightSource import LightSource
-from matutils import scaleMatrix, translationMatrix
 from model import Model
 from scene import Scene
-from shaders import FlatShader
 
 
 class MainScene(Scene):
@@ -21,52 +16,12 @@ class MainScene(Scene):
 
         # ldn = load_obj_file("models/london.obj")
         # self.add_models_list([DrawModelFromMesh(scene=self, M=translationMatrix([0,0,0]),mesh=mesh,shader=FlatShader(),) for mesh in ldn])
+        # Model.from_obj("london.obj")
 
-        meshes = load_obj_file("models/scene.obj")
-        self.add_models_list(
-            [
-                DrawModelFromMesh(
-                    scene=self,
-                    M=scaleMatrix([0.5, 0.5, 0.5]),
-                    mesh=mesh,
-                    shader=FlatShader(),
-                )
-                for mesh in meshes
-            ]
-        )
-
-        table = load_obj_file("models/quad_table.obj")
-        self.table = [
-            DrawModelFromMesh(
-                scene=self,
-                M=translationMatrix([0, -3, +0]),
-                mesh=mesh,
-                shader=FlatShader(),
-            )
-            for mesh in table
-        ]
-
-        bunny = load_obj_file("models/bunny_world.obj")
-        self.bunny = DrawModelFromMesh(
-            scene=self,
-            M=np.matmul(translationMatrix([0, +1, 0]), scaleMatrix([0.5, 0.5, 0.5])),
-            mesh=bunny[0],
-            shader=FlatShader(),
-        )
-
-        # self.bunny_new = Model(bunny[0], position=(2.0,2.0,0.0), rotation=rotationMatrixY(0))
-        self.bunny_new = Model(bunny[0]).from_obj("bunny_world.obj")
-
-        box = load_obj_file("models/fluid_border.obj")
-        self.box = [
-            DrawModelFromMesh(
-                scene=self,
-                M=translationMatrix([0, +1, 0]),
-                mesh=mesh,
-                shader=FlatShader(),
-            )
-            for mesh in box
-        ]
+        floor = Model.from_obj("scene.obj", scale=0.5)
+        Model.from_obj("quad_table.obj", position=(0, -3, 0), scale=2.0, parent=floor)
+        Model.from_obj("bunny_world.obj", position=(0, 1, 0), scale=0.5)
+        Model.from_obj("fluid_border.obj", position=(0, 1, 0))
 
     def keyboard(self, event):
         """
@@ -96,22 +51,10 @@ class MainScene(Scene):
         for model in self.models:
             model.draw()
 
-        # also all models from the table
-        for model in self.table:
-            model.draw()
-
-        # and for the box
-        for model in self.box:
-            model.draw()
-
-        # for the bunny (it consists of a single mesh).
-        self.bunny.draw()
-        self.bunny_new.draw()
-
         if self.show_imgui_demo:
             self.show_imgui_demo = imgui.show_demo_window(True)
 
-        with imgui.begin("Scene"):
+        with imgui.begin("Scene", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE):
             imgui.text("Press ESC to interact with the menu")
             imgui.text(f"FPS: {self.clock.get_fps():.2f}")
             imgui.text(f"Frametime: {self.clock.get_time():.2f}ms")
@@ -119,6 +62,8 @@ class MainScene(Scene):
             (fov_changed, self.fov) = imgui.slider_float("FOV", self.fov, 30, 150)
             if fov_changed:
                 self.update_viewport()
+
+            _, self.fps_max = imgui.slider_float("Max FPS", self.fps_max, 15, 600)
 
             _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
             if self.wireframe:
@@ -133,11 +78,23 @@ class MainScene(Scene):
                 else:
                     self.camera = Camera(self)
 
+            imgui.separator()
+            if imgui.tree_node("Models"):
+                for model in self.models:
+                    if imgui.tree_node(model.name):
+                        model.render_debug_menu()
+                        imgui.tree_pop()
+                imgui.tree_pop()
+            imgui.separator()
+
             if imgui.button("Debug camera"):
                 self.debug_camera = True
 
             if imgui.button("Open ImGui Demo"):
                 self.show_imgui_demo = True
+
+            if imgui.button("Quit"):
+                self.running = False
 
 
 if __name__ == "__main__":

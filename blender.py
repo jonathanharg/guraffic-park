@@ -314,9 +314,9 @@ def fix_blender_textures(textures, faces, vertices):
     # (OpenGL, unlike Blender, does not allow for multiple indexing!)
 
     if faces.shape[2] == 1:
-        print(
-            "(W) No texture indices provided, setting texture coordinate array as None!"
-        )
+        # print(
+        #     "(W) No texture indices provided, setting texture coordinate array as None!"
+        # )
         return None
 
     new_textures = np.zeros((vertices.shape[0], 2), dtype="f")

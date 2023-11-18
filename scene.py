@@ -6,8 +6,7 @@ import pygame
 from imgui.integrations.pygame import PygameRenderer
 from OpenGL import GL as gl
 
-from camera import Camera, NoclipCamera
-from lightSource import LightSource
+from camera import Camera
 from matutils import frustumMatrix
 
 
@@ -59,6 +58,7 @@ class Scene:
         self.mouse_locked = True
         self.show_imgui_demo = False
         self.debug_camera = False
+        self.running = False
 
         pygame.init()
         pygame.display.set_mode(
@@ -109,7 +109,7 @@ class Scene:
         self.mode = 1  # initialise to full interpolated shading
 
         # This class will maintain a list of models to draw in the scene,
-        self.models = []
+        self.models: list["Model"] = []
 
     def add_model(self, model):
         """
