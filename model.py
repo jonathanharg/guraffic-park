@@ -5,7 +5,6 @@ import imgui
 
 from blender import find_file, load_obj_file
 from entity import Entity
-from matutils import rotationMatrixXYZ
 from mesh import Mesh
 from scene import Scene
 from shaders import BaseShaderProgram, FlatShader
@@ -50,27 +49,14 @@ class Model(Entity):
             surface.draw()
 
     def set_shader(self, shader: BaseShaderProgram):
+        # TODO: THIS IS BUSTED
         for surface in self.surfaces:
             surface.shader = shader
             surface.bind_shader(shader.name)
 
-    def render_debug_menu(self):
-        _, self.position = imgui.drag_float3(
-            "Position", self.x, self.y, self.z, change_speed=0.1
-        )
-
+    def debug_menu(self):
         _, self.visible = imgui.checkbox("Visible", self.visible)
-
-        x_rot_changed, x_rot = imgui.slider_angle("X Rotation", self.x_rot())
-        y_rot_changed, y_rot = imgui.slider_angle("Y Rotation", self.y_rot())
-        z_rot_changed, z_rot = imgui.slider_angle("Z Rotation", self.z_rot())
-
-        if x_rot_changed or y_rot_changed or z_rot_changed:
-            self.rotation = rotationMatrixXYZ(x_rot, y_rot, z_rot)
-
-        _, scale = imgui.drag_float("Scale", self.scale, change_speed=0.1)
-        self.scale = scale if scale != 0 else 0.0001
-
+        super().debug_menu()
         # clicked_shader, current_shader = imgui.combo("Shader", )
         # shaders = ["flat", "gouraud", "blinn", "texture"]
         # selected = 0

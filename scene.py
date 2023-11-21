@@ -57,7 +57,6 @@ class Scene:
         self.delta_time = 0
         self.mouse_locked = True
         self.show_imgui_demo = False
-        self.debug_camera = False
         self.running = False
 
         pygame.init()
@@ -88,7 +87,7 @@ class Scene:
         # depending on your model, or your projection matrix, the winding order may be inverted,
         # Typically, you see the far side of the model instead of the front one
         # uncommenting the following line should provide an easy fix.
-        # glCullFace(GL_FRONT)
+        # gl.glCullFace(gl.GL_FRONT)
 
         # enable the vertex array capability
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
@@ -100,7 +99,7 @@ class Scene:
         self.shaders = "flat"
 
         # initialises the camera object
-        self.camera = Camera(self)
+        self.camera = Camera()
 
         # initialise the light source
         # self.light = LightSource(self, position=[5.0, 5.0, 5.0])

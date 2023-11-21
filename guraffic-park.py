@@ -1,5 +1,6 @@
 import imgui
 import pygame
+import quaternion
 from OpenGL import GL as gl
 
 from camera import Camera, NoclipCamera
@@ -18,10 +19,20 @@ class MainScene(Scene):
         # self.add_models_list([DrawModelFromMesh(scene=self, M=translationMatrix([0,0,0]),mesh=mesh,shader=FlatShader(),) for mesh in ldn])
         # Model.from_obj("london.obj")
 
+        self.camera = NoclipCamera()
+
         floor = Model.from_obj("scene.obj", scale=0.5)
-        Model.from_obj("quad_table.obj", position=(0, -3, 0), scale=2.0, parent=floor)
-        Model.from_obj("bunny_world.obj", position=(0, 1, 0), scale=0.5)
-        Model.from_obj("fluid_border.obj", position=(0, 1, 0))
+        table = Model.from_obj(
+            "quad_table.obj", position=(0, -3, 0), scale=2.0, parent=floor
+        )
+        Model.from_obj(
+            "bunny_world.obj", position=(0, 1, -10), scale=0.5, parent=self.camera
+        )
+        self.box = Model.from_obj("fluid_border.obj", position=(0, 1, 0))
+        Model.from_obj(
+            "bunny_world.obj", position=(0, 3, 0), scale=0.5, parent=self.box
+        )
+        # self.camera.parent = self.box
 
     def keyboard(self, event):
         """
@@ -46,6 +57,10 @@ class MainScene(Scene):
         :return: None
         """
         self.camera.update()
+
+        self.box.rotation = (
+            quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
+        )
 
         # then we loop over all models in the list and draw them
         for model in self.models:
@@ -76,19 +91,20 @@ class MainScene(Scene):
                 if self.noclip:
                     self.camera = NoclipCamera(self)
                 else:
-                    self.camera = Camera(self)
+                    self.camera = Camera()
 
             imgui.separator()
             if imgui.tree_node("Models"):
                 for model in self.models:
                     if imgui.tree_node(model.name):
-                        model.render_debug_menu()
+                        model.debug_menu()
                         imgui.tree_pop()
                 imgui.tree_pop()
             imgui.separator()
 
-            if imgui.button("Debug camera"):
-                self.debug_camera = True
+            if imgui.tree_node("Camera"):
+                self.camera.debug_menu()
+                imgui.tree_pop()
 
             if imgui.button("Open ImGui Demo"):
                 self.show_imgui_demo = True
