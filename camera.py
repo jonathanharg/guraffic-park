@@ -150,7 +150,7 @@ class NoclipCamera(Camera):
 
         # Ignore mouse events if we're interacting with the GUI
         if not scene.mouse_locked:
-            return
+            return super().update()
 
         mouse_movement = pygame.mouse.get_rel()
         keys_pressed = pygame.key.get_pressed()
