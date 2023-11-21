@@ -62,6 +62,7 @@ class Entity:
     def get_world_translation_matrix(self):
         translation_matrix = translationMatrix([self.x, self.y, self.z])
 
+        # TODO: This should be parents pose matrix + 
         if self.parent is not None:
             translation_matrix = np.matmul(
                 self.parent.get_world_translation_matrix(), translation_matrix
@@ -86,6 +87,14 @@ class Entity:
             )
 
     def get_world_pose_matrix(self):
+        # TODO: ORDER OF OPERATIONS
+        # - Parents rotation
+        # - Childs rotation
+        # - Parents scale
+        # - Childs scale
+        # - Parents translation
+        # - Childs translation
+
         pose_matrix = np.matmul(
             np.matmul(
                 self.get_world_translation_matrix(), self.get_world_rotation_matrix()
