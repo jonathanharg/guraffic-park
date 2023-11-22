@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Any, Type
 import numpy as np
 from OpenGL import GL as gl
 from OpenGL.GL import shaders
@@ -8,6 +8,14 @@ from scene import Scene
 
 if TYPE_CHECKING:
     from model import Model
+
+class Singleton(type):
+    _instances = {}
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        if self not in self._instances:
+            self._instances[self] = super().__call__(*args, **kwds)
+        return self._instances[self]
 
 class Uniform:
     """
@@ -111,6 +119,7 @@ class Shader():
     This is the base class for loading and compiling the GLSL shaders.
     """
     shader_count = 0
+    compiled_program_ids = {}
 
     def __init__(self, name, vertex_shader=None, fragment_shader=None):
         """
@@ -158,20 +167,23 @@ class Shader():
         :return:
         """
         try:
-            # TODO: I THINK WE'RE COMPILING A NEW SHADER FOR EACH MESH, NOT GOOD!?
-            self.program = gl.glCreateProgram()
-            Shader.shader_count += 1
-            print(f"Just compiled a new shader, current total: {Shader.shader_count}")
-            gl.glAttachShader(
-                self.program,
-                shaders.compileShader(self.vertex_shader_source, gl.GL_VERTEX_SHADER),
-            )
-            gl.glAttachShader(
-                self.program,
-                shaders.compileShader(
-                    self.fragment_shader_source, gl.GL_FRAGMENT_SHADER
-                ),
-            )
+            if self.__class__.__name__ not in Shader.compiled_program_ids:
+                self.program = gl.glCreateProgram()
+                Shader.shader_count += 1
+                print(f"Just compiled a new shader, current total: {Shader.shader_count}")
+                gl.glAttachShader(
+                    self.program,
+                    shaders.compileShader(self.vertex_shader_source, gl.GL_VERTEX_SHADER),
+                )
+                gl.glAttachShader(
+                    self.program,
+                    shaders.compileShader(
+                        self.fragment_shader_source, gl.GL_FRAGMENT_SHADER
+                    ),
+                )
+                self.compiled_program_ids[self.__class__.__name__] = self.program
+            else:
+                self.program = self.compiled_program_ids[self.__class__.__name__]
 
         except Exception as e:
             raise RuntimeError(f"Error compiling {self.name} shader: {e}") from e
