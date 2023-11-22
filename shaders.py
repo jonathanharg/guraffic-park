@@ -144,8 +144,13 @@ class Shader():
             "PVM": Uniform("PVM"),  # projection view model matrix
         }
 
+        # print(f"CHECK: v{gl.glGetString(gl.GL_VERSION)} {bool(gl.glCreateProgram)}")
+
+        # self.compile({})
+
     def add_uniform(self, name:str):
         self.uniforms[name] = Uniform(name)
+        self.uniforms[name].link(self.program)
 
     def compile(self, attributes):
         """

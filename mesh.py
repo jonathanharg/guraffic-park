@@ -133,8 +133,7 @@ class Mesh(Entity):
 
         gl.glBindVertexArray(0)
         self.shader.unbind()
-    
-    
+
     def vbo__del__(self):
         """
         Release all VBO objects when finished.
@@ -222,15 +221,9 @@ class Mesh(Entity):
         """
         If a new shader is bound, we need to re-link it to ensure attributes are correctly linked.
         """
-        # TODO: THIS IS BUSTED
-        if self.shader.name is not shader:
-            if isinstance(shader, str):
-                self.shader = PhongShader(shader)
-            else:
-                self.shader = shader
-
-            # bind all attributes and compile the shader
-            self.shader.bind_attributes(self.attributes)
+        self.shader = shader
+        self.shader.compile(self.attributes)
+        # self.shader.bind_attributes(self.attributes)
 
 
 class CubeMesh(Mesh):

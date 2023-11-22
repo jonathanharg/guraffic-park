@@ -52,10 +52,8 @@ class Model(Entity):
 
     def set_shader(self, shader: Shader):
         self.shader = shader
-        # TODO: THIS IS BUSTED
         for mesh in self.meshes:
-            # mesh.shader = shader
-            mesh.bind_shader(shader.name)
+            mesh.bind_shader(shader)
 
     def debug_menu(self):
         super().debug_menu()
