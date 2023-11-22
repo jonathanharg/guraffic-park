@@ -61,10 +61,9 @@ class Model(Entity):
         super().debug_menu()
         _, self.visible = imgui.checkbox("Visible", self.visible)
         
-        ALL_SHADERS = [PhongShader, FlatShader, TextureShader]
+        ALL_SHADERS = [Shader, PhongShader, FlatShader, TextureShader]
 
         current_shader = ALL_SHADERS.index(type(self.shader))
-        imgui.text(f"CURRENT SHADER: {self.shader.name} ({self.shader.__class__.__name__})")
         shader_changed, selected_index = imgui.combo(
             "Shader", current_shader, [shader.__name__ for shader in ALL_SHADERS]
         )
