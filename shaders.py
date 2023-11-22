@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING, Type
 import numpy as np
 from OpenGL import GL as gl
 from OpenGL.GL import shaders
@@ -5,6 +6,8 @@ from OpenGL.GL import shaders
 from matutils import homog, unhomog
 from scene import Scene
 
+if TYPE_CHECKING:
+    from model import Model
 
 class Uniform:
     """
@@ -103,12 +106,13 @@ class Uniform:
         self.value = value
 
 
-class BaseShaderProgram:
+class Shader():
     """
     This is the base class for loading and compiling the GLSL shaders.
     """
+    shader_count = 0
 
-    def __init__(self, name=None, vertex_shader=None, fragment_shader=None):
+    def __init__(self, name, vertex_shader=None, fragment_shader=None):
         """
         Initialises the shaders
         :param vertex_shader: the name of the file containing the vertex shader GLSL code
@@ -116,51 +120,31 @@ class BaseShaderProgram:
         """
 
         self.name = name
-        # print("Creating shader program: {}".format(name))
 
-        if name is not None:
-            vertex_shader = "shaders/{}/vertex_shader.glsl".format(name)
-            fragment_shader = "shaders/{}/fragment_shader.glsl".format(name)
+        if name is None:
+            name = "default"
 
-        # load the vertex shader GLSL code
         if vertex_shader is None:
-            self.vertex_shader_source = """
-                #version 130
-
-                in vec3 position;   // vertex position
-                uniform mat4 PVM; // the Perspective-View-Model matrix is received as a Uniform
-
-                // main function of the shader
-                void main() {
-                    gl_Position = PVM * vec4(position, 1.0f);  // first we transform the position using PVM matrix
-                }
-            """
-        else:
-            # print("Load vertex shader from file: {}".format(vertex_shader))
-            with open(vertex_shader, "r") as file:
-                self.vertex_shader_source = file.read()
-            # print(self.vertex_shader_source)
-
-        # load the fragment shader GLSL code
+            vertex_shader = f"shaders/{name}/vertex_shader.glsl"
+        
         if fragment_shader is None:
-            self.fragment_shader_source = """
-                #version 130
-                void main() {                   
-                      gl_FragColor = vec4(1.0f);      // for now, we just apply the colour uniformly
-                }
-            """
-        else:
-            # print("Load fragment shader from file: {}".format(fragment_shader))
-            with open(fragment_shader, "r") as file:
-                self.fragment_shader_source = file.read()
-            # print(self.fragment_shader_source)
+            fragment_shader = f"shaders/{name}/fragment_shader.glsl"
+
+
+        with open(vertex_shader, "r") as file:
+            self.vertex_shader_source = file.read()
+
+
+        with open(fragment_shader, "r") as file:
+            self.fragment_shader_source = file.read()
+
 
         # in order to simplify extension of the class in the future, we start storing uniforms in a dictionary.
         self.uniforms = {
-            "PVM": Uniform("PVM"),  # project view model matrix
+            "PVM": Uniform("PVM"),  # projection view model matrix
         }
 
-    def add_uniform(self, name):
+    def add_uniform(self, name:str):
         self.uniforms[name] = Uniform(name)
 
     def compile(self, attributes):
@@ -168,9 +152,11 @@ class BaseShaderProgram:
         Call this function to compile the GLSL codes for both shaders.
         :return:
         """
-        # print("Compiling GLSL shaders [{}]...".format(self.name))
         try:
+            # TODO: I THINK WE'RE COMPILING A NEW SHADER FOR EACH MESH, NOT GOOD!?
             self.program = gl.glCreateProgram()
+            Shader.shader_count += 1
+            print(f"Just compiled a new shader, current total: {Shader.shader_count}")
             gl.glAttachShader(
                 self.program,
                 shaders.compileShader(self.vertex_shader_source, gl.GL_VERTEX_SHADER),
@@ -182,19 +168,10 @@ class BaseShaderProgram:
                 ),
             )
 
-            # self.program = shaders.compileProgram(
-            #    shaders.compileShader(self.vertex_shader_source, shaders.GL_VERTEX_SHADER),
-            #    shaders.compileShader(self.fragment_shader_source, shaders.GL_FRAGMENT_SHADER)
-            # )
-        except RuntimeError as error:
-            print(
-                "(E) An error occured while compiling {} shader:\n {}\n... forwarding exception...".format(
-                    self.name, error
-                )
-            ),
-            raise error
+        except Exception as e:
+            raise RuntimeError(f"Error compiling {self.name} shader: {e}") from e
 
-        self.bindAttributes(attributes)
+        self.bind_attributes(attributes)
 
         gl.glLinkProgram(self.program)
 
@@ -205,13 +182,12 @@ class BaseShaderProgram:
         for uniform in self.uniforms:
             self.uniforms[uniform].link(self.program)
 
-    def bindAttributes(self, attributes):
+    def bind_attributes(self, attributes):
         # bind all shader attributes to the correct locations in the VAO
         for name, location in attributes.items():
             gl.glBindAttribLocation(self.program, location, name)
-            # print("Binding attribute {} to location {}".format(name, location))
 
-    def bind(self, model, M):
+    def bind(self, model: Type['Model']):
         """
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         """
@@ -219,30 +195,22 @@ class BaseShaderProgram:
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
 
-        P = Scene.current_scene.perspective_matrix
-        V = Scene.current_scene.camera.view_matrix
+        projection_matrix = Scene.current_scene.projection_matrix
+        view_matrix = Scene.current_scene.camera.view_matrix
 
         # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(np.matmul(P, np.matmul(V, M)))
+        self.uniforms["PVM"].bind(np.matmul(projection_matrix, np.matmul(view_matrix, model.world_pose)))
+    
+    def unbind(self):
+        gl.glUseProgram(0)
 
-
-class PhongShader(BaseShaderProgram):
-    """
-    This is the base class for loading and compiling the GLSL shaders.
-    """
-
-    def __init__(self, name="phong"):
-        """
-        Initialises the shaders
-        :param vertex_shader: the name of the file containing the vertex shader GLSL code
-        :param fragment_shader: the name of the file containing the fragment shader GLSL code
-        """
-
-        BaseShaderProgram.__init__(self, name=name)
+class PhongShader(Shader):
+    def __init__(self, name="phong", **kwargs):
+        super().__init__(name=name, **kwargs)
 
         # in order to simplify extension of the class in the future, we start storing uniforms in a dictionary.
         self.uniforms = {
-            "PVM": Uniform("PVM"),  # project view model matrix
+            "PVM": Uniform("PVM"),  # projection view model matrix
             "VM": Uniform("VM"),  # view model matrix (necessary for light computations)
             "VMiT": Uniform(
                 "VMiT"
@@ -251,7 +219,6 @@ class PhongShader(BaseShaderProgram):
                 "mode", 0
             ),  # rendering mode (only for illustration, in general you will want one shader program per mode)
             "alpha": Uniform("alpha", 1.0),
-            # rendering mode (only for illustration, in general you will want one shader program per mode)
             "Ka": Uniform("Ka"),
             "Kd": Uniform("Kd"),
             "Ks": Uniform("Ks"),
@@ -265,33 +232,31 @@ class PhongShader(BaseShaderProgram):
             #'textureObject2': Uniform('textureObject2'),
         }
 
-    def bind(self, model, M):
+    def bind(self, model: Type['Model']):
         """
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         """
-        P = Scene.current_scene.perspective_matrix
-        V = Scene.current_scene.camera.view_matrix
-        # P = model.scene.perspective_matrix
-        # V = model.scene.camera.view_matrix
+        projection_matrix = Scene.current_scene.projection_matrix
+        view_matrix = Scene.current_scene.camera.view_matrix
 
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
 
         # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(np.matmul(P, np.matmul(V, M)))
+        self.uniforms["PVM"].bind(np.matmul(projection_matrix, np.matmul(view_matrix, model.world_pose)))
 
         # set the PVM matrix uniform
-        self.uniforms["VM"].bind(np.matmul(V, M))
+        self.uniforms["VM"].bind(np.matmul(view_matrix, model.world_pose))
 
         # set the PVM matrix uniform
-        self.uniforms["VMiT"].bind(np.linalg.inv(np.matmul(V, M))[:3, :3].transpose())
+        self.uniforms["VMiT"].bind(np.linalg.inv(np.matmul(view_matrix, model.world_pose))[:3, :3].transpose())
 
         # bind the mode to the program
         self.uniforms["mode"].bind(Scene.current_scene.mode)
 
-        self.uniforms["alpha"].bind(model.mesh.material.alpha)
+        self.uniforms["alpha"].bind(model.material.alpha)
 
-        if len(model.mesh.textures) > 0:
+        if len(model.textures) > 0:
             # bind the texture(s)
             self.uniforms["textureObject"].bind(0)
             self.uniforms["has_texture"].bind(1)
@@ -299,10 +264,10 @@ class PhongShader(BaseShaderProgram):
             self.uniforms["has_texture"].bind(0)
 
         # bind material properties
-        self.bind_material_uniforms(model.mesh.material)
+        self.bind_material_uniforms(model.material)
 
         # bind the light properties
-        self.bind_light_uniforms(Scene.current_scene.light, V)
+        self.bind_light_uniforms(Scene.current_scene.light, view_matrix)
 
     def bind_light_uniforms(self, light, V):
         self.uniforms["light"].bind_vector(unhomog(np.dot(V, homog(light.position))))
@@ -321,25 +286,22 @@ class PhongShader(BaseShaderProgram):
             print("(W) Warning re-defining already existing uniform %s" % name)
         self.uniforms[name] = Uniform(name)
 
-    def unbind(self):
-        gl.glUseProgram(0)
-
 
 class FlatShader(PhongShader):
     def __init__(self):
-        PhongShader.__init__(self, name="flat")
+        super().__init__(name="flat")
 
 
 class GouraudShader(PhongShader):
     def __init__(self):
-        PhongShader.__init__(self, name="gouraud")
+        super().__init__(name="gouraud")
 
 
 class BlinnShader(PhongShader):
     def __init__(self):
-        PhongShader.__init__(self, name="blinn")
+        super().__init__(name="blinn")
 
 
 class TextureShader(PhongShader):
     def __init__(self):
-        PhongShader.__init__(self, name="texture")
+        super().__init__(name="texture")

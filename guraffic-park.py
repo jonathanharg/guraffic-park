@@ -1,5 +1,4 @@
 import imgui
-import pygame
 import quaternion
 from OpenGL import GL as gl
 
@@ -7,6 +6,7 @@ from camera import Camera, FreeCamera, OrbitCamera
 from lightSource import LightSource
 from model import Model
 from scene import Scene
+# from skybox import SkyBox
 
 
 class MainScene(Scene):
@@ -15,11 +15,12 @@ class MainScene(Scene):
 
         self.light = LightSource(self, position=[5.0, 3.0, 5.0])
 
-        # ldn = load_obj_file("models/london.obj")
-        # self.add_models_list([DrawModelFromMesh(scene=self, M=translationMatrix([0,0,0]),mesh=mesh,shader=FlatShader(),) for mesh in ldn])
-        # Model.from_obj("london.obj")
+        # ldn = Model.from_obj("london.obj")
+
+        # cube = Model()
 
         self.camera = OrbitCamera()
+        # self.skybox = SkyBox()
 
         floor = Model.from_obj("scene.obj", scale=0.5)
         table = Model.from_obj(
@@ -31,23 +32,6 @@ class MainScene(Scene):
         )
         # self.camera.parent = self.box
 
-    def keyboard(self, event):
-        """
-        Process additional keyboard events for this demo.
-        """
-        Scene.keyboard(self, event)
-
-        if event.key == pygame.K_1:
-            print("Number 1 detected")
-
-        #     print("--> using Flat shading")
-        #     self.bunny.use_textures = True
-        #     self.bunny.bind_shader("flat")
-
-        # elif event.key == pygame.K_2:
-        #     print("--> using Texture shading")
-        #     self.bunny.bind_shader("texture")
-
     def draw(self):
         """
         Draw all models in the scene
@@ -58,6 +42,9 @@ class MainScene(Scene):
         self.box.rotation = (
             quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
         )
+
+        # if self.skybox is not None:
+        #     self.skybox.draw()
 
         # then we loop over all models in the list and draw them
         for model in self.models:
@@ -85,11 +72,11 @@ class MainScene(Scene):
 
             cameras = [Camera, FreeCamera, OrbitCamera]
             current_camera = cameras.index(type(self.camera))
-            camera_clicked, selected_index = imgui.combo(
+            camera_changed, selected_index = imgui.combo(
                 "Camera Mode", current_camera, [cam.__name__ for cam in cameras]
             )
 
-            if camera_clicked:
+            if camera_changed:
                 self.camera = cameras[selected_index]()
 
             imgui.separator()

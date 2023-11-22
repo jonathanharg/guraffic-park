@@ -1,4 +1,4 @@
-from typing import Self
+from typing import TYPE_CHECKING, Self, Type
 
 import imgui
 import numpy as np
@@ -9,13 +9,15 @@ from OpenGL import GL as gl
 from camera import Camera
 from matutils import frustumMatrix
 
+if TYPE_CHECKING:
+    from model import Model
 
 class Scene:
     """
     This is the main class for drawing an OpenGL scene using the PyGame library
     """
 
-    current_scene: Self | None = None
+    current_scene: Self = None # type: ignore
 
     def update_viewport(self):
         pygame.display.set_mode(
@@ -33,7 +35,7 @@ class Scene:
 
         # to start with, we use an orthographic projection; change this.
         # self.P = frustumMatrix(left, right, top, bottom, near, far)
-        self.perspective_matrix = frustumMatrix(
+        self.projection_matrix = frustumMatrix(
             left, right, top, bottom, self.near_clipping, self.far_clipping
         )
 
@@ -45,7 +47,7 @@ class Scene:
         self.window_size = (width, height)
         self.wireframe = False
         self.fov = 90.0
-        self.perspective_matrix = None
+        self.projection_matrix = None
         self.near_clipping = 0.5
         self.far_clipping = 1000.0
         self.x_sensitivity = 3
@@ -74,7 +76,6 @@ class Scene:
 
         imgui.create_context()
         self.imgui_impl = PygameRenderer()
-        self.show_custom_window = False
 
         io = imgui.get_io()
         io.fonts.add_font_default()
@@ -83,7 +84,7 @@ class Scene:
         self.update_viewport()
 
         # this selects the background color
-        gl.glClearColor(0.886, 0.91, 0.941, 1.0)
+        gl.glClearColor(0.0, 0.0, 0.0, 1.0)
 
         # enable back face culling (see lecture on clipping and visibility
         gl.glEnable(gl.GL_CULL_FACE)
@@ -111,7 +112,7 @@ class Scene:
         self.mode = 1  # initialise to full interpolated shading
 
         # This class will maintain a list of models to draw in the scene,
-        self.models: list["Model"] = []
+        self.models: list[Type['Model']] = []
 
     def add_model(self, model):
         """

@@ -1,10 +1,10 @@
 import numpy as np
 from OpenGL import GL as gl
 
-from BaseModel import DrawModelFromMesh
 from cubeMap import CubeMap
+from material import Material
 from matutils import poseMatrix
-from mesh import CubeMesh
+from mesh import CubeMesh, Mesh
 from shaders import BaseShaderProgram
 
 
@@ -24,18 +24,19 @@ class SkyBoxShader(BaseShaderProgram):
         # self.uniforms['PVM'].bind(np.matmul(V, M))
 
 
-class SkyBox(DrawModelFromMesh):
-    def __init__(self, scene):
-        DrawModelFromMesh.__init__(
-            self,
-            scene=scene,
-            M=poseMatrix(scale=10.0),
-            mesh=CubeMesh(texture=CubeMap(name="skybox/ame_ash"), inside=True),
-            shader=SkyBoxShader(),
-            name="skybox",
+class SkyBox(Mesh):
+    def __init__(self):
+        material = Material()
+        
+        super().__init__(
+            scale=100,
+            # mesh=CubeMesh(texture=CubeMap(name="skybox/ame_ash"), inside=True),
+            mesh=CubeMesh(invert= True),
+            # shader=SkyBoxShader(),
+            # name="skybox",
         )
 
     def draw(self):
         gl.glDepthMask(gl.GL_FALSE)
-        DrawModelFromMesh.draw(self)
+        super().draw()
         gl.glDepthMask(gl.GL_TRUE)

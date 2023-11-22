@@ -1,131 +1,6 @@
-import numpy as np
 from OpenGL import GL as gl
 
-from BaseModel import DrawModelFromMesh
-from matutils import poseMatrix
-from mesh import Mesh
-from shaders import BaseShaderProgram
 from texture import ImageWrapper, Texture
-
-
-class FlattenedCubeShader(BaseShaderProgram):
-    """
-    Base class for rendering the flattened cube.
-    """
-
-    def __init__(self):
-        BaseShaderProgram.__init__(self, name="flattened_cube")
-
-        # the main uniform to add is the cube map.
-        self.add_uniform("sampler_cube")
-
-
-class FlattenCubeMap(DrawModelFromMesh):
-    """
-    Class for drawing the cube faces flattened on the screen (for debugging purposes)
-    """
-
-    def __init__(self, scene, cube=None):
-        """
-        Initialises the
-        :param scene: The scene object.
-        :param cube: [optional] if not None, the cubemap texture to draw (can be set at a later stage using the set() method)
-        """
-
-        vertices = (
-            np.array(
-                [
-                    [-2.0, -1.0, 0.0],  # 0 --> left
-                    [-2.0, 0.0, 0.0],  # 1
-                    [-1.0, -1.0, 0.0],  # 2
-                    [-1.0, 0.0, 0.0],  # 3
-                    [-1.0, -1.0, 0.0],  # 2 --> front
-                    [-1.0, 0.0, 0.0],  # 3
-                    [0.0, -1.0, 0.0],  # 4`
-                    [0.0, 0.0, 0.0],  # 5
-                    [0.0, -1.0, 0.0],  # 4` --> right
-                    [0.0, 0.0, 0.0],  # 5
-                    [1.0, -1.0, 0.0],  # 6
-                    [1.0, 0.0, 0.0],  # 7
-                    [1.0, -1.0, 0.0],  # 6 --> back
-                    [1.0, 0.0, 0.0],  # 7
-                    [2.0, -1.0, 0.0],  # 8
-                    [2.0, 0.0, 0.0],  # 9
-                    [-1.0, 0.0, 0.0],  # 10
-                    [-1.0, 1.0, 0.0],  # 3  --> top
-                    [0.0, 0.0, 0.0],  # 11
-                    [0.0, 1.0, 0.0],  # 5
-                    [-1.0, -2.0, 0.0],  # 12
-                    [-1.0, -1.0, 0.0],  # 2 ---> bottom
-                    [0.0, -2.0, 0.0],  # 13
-                    [0.0, -1.0, 0.0],  # 4`
-                ],
-                dtype="f",
-            )
-            / 2
-        )
-
-        # set the faces of the flattened cube
-        faces = np.zeros(vertices.shape, dtype=np.uint32)
-        for f in range(int(vertices.shape[0] / 4)):
-            faces[2 * f + 0, :] = [0 + f * 4, 3 + f * 4, 1 + f * 4]
-            faces[2 * f + 1, :] = [0 + f * 4, 2 + f * 4, 3 + f * 4]
-
-        # and set the texture coordinates to index in the cube map texture
-        texture_coords = np.array(
-            [
-                [-1, +1, -1],  # left
-                [-1, -1, -1],
-                [-1, +1, +1],
-                [-1, -1, +1],
-                [-1, +1, +1],  # front
-                [-1, -1, +1],
-                [+1, +1, +1],
-                [+1, -1, +1],
-                [+1, +1, +1],  # right
-                [+1, -1, +1],
-                [+1, +1, -1],
-                [+1, -1, -1],
-                [+1, +1, -1],  # back
-                [+1, -1, -1],
-                [-1, +1, -1],
-                [-1, -1, -1],
-                [-1, -1, +1],  # top
-                [-1, -1, -1],
-                [+1, -1, +1],
-                [+1, -1, -1],
-                [-1, +1, -1],  # bottom
-                [-1, +1, +1],
-                [+1, +1, -1],
-                [+1, +1, +1],
-            ],
-            dtype="f",
-        )
-
-        # create a mesh from the object
-        mesh = Mesh(vertices=vertices, faces=faces, texture_coords=texture_coords)
-
-        # add the CubeMap object if provided (otherwise you need to call set() at a later stage)
-        if cube is not None:
-            mesh.textures.append(cube)
-
-        # Finishes initialising the mesh
-        DrawModelFromMesh.__init__(
-            self,
-            scene=scene,
-            M=poseMatrix(position=[0, 0, +1]),
-            mesh=mesh,
-            shader=FlattenedCubeShader(),
-            visible=False,
-        )
-
-    def set(self, cube):
-        """
-        Set the cube map to display
-        :param cube: A CubeMap texture
-        """
-        self.mesh.textures = [cube]
-
 
 class CubeMap(Texture):
     """
@@ -165,8 +40,8 @@ class CubeMap(Texture):
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: "back.bmp",
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: "right.bmp",
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: "front.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: "bottom.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: "top.bmp",
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: "top.bmp",
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: "bottom.bmp",
         }
 
         # generate the texture.

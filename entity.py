@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Type
 
 import imgui
 import numpy as np
@@ -13,7 +13,7 @@ class Entity:
         position: tuple[float, float, float] = (0.0, 0.0, 0.0),
         scale: float = 1.0,
         rotation=None,
-        parent: Self | None = None,
+        parent: Type['Entity'] | None = None,
     ) -> None:
         self.position = np.array(position, dtype=np.float32)
         self.scale = scale
@@ -29,15 +29,15 @@ class Entity:
         # print(f"Creating {self.__class__.__name__}({self.name if hasattr(self, "name") else ""}): {self.position} x{self.scale}")
 
     @property
-    def x(self):
+    def x(self) -> np.float32:
         return self.position[0]
 
     @property
-    def y(self):
+    def y(self) -> np.float32:
         return self.position[1]
 
     @property
-    def z(self):
+    def z(self) -> np.float32:
         return self.position[2]
 
     @property
