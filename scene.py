@@ -15,7 +15,7 @@ class Scene:
     This is the main class for drawing an OpenGL scene using the PyGame library
     """
 
-    current_scene: Self = None
+    current_scene: Self | None = None
 
     def update_viewport(self):
         pygame.display.set_mode(
@@ -25,6 +25,7 @@ class Scene:
 
         aspect_ratio = self.window_size[1] / self.window_size[0]
 
+        # TODO: Move this into camera class
         right = self.near_clipping * np.tan(self.fov * np.pi / 360.0)
         left = -right
         top = -right * aspect_ratio
@@ -49,9 +50,6 @@ class Scene:
         self.far_clipping = 1000.0
         self.x_sensitivity = 3
         self.y_sensitivity = 3
-        self.x_pan_amount = 10
-        self.y_pan_amount = 10
-        self.noclip = False
         self.fps_max = 60
         self.clock = pygame.time.Clock()
         self.delta_time = 0
@@ -68,6 +66,11 @@ class Scene:
         pygame.mouse.set_visible(False)
         # Increase key repeat window, Makes WASD movement smoother
         pygame.key.set_repeat(0)
+        # Center the mouse
+        pygame.mouse.set_pos((self.window_size[0] / 2, self.window_size[1] / 2))
+
+        # Print numpy matrices to a reasonable degree of accuracy for debugging
+        np.set_printoptions(precision=3, suppress=True)
 
         imgui.create_context()
         self.imgui_impl = PygameRenderer()

@@ -3,7 +3,7 @@ import pygame
 import quaternion
 from OpenGL import GL as gl
 
-from camera import Camera, NoclipCamera
+from camera import Camera, FreeCamera, OrbitCamera
 from lightSource import LightSource
 from model import Model
 from scene import Scene
@@ -19,18 +19,15 @@ class MainScene(Scene):
         # self.add_models_list([DrawModelFromMesh(scene=self, M=translationMatrix([0,0,0]),mesh=mesh,shader=FlatShader(),) for mesh in ldn])
         # Model.from_obj("london.obj")
 
-        self.camera = NoclipCamera()
+        self.camera = OrbitCamera()
 
         floor = Model.from_obj("scene.obj", scale=0.5)
         table = Model.from_obj(
-            "quad_table.obj", position=(0, -3, 0), scale=2.0, parent=floor
-        )
-        Model.from_obj(
-            "bunny_world.obj", position=(0, 1, -10), scale=0.5, parent=self.camera
+            "quad_table.obj", position=(0, -6, 0), scale=2.0, parent=floor
         )
         self.box = Model.from_obj("fluid_border.obj", position=(0, 1, 0))
         Model.from_obj(
-            "bunny_world.obj", position=(0, 3, 0), scale=0.5, parent=self.box
+            "bunny_world.obj", position=(0, 2, 0), scale=0.5, parent=self.box
         )
         # self.camera.parent = self.box
 
@@ -86,12 +83,14 @@ class MainScene(Scene):
             else:
                 gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
 
-            clicked_noclip_checkbox, self.noclip = imgui.checkbox("Noclip", self.noclip)
-            if clicked_noclip_checkbox:
-                if self.noclip:
-                    self.camera = NoclipCamera(self)
-                else:
-                    self.camera = Camera()
+            cameras = [Camera, FreeCamera, OrbitCamera]
+            current_camera = cameras.index(type(self.camera))
+            camera_clicked, selected_index = imgui.combo(
+                "Camera Mode", current_camera, [cam.__name__ for cam in cameras]
+            )
+
+            if camera_clicked:
+                self.camera = cameras[selected_index]()
 
             imgui.separator()
             if imgui.tree_node("Models"):

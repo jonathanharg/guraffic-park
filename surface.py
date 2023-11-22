@@ -26,7 +26,7 @@ class Surface(Entity):
     def draw(self):
         gl.glBindVertexArray(self.vertex_array_object)
 
-        self.shader.bind(self, self.get_world_pose_matrix())
+        self.shader.bind(self, self.world_pose)
 
         for offset, texture in enumerate(self.mesh.textures):
             gl.glActiveTexture(gl.GL_TEXTURE0 + offset)

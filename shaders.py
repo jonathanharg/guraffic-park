@@ -219,8 +219,8 @@ class BaseShaderProgram:
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
 
-        P = model.scene.perspective_matrix
-        V = model.scene.camera.view_matrix
+        P = Scene.current_scene.perspective_matrix
+        V = Scene.current_scene.camera.view_matrix
 
         # set the PVM matrix uniform
         self.uniforms["PVM"].bind(np.matmul(P, np.matmul(V, M)))
