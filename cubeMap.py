@@ -65,7 +65,7 @@ class CubeMap(Texture):
         # unbind the texture
         self.unbind()
 
-    def set(self, name, files=None):
+    def set(self, name:str , files=None):
         """
         Load the cube's faces from images on the disk
         :param name: The folder in which the images are.
@@ -76,7 +76,7 @@ class CubeMap(Texture):
             self.files = files
 
         for key, value in self.files.items():
-            img = ImageWrapper("{}/{}".format(name, value))
+            img = ImageWrapper(f"{name}/{value}")
 
             # convert the python image object to a plain byte array for passsing to OpenGL
             gl.glTexImage2D(

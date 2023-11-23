@@ -159,7 +159,8 @@ class Shader():
 
     def add_uniform(self, name:str):
         self.uniforms[name] = Uniform(name)
-        self.uniforms[name].link(self.program)
+        if self.program is not None:
+            self.uniforms[name].link(self.program)
 
     def compile(self, attributes):
         """

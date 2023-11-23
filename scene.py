@@ -1,3 +1,6 @@
+import cProfile
+import pstats
+import stat
 from typing import TYPE_CHECKING, Self, Type
 
 import imgui
@@ -52,7 +55,7 @@ class Scene:
         self.far_clipping = 1000.0
         self.x_sensitivity = 3
         self.y_sensitivity = 3
-        self.fps_max = 60
+        self.fps_max = 300
         self.clock = pygame.time.Clock()
         self.delta_time = 0
         self.mouse_locked = True
@@ -225,19 +228,24 @@ class Scene:
         Draws the scene in a loop until exit.
         """
 
-        # We have a classic program loop
-        self.running = True
-        while self.running:
-            self.delta_time = self.clock.tick(self.fps_max) / 1000
-            self.handle_pygame_events()
-            self.imgui_impl.process_inputs()
-            imgui.new_frame()
+        with cProfile.Profile() as pr:
+            # We have a classic program loop
+            self.running = True
+            while self.running:
+                self.delta_time = self.clock.tick(self.fps_max) / 1000
+                self.handle_pygame_events()
+                self.imgui_impl.process_inputs()
+                imgui.new_frame()
 
-            gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+                gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-            self.draw()
+                self.draw()
 
-            imgui.render()
-            self.imgui_impl.render(imgui.get_draw_data())
+                imgui.render()
+                self.imgui_impl.render(imgui.get_draw_data())
 
-            pygame.display.flip()
+                pygame.display.flip()
+        
+        stats = pstats.Stats(pr)
+        stats.sort_stats(pstats.SortKey.TIME)
+        stats.dump_stats(filename='last_run.prof')

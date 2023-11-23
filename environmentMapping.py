@@ -12,10 +12,11 @@ from matutils import (
     translationMatrix,
 )
 from mesh import CubeMesh
-from shaders import BaseShaderProgram
+from scene import Scene
+from shaders import BaseShaderProgram, Shader
 
 
-class EnvironmentShader(BaseShaderProgram):
+class EnvironmentShader(Shader):
     def __init__(self, name="environment", map=None):
         BaseShaderProgram.__init__(self, name=name)
         self.add_uniform("sampler_cube")
@@ -36,9 +37,9 @@ class EnvironmentShader(BaseShaderProgram):
         gl.glUseProgram(self.program)
 
         projection_matrix = (
-            model.scene.projection_matrix
+            Scene.current_scene.projection_matrix
         )  # get projection matrix from the scene
-        view_matrix = model.scene.camera.view_matrix  # get view matrix from the camera
+        view_matrix =  Scene.current_scene.camera.view_matrix  # get view matrix from the camera
 
         # set the PVM matrix uniform
         self.uniforms["PVM"].bind(
@@ -116,7 +117,7 @@ class EnvironmentMappingTexture(CubeMap):
 
         self.bind()
 
-        Pscene = scene.perspective_matrix
+        Pscene = Scene.current_scene.projection_matrix
 
         scene.perspective_matrix = frustumMatrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
 

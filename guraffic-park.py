@@ -6,7 +6,7 @@ from camera import Camera, FreeCamera, OrbitCamera
 from lightSource import LightSource
 from model import Model
 from scene import Scene
-# from skybox import SkyBox
+from skybox import SkyBox
 
 
 class MainScene(Scene):
@@ -20,7 +20,7 @@ class MainScene(Scene):
         # cube = Model()
 
         self.camera = OrbitCamera()
-        # self.skybox = SkyBox()
+        self.skybox = SkyBox()
 
         floor = Model.from_obj("scene.obj", scale=0.5)
         table = Model.from_obj(

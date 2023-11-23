@@ -5,6 +5,8 @@ london.blend*
 textures/mk
 models/london.mtl
 models/london.obj
+# Profiling data
+last_run.prof
 
 # Dear ImGui Configs
 imgui.ini

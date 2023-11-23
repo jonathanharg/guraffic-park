@@ -18,7 +18,7 @@ class Mesh(Entity):
         faces=None,
         normals=None,
         texture_coords=None,
-        material=Material(),
+        material: Material = Material(),
         shader: Shader = PhongShader(),
         **kwargs
     ):
@@ -56,7 +56,8 @@ class Mesh(Entity):
             self.normals = normals
 
         if material.texture is not None:
-            self.textures.append(Texture(material.texture))
+            texture = material.texture if isinstance(material.texture, Texture) else Texture(material.texture)
+            self.textures.append(texture)
         
         # Assume if one uses quads, they all do
         if self.faces.shape[1] == 4:

@@ -8,7 +8,7 @@ class ImageWrapper:
         # TODO: BETTER FILE LOADING
         # load the image from file using pyGame - any other image reading function could be used here.
         # print("Loading image: texture/{}".format(name))
-        self.img = pygame.image.load("./textures/{}".format(name))
+        self.img = pygame.image.load(f"./textures/{name}")
 
     def width(self):
         return self.img.get_width()

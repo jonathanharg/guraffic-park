@@ -1,5 +1,5 @@
 import os
-from typing import Self
+from typing import Self, Type
 
 import imgui
 
@@ -13,7 +13,7 @@ from shaders import Shader, FlatShader, PhongShader, TextureShader
 class Model(Entity):
     untitled_model_count = 0
 
-    def __init__(self, meshes: list[Mesh], name=None, shader: Shader = PhongShader(), **kwargs) -> None:
+    def __init__(self, meshes: list[Type[Mesh]], name=None, shader: Shader = PhongShader(), **kwargs) -> None:
         # TODO: FIX issue if the model is loaded multiple times
         if name is not None:
             self.name = name

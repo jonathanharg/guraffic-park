@@ -3,37 +3,36 @@ from OpenGL import GL as gl
 
 from cubeMap import CubeMap
 from material import Material
-from matutils import poseMatrix
-from mesh import CubeMesh, Mesh
-from shaders import BaseShaderProgram
+from mesh import CubeMesh
+from model import Model
+from scene import Scene
+from shaders import Shader
 
 
-class SkyBoxShader(BaseShaderProgram):
+class SkyBoxShader(Shader):
     def __init__(self, name="skybox"):
-        BaseShaderProgram.__init__(self, name=name)
+        super().__init__(name=name)
+        self.compile({})
         self.add_uniform("sampler_cube")
 
-    def bind(self, model, M):
-        BaseShaderProgram.bind(self, model, M)
-        P = model.scene.perspective_matrix  # get projection matrix from the scene
-        V = model.scene.camera.view_matrix  # get view matrix from the camera
-        Vr = np.identity(4)
-        Vr[:3, :3] = V[:3, :3]
-
-        self.uniforms["PVM"].bind(np.matmul(P, np.matmul(V, M)))
-        # self.uniforms['PVM'].bind(np.matmul(V, M))
+    def bind(self, model):
+        Shader.bind(self, model)
+        
+        P = Scene.current_scene.projection_matrix  # get projection matrix from the scene
+        V = Scene.current_scene.camera.view_matrix  # get view matrix from the camera
 
 
-class SkyBox(Mesh):
+        self.uniforms["PVM"].bind(np.matmul(P, np.matmul(V, model.world_pose)))
+
+
+class SkyBox(Model):
     def __init__(self):
-        material = Material()
+        material = Material(name="skybox", texture=CubeMap(name="skybox/ame_ash"))
         
         super().__init__(
             scale=100,
-            # mesh=CubeMesh(texture=CubeMap(name="skybox/ame_ash"), inside=True),
-            mesh=CubeMesh(invert= True),
-            # shader=SkyBoxShader(),
-            # name="skybox",
+            meshes=[CubeMesh(invert= True, material=material)],
+            shader=SkyBoxShader(),
         )
 
     def draw(self):
