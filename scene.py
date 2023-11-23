@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Self, Type
+from entity import Entity
 
 import imgui
 import numpy as np
@@ -214,9 +215,9 @@ class Scene:
                     not imgui.get_io().want_capture_mouse
                 ) and pygame.mouse.get_pressed()[0]:
                     # We've clicked on the 3d scene and not the UI
+                    # Stops the mouse from being able to leave the window
                     pygame.event.set_grab(
-                        True
-                    )  # Stops the mouse from being able to leave the window
+                        True)
                     pygame.mouse.set_visible(False)
                     self.mouse_locked = True
 
@@ -240,4 +241,5 @@ class Scene:
             imgui.render()
             self.imgui_impl.render(imgui.get_draw_data())
 
+            map(lambda x: x.clear_matrix_cache(), Entity.all_entities)
             pygame.display.flip()
