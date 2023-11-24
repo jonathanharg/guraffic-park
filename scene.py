@@ -237,6 +237,9 @@ class Scene:
                     pygame.mouse.set_visible(False)
                     self.mouse_locked = True
 
+    def debug_menu(self):
+        pass
+
     def start(self):
         """
         Draws the scene in a loop until exit.
@@ -247,9 +250,10 @@ class Scene:
         self.running = True
         while self.running:
             self.delta_time = self.clock.tick(self.fps_max) / 1000
+            self.run()
             self.imgui_impl.process_inputs()
             imgui.new_frame()
-            self.run()
+            self.debug_menu()
 
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 

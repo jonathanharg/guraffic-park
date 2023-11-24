@@ -42,10 +42,9 @@ class MainScene(Scene):
         # self.camera.parent = self.box
 
     def run(self):
-        self.debug_menu()
-        self.box.rotation = (
-            quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
-        )
+        # self.box.rotation = (
+        #     quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
+        # )
         super().run()
 
     def draw(self):
