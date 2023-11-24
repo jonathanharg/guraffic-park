@@ -3,9 +3,12 @@ import quaternion
 from OpenGL import GL as gl
 
 from camera import Camera, FreeCamera, OrbitCamera
+from environmentMapping import EnvironmentMappingTexture
 from lightSource import LightSource
+from mesh import CubeMesh
 from model import Model
 from scene import Scene
+from shaders import EnvironmentShader
 from skybox import SkyBox
 
 
@@ -21,6 +24,7 @@ class MainScene(Scene):
 
         self.camera = OrbitCamera()
         self.skybox = SkyBox()
+        self.environment = EnvironmentMappingTexture(width=400, height=400)
 
         floor = Model.from_obj("scene.obj", scale=0.5)
         table = Model.from_obj(
@@ -30,6 +34,11 @@ class MainScene(Scene):
         Model.from_obj(
             "bunny_world.obj", position=(0, 2, 0), scale=0.5, parent=self.box
         )
+        Model(
+            meshes=[CubeMesh()],
+            position=(5, 0, 0),
+            shader=EnvironmentShader(map=self.environment),
+        )
         # self.camera.parent = self.box
 
     def draw(self):
@@ -38,6 +47,7 @@ class MainScene(Scene):
         :return: None
         """
         self.camera.update()
+        self.environment.update()
 
         self.box.rotation = (
             quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
@@ -57,19 +67,19 @@ class MainScene(Scene):
             imgui.text("Press ESC to interact with the menu")
             imgui.text(f"FPS: {self.clock.get_fps():.2f}")
             imgui.text(f"Frametime: {self.clock.get_time():.2f}ms")
+            imgui.text(
+                f"OpenGL v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
+            )
 
+            # FOV Slider
             (fov_changed, self.fov) = imgui.slider_float("FOV", self.fov, 30, 150)
             if fov_changed:
                 self.update_viewport()
 
+            # Max FPS Slider
             _, self.fps_max = imgui.slider_float("Max FPS", self.fps_max, 15, 600)
 
-            _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
-            if self.wireframe:
-                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-            else:
-                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
-
+            # Camera Selector
             cameras = [Camera, FreeCamera, OrbitCamera]
             current_camera = cameras.index(type(self.camera))
             camera_changed, selected_index = imgui.combo(
@@ -78,6 +88,13 @@ class MainScene(Scene):
 
             if camera_changed:
                 self.camera = cameras[selected_index]()
+
+            # Wireframe Toggle
+            _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
+            if self.wireframe:
+                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+            else:
+                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
 
             imgui.separator()
             if imgui.tree_node("Models"):

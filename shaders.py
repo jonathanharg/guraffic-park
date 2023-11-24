@@ -1,13 +1,15 @@
 from typing import TYPE_CHECKING, Any, Type
+
 import numpy as np
 from OpenGL import GL as gl
 from OpenGL.GL import shaders
 
-from matutils import homog, unhomog
+from matutils import homog, scaleMatrix, translationMatrix, unhomog
 from scene import Scene
 
 if TYPE_CHECKING:
     from model import Model
+
 
 class Singleton(type):
     _instances = {}
@@ -16,6 +18,7 @@ class Singleton(type):
         if self not in self._instances:
             self._instances[self] = super().__call__(*args, **kwds)
         return self._instances[self]
+
 
 class Uniform:
     """
@@ -114,10 +117,11 @@ class Uniform:
         self.value = value
 
 
-class Shader():
+class Shader:
     """
     This is the base class for loading and compiling the GLSL shaders.
     """
+
     shader_count = 0
     compiled_program_ids = {}
 
@@ -135,18 +139,15 @@ class Shader():
 
         if vertex_shader is None:
             vertex_shader = f"shaders/{name}/vertex_shader.glsl"
-        
+
         if fragment_shader is None:
             fragment_shader = f"shaders/{name}/fragment_shader.glsl"
-
 
         with open(vertex_shader, "r") as file:
             self.vertex_shader_source = file.read()
 
-
         with open(fragment_shader, "r") as file:
             self.fragment_shader_source = file.read()
-
 
         # in order to simplify extension of the class in the future, we start storing uniforms in a dictionary.
         self.uniforms = {
@@ -157,7 +158,7 @@ class Shader():
 
         # self.compile({})
 
-    def add_uniform(self, name:str):
+    def add_uniform(self, name: str):
         self.uniforms[name] = Uniform(name)
         if self.program is not None:
             self.uniforms[name].link(self.program)
@@ -171,10 +172,14 @@ class Shader():
             if self.__class__.__name__ not in Shader.compiled_program_ids:
                 self.program = gl.glCreateProgram()
                 Shader.shader_count += 1
-                print(f"Just compiled a new shader, current total: {Shader.shader_count}")
+                print(
+                    f"Just compiled a new shader, current total: {Shader.shader_count}"
+                )
                 gl.glAttachShader(
                     self.program,
-                    shaders.compileShader(self.vertex_shader_source, gl.GL_VERTEX_SHADER),
+                    shaders.compileShader(
+                        self.vertex_shader_source, gl.GL_VERTEX_SHADER
+                    ),
                 )
                 gl.glAttachShader(
                     self.program,
@@ -205,7 +210,7 @@ class Shader():
         for name, location in attributes.items():
             gl.glBindAttribLocation(self.program, location, name)
 
-    def bind(self, model: Type['Model']):
+    def bind(self, model: Type["Model"]):
         """
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         """
@@ -217,10 +222,13 @@ class Shader():
         view_matrix = Scene.current_scene.camera.view_matrix
 
         # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(np.matmul(projection_matrix, np.matmul(view_matrix, model.world_pose)))
-    
+        self.uniforms["PVM"].bind(
+            np.matmul(projection_matrix, np.matmul(view_matrix, model.world_pose))
+        )
+
     def unbind(self):
         gl.glUseProgram(0)
+
 
 class PhongShader(Shader):
     def __init__(self, name="phong", **kwargs):
@@ -250,7 +258,7 @@ class PhongShader(Shader):
             #'textureObject2': Uniform('textureObject2'),
         }
 
-    def bind(self, model: Type['Model']):
+    def bind(self, model: Type["Model"]):
         """
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         """
@@ -260,14 +268,16 @@ class PhongShader(Shader):
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
 
-        # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(np.matmul(projection_matrix, np.matmul(view_matrix, model.world_pose)))
+        vm = np.matmul(view_matrix, model.world_pose)
 
         # set the PVM matrix uniform
-        self.uniforms["VM"].bind(np.matmul(view_matrix, model.world_pose))
+        self.uniforms["PVM"].bind(np.matmul(projection_matrix, vm))
 
         # set the PVM matrix uniform
-        self.uniforms["VMiT"].bind(np.linalg.inv(np.matmul(view_matrix, model.world_pose))[:3, :3].transpose())
+        self.uniforms["VM"].bind(vm)
+
+        # set the PVM matrix uniform
+        self.uniforms["VMiT"].bind(np.linalg.inv(vm)[:3, :3].transpose())
 
         # bind the mode to the program
         self.uniforms["mode"].bind(Scene.current_scene.mode)
@@ -323,3 +333,92 @@ class BlinnShader(PhongShader):
 class TextureShader(PhongShader):
     def __init__(self):
         super().__init__(name="texture")
+
+
+class SkyBoxShader(Shader):
+    def __init__(self, name="skybox"):
+        super().__init__(name=name)
+        self.compile({})
+        self.add_uniform("sampler_cube")
+
+    def bind(self, model):
+        Shader.bind(self, model)
+
+        P = (
+            Scene.current_scene.projection_matrix
+        )  # get projection matrix from the scene
+        V = Scene.current_scene.camera.view_matrix  # get view matrix from the camera
+
+        self.uniforms["PVM"].bind(np.matmul(P, np.matmul(V, model.world_pose)))
+
+
+class EnvironmentShader(Shader):
+    def __init__(self, name="environment", map=None):
+        super().__init__(name=name)
+        self.compile({})
+        self.add_uniform("sampler_cube")
+        self.add_uniform("VM")
+        self.add_uniform("VMiT")
+        self.add_uniform("VT")
+
+        self.map = map
+
+    def bind(self, model):
+        if self.map is not None:
+            # self.map.update(model.scene)
+            unit = len(model.textures)
+            gl.glActiveTexture(gl.GL_TEXTURE0)
+            self.map.bind()
+            # self.uniforms["sampler_cube"].bind(0)
+
+        gl.glUseProgram(self.program)
+
+        projection_matrix = (
+            Scene.current_scene.projection_matrix
+        )  # get projection matrix from the scene
+        view_matrix = (
+            Scene.current_scene.camera.view_matrix
+        )  # get view matrix from the camera
+
+        vm = np.matmul(view_matrix, model.world_pose)
+
+        # set the PVM matrix uniform
+        self.uniforms["PVM"].bind(np.matmul(projection_matrix, vm))
+
+        # set the PVM matrix uniform
+        self.uniforms["VM"].bind(vm)
+
+        # set the PVM matrix uniform
+        self.uniforms["VMiT"].bind(np.linalg.inv(vm)[:3, :3].transpose())
+
+        self.uniforms["VT"].bind(view_matrix.transpose()[:3, :3])
+
+
+class ShadowMappingShader(PhongShader):
+    def __init__(self, shadow_map=None):
+        super().__init__(name="shadow_mapping")
+        self.compile({})
+        self.add_uniform("shadow_map")
+        # self.add_uniform('old_map')
+        self.add_uniform("shadow_map_matrix")
+        self.shadow_map = shadow_map
+
+    def bind(self, model):
+        super().bind(model)
+        self.uniforms["shadow_map"].bind(1)
+
+        gl.glActiveTexture(gl.GL_TEXTURE1)
+        self.shadow_map.bind()
+
+        # gl.glActiveTexture(gl.GL_TEXTURE2)
+        # self.shadow_map.bind()
+
+        gl.glActiveTexture(gl.GL_TEXTURE0)
+
+        # setup the shadow map matrix
+        VsT = np.linalg.inv(Scene.current_scene.camera.view_matrix)
+        self.SM = np.matmul(self.shadow_map.view_matrix, VsT)
+        self.SM = np.matmul(self.shadow_map.projection_matrix, self.SM)
+        self.SM = np.matmul(translationMatrix([1, 1, 1]), self.SM)
+        self.SM = np.matmul(scaleMatrix(0.5), self.SM)
+        self.uniforms["shadow_map_matrix"].bind(self.SM)

@@ -7,13 +7,27 @@ from blender import find_file, load_obj_file
 from entity import Entity
 from mesh import Mesh
 from scene import Scene
-from shaders import Shader, FlatShader, PhongShader, TextureShader
+from shaders import (
+    EnvironmentShader,
+    FlatShader,
+    PhongShader,
+    Shader,
+    ShadowMappingShader,
+    SkyBoxShader,
+    TextureShader,
+)
 
 
 class Model(Entity):
     untitled_model_count = 0
 
-    def __init__(self, meshes: list[Type[Mesh]], name=None, shader: Shader = PhongShader(), **kwargs) -> None:
+    def __init__(
+        self,
+        meshes: list[Type[Mesh]],
+        name=None,
+        shader: Shader = PhongShader(),
+        **kwargs,
+    ) -> None:
         # TODO: FIX issue if the model is loaded multiple times
         if name is not None:
             self.name = name
@@ -58,8 +72,16 @@ class Model(Entity):
     def debug_menu(self):
         super().debug_menu()
         _, self.visible = imgui.checkbox("Visible", self.visible)
-        
-        ALL_SHADERS = [Shader, PhongShader, FlatShader, TextureShader]
+
+        ALL_SHADERS = [
+            Shader,
+            PhongShader,
+            FlatShader,
+            TextureShader,
+            SkyBoxShader,
+            EnvironmentShader,
+            ShadowMappingShader,
+        ]
 
         current_shader = ALL_SHADERS.index(type(self.shader))
         shader_changed, selected_index = imgui.combo(

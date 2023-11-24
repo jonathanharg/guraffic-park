@@ -1,7 +1,6 @@
 import numpy as np
 from OpenGL import GL as gl
 
-from BaseModel import DrawModelFromMesh
 from cubeMap import CubeMap
 from framebuffer import Framebuffer
 from matutils import (
@@ -11,50 +10,9 @@ from matutils import (
     rotationMatrixY,
     translationMatrix,
 )
-from mesh import CubeMesh
+from mesh import CubeMesh, Mesh
 from scene import Scene
-from shaders import BaseShaderProgram, Shader
-
-
-class EnvironmentShader(Shader):
-    def __init__(self, name="environment", map=None):
-        BaseShaderProgram.__init__(self, name=name)
-        self.add_uniform("sampler_cube")
-        self.add_uniform("VM")
-        self.add_uniform("VMiT")
-        self.add_uniform("VT")
-
-        self.map = map
-
-    def bind(self, model, M):
-        if self.map is not None:
-            # self.map.update(model.scene)
-            unit = len(model.mesh.textures)
-            gl.glActiveTexture(gl.GL_TEXTURE0)
-            self.map.bind()
-            self.uniforms["sampler_cube"].bind(0)
-
-        gl.glUseProgram(self.program)
-
-        projection_matrix = (
-            Scene.current_scene.projection_matrix
-        )  # get projection matrix from the scene
-        view_matrix =  Scene.current_scene.camera.view_matrix  # get view matrix from the camera
-
-        # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(
-            np.matmul(projection_matrix, np.matmul(view_matrix, M))
-        )
-
-        # set the PVM matrix uniform
-        self.uniforms["VM"].bind(np.matmul(view_matrix, M))
-
-        # set the PVM matrix uniform
-        self.uniforms["VMiT"].bind(
-            np.linalg.inv(np.matmul(view_matrix, M))[:3, :3].transpose()
-        )
-
-        self.uniforms["VT"].bind(view_matrix.transpose()[:3, :3])
+from shaders import EnvironmentShader
 
 
 class EnvironmentMappingTexture(CubeMap):
@@ -111,24 +69,28 @@ class EnvironmentMappingTexture(CubeMap):
             fbo.prepare(self, face)
         self.unbind()
 
-    def update(self, scene):
+    def update(self):
         if self.done:
             return
 
         self.bind()
 
-        Pscene = Scene.current_scene.projection_matrix
+        scene = Scene.current_scene
 
-        scene.perspective_matrix = frustumMatrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
+        old_p = scene.projection_matrix
+
+        scene.projection_matrix = frustumMatrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
 
         gl.glViewport(0, 0, self.width, self.height)
 
         for face, fbo in self.fbos.items():
             fbo.bind()
             # scene.camera.V = np.identity(4)
-            scene.camera.V = self.views[face]
+            scene.camera.view_matrix = self.views[face]
 
-            scene.draw_reflections()
+            # # scene.draw_reflections()
+            # for model in scene.models:
+            #     model.draw()
 
             scene.camera.update()
             fbo.unbind()
@@ -136,21 +98,19 @@ class EnvironmentMappingTexture(CubeMap):
         # reset the viewport
         gl.glViewport(0, 0, scene.window_size[0], scene.window_size[1])
 
-        scene.P = Pscene
+        scene.projection_matrix = old_p
 
         self.unbind()
 
 
-class EnvironmentBox(DrawModelFromMesh):
-    def __init__(self, scene, shader=EnvironmentShader(), width=200, height=200):
-        self.done = False
-        self.map = EnvironmentMappingTexture(width, height)
+# class EnvironmentBox(Mesh):
+#     def __init__(self, scene, shader=EnvironmentShader(), width=200, height=200):
+#         self.done = False
+#         self.map = EnvironmentMappingTexture(width, height)
 
-        DrawModelFromMesh.__init__(
-            self,
-            scene=scene,
-            M=poseMatrix(),
-            mesh=CubeMesh(shader.map),
-            shader=shader,
-            visible=False,
-        )
+#         super().__init__(
+#             scene=scene,
+#             mesh=CubeMesh(shader.map),
+#             shader=shader,
+#             visible=False,
+#         )

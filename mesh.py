@@ -1,8 +1,9 @@
 import numpy as np
 from OpenGL import GL as gl
+
 from entity import Entity
 from material import Material
-from shaders import Shader, FlatShader, PhongShader
+from shaders import FlatShader, PhongShader, Shader
 from texture import Texture
 
 
@@ -39,7 +40,7 @@ class Mesh(Entity):
         self.tangents = None
         self.binormals = None
         self.primitive = gl.GL_TRIANGLES
-        self.shader= shader
+        self.shader = shader
         self.vertex_buffer_objects = {}
         self.attributes = {}
         self.vertex_array_object = gl.glGenVertexArrays(1)
@@ -56,16 +57,19 @@ class Mesh(Entity):
             self.normals = normals
 
         if material.texture is not None:
-            texture = material.texture if isinstance(material.texture, Texture) else Texture(material.texture)
+            texture = (
+                material.texture
+                if isinstance(material.texture, Texture)
+                else Texture(material.texture)
+            )
             self.textures.append(texture)
-        
+
         # Assume if one uses quads, they all do
         if self.faces.shape[1] == 4:
             self.primitive = gl.GL_QUADS
 
         self.bind()
         self.bind_shader(self.shader)
-
 
     def calculate_normals(self):
         """
@@ -112,7 +116,6 @@ class Mesh(Entity):
             self.tangents /= np.linalg.norm(self.tangents, axis=1, keepdims=True)
             self.binormals /= np.linalg.norm(self.binormals, axis=1, keepdims=True)
 
-    
     def draw(self):
         gl.glBindVertexArray(self.vertex_array_object)
 
@@ -168,9 +171,7 @@ class Mesh(Entity):
         if self.faces is not None:
             self.index_buffer = gl.glGenBuffers(1)
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.index_buffer)
-            gl.glBufferData(
-                gl.GL_ELEMENT_ARRAY_BUFFER, self.faces, gl.GL_STATIC_DRAW
-            )
+            gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, self.faces, gl.GL_STATIC_DRAW)
 
         # finally we unbind the VAO and VBO when we're done to avoid side effects
         gl.glBindVertexArray(0)
@@ -207,16 +208,15 @@ class Mesh(Entity):
         # ... and we set the data in the buffer as the vertex array
         gl.glBufferData(gl.GL_ARRAY_BUFFER, data, gl.GL_STATIC_DRAW)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-    
+
     # @property
     # def shader_new(self):
     #     return self.shader
-    
+
     # @shader_new.setter
     # def shader(self, value: Shader):
     #     value.compile(self.attributes)
     #     self.shader = value
-
 
     def bind_shader(self, shader: Shader):
         """
@@ -228,7 +228,7 @@ class Mesh(Entity):
 
 
 class CubeMesh(Mesh):
-    def __init__(self,invert = False, **kwargs):
+    def __init__(self, invert=False, **kwargs):
         vertices = np.array(
             [
                 [-1.0, -1.0, -1.0],  # 0
@@ -270,4 +270,4 @@ class CubeMesh(Mesh):
         if invert:
             faces = faces[:, np.argsort([0, 2, 1])]
 
-        super().__init__(vertices,faces, **kwargs)
+        super().__init__(vertices, faces, **kwargs)

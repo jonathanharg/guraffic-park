@@ -2,7 +2,6 @@ import cProfile
 import pstats
 import stat
 from typing import TYPE_CHECKING, Self, Type
-from entity import Entity
 
 import imgui
 import numpy as np
@@ -11,17 +10,19 @@ from imgui.integrations.pygame import PygameRenderer
 from OpenGL import GL as gl
 
 from camera import Camera
+from entity import Entity
 from matutils import frustumMatrix
 
 if TYPE_CHECKING:
     from model import Model
+
 
 class Scene:
     """
     This is the main class for drawing an OpenGL scene using the PyGame library
     """
 
-    current_scene: Self = None # type: ignore
+    current_scene: Self = None  # type: ignore
 
     def update_viewport(self):
         pygame.display.set_mode(
@@ -64,6 +65,18 @@ class Scene:
         self.running = False
 
         pygame.init()
+
+        # # TODO: REMOVE THIS, IT BUGS OUT IMGUI
+        pygame.display.gl_set_attribute(
+            pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
+        )
+        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
+        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
+        pygame.display.gl_set_attribute(
+            pygame.GL_CONTEXT_FLAGS, pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG
+        )
+        # # TODO: REMOVE THIS, IT BUGS OUT IMGUI
+
         pygame.display.set_mode(
             self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
         )
@@ -98,7 +111,8 @@ class Scene:
         # gl.glCullFace(gl.GL_FRONT)
 
         # enable the vertex array capability
-        gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+        # TODO: ONLY DISABLE THIS WHEN DEBUGING WITH RENDERDOC
+        # gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
 
         # enable depth test for clean output (see lecture on clipping & visibility for an explanation
         gl.glEnable(gl.GL_DEPTH_TEST)
@@ -116,7 +130,7 @@ class Scene:
         self.mode = 1  # initialise to full interpolated shading
 
         # This class will maintain a list of models to draw in the scene,
-        self.models: list[Type['Model']] = []
+        self.models: list[Type["Model"]] = []
 
     def add_model(self, model):
         """
@@ -219,8 +233,7 @@ class Scene:
                 ) and pygame.mouse.get_pressed()[0]:
                     # We've clicked on the 3d scene and not the UI
                     # Stops the mouse from being able to leave the window
-                    pygame.event.set_grab(
-                        True)
+                    pygame.event.set_grab(True)
                     pygame.mouse.set_visible(False)
                     self.mouse_locked = True
 
@@ -229,26 +242,26 @@ class Scene:
         Draws the scene in a loop until exit.
         """
 
-        with cProfile.Profile() as pr:
-            # We have a classic program loop
-            self.running = True
-            while self.running:
-                self.delta_time = self.clock.tick(self.fps_max) / 1000
-                self.handle_pygame_events()
-                self.imgui_impl.process_inputs()
-                imgui.new_frame()
+        # with cProfile.Profile() as pr:
+        # We have a classic program loop
+        self.running = True
+        while self.running:
+            self.delta_time = self.clock.tick(self.fps_max) / 1000
+            self.handle_pygame_events()
+            self.imgui_impl.process_inputs()
+            imgui.new_frame()
 
-                gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+            gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-                self.draw()
+            self.draw()
 
-                imgui.render()
-                self.imgui_impl.render(imgui.get_draw_data())
+            imgui.render()
+            self.imgui_impl.render(imgui.get_draw_data())
 
-                map(lambda x: x.clear_matrix_cache(), Entity.all_entities)
-                pygame.display.flip()
-        
-        stats = pstats.Stats(pr)
-        stats.sort_stats(pstats.SortKey.TIME)
-        stats.dump_stats(filename='last_run.prof')
+            for entity in Entity.all_entities:
+                entity.clear_matrix_cache()
+            pygame.display.flip()
 
+        # stats = pstats.Stats(pr)
+        # stats.sort_stats(pstats.SortKey.TIME)
+        # stats.dump_stats(filename='last_run.prof')

@@ -2,6 +2,7 @@ from OpenGL import GL as gl
 
 from texture import ImageWrapper, Texture
 
+
 class CubeMap(Texture):
     """
     Class for handling a cube map texture.
@@ -65,7 +66,7 @@ class CubeMap(Texture):
         # unbind the texture
         self.unbind()
 
-    def set(self, name:str , files=None):
+    def set(self, name: str, files=None):
         """
         Load the cube's faces from images on the disk
         :param name: The folder in which the images are.

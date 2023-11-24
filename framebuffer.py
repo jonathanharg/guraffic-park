@@ -37,7 +37,7 @@ class Framebuffer:
 
         self.bind()
         gl.glFramebufferTexture2D(
-            gl.GL_FRAMEBUFFER, self.attachment, target, texture.textureid, level
+            gl.GL_FRAMEBUFFER, self.attachment, target, texture.texture_id, level
         )
         if self.attachment == gl.GL_DEPTH_ATTACHMENT:
             gl.glDrawBuffer(gl.GL_NONE)

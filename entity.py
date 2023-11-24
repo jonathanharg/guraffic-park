@@ -15,7 +15,7 @@ class Entity:
         position: tuple[float, float, float] = (0.0, 0.0, 0.0),
         scale: float = 1.0,
         rotation=None,
-        parent: Type['Entity'] | None = None,
+        parent: Type["Entity"] | None = None,
     ) -> None:
         self.position = np.array(position, dtype=np.float32)
         self.scale = scale
@@ -80,7 +80,7 @@ class Entity:
     def world_translation(self):
         if self.__cache_world_translation__ is not None:
             return self.__cache_world_translation__
-        
+
         translation_matrix = translationMatrix([self.x, self.y, self.z])
 
         # TODO: This should be parents pose matrix +
@@ -88,7 +88,7 @@ class Entity:
             translation_matrix = np.matmul(
                 self.parent.world_translation(), translation_matrix
             )
-        
+
         self.__cache_world_translation__ = translation_matrix
         return translation_matrix
 
@@ -100,7 +100,9 @@ class Entity:
             self.__cache_world_rotation__ = self.rotation_matrix
             return self.__cache_world_rotation__
         else:
-            world_rotation = np.matmul(self.parent.world_rotation(), self.rotation_matrix)
+            world_rotation = np.matmul(
+                self.parent.world_rotation(), self.rotation_matrix
+            )
             self.__cache_world_rotation__ = world_rotation
             return world_rotation
 
@@ -121,13 +123,13 @@ class Entity:
         self.__cache_world_pose__ = local_pose_matrix
 
         return local_pose_matrix
-    
+
     def clear_matrix_cache(self):
         self.__cache_world_pose__ = None
         self.__cache_world_translation__ = None
         self.__cache_world_rotation__ = None
 
-    def debug_enu(self):
+    def debug_menu(self):
         _, self.position = imgui.drag_float3(
             "Position", self.x, self.y, self.z, change_speed=0.1
         )
