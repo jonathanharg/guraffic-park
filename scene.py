@@ -192,7 +192,7 @@ class Scene:
             pygame.mouse.set_visible(True)
             self.mouse_locked = False
 
-    def handle_pygame_events(self):
+    def run(self):
         """
         Method to handle PyGame events for user interaction.
         """
@@ -237,7 +237,7 @@ class Scene:
                     pygame.mouse.set_visible(False)
                     self.mouse_locked = True
 
-    def run(self):
+    def start(self):
         """
         Draws the scene in a loop until exit.
         """
@@ -247,9 +247,9 @@ class Scene:
         self.running = True
         while self.running:
             self.delta_time = self.clock.tick(self.fps_max) / 1000
-            self.handle_pygame_events()
             self.imgui_impl.process_inputs()
             imgui.new_frame()
+            self.run()
 
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -259,7 +259,7 @@ class Scene:
             self.imgui_impl.render(imgui.get_draw_data())
 
             for entity in Entity.all_entities:
-                entity.clear_matrix_cache()
+                entity.clear_entity_cache()
             pygame.display.flip()
 
         # stats = pstats.Stats(pr)

@@ -17,9 +17,14 @@ class Entity:
         rotation=None,
         parent: Type["Entity"] | None = None,
     ) -> None:
-        self.position = np.array(position, dtype=np.float32)
-        self.scale = scale
+        self.__position__ = np.array(position, dtype=np.float32)
+        self.__scale__ = scale
+        self.children: list[Type["Entity"]] = []
         self.parent = parent
+
+        if parent is not None:
+            self.parent.children.append(self)
+
         self.__cache_world_pose__ = None
         self.__cache_world_translation__ = None
         self.__cache_world_rotation__ = None
@@ -27,48 +32,85 @@ class Entity:
         # This is because I encountered some bugs when trying to implement animations
         # Interpolating between two quaternions is much easier, and allows for smooth animations
         # They also avoid euler angle related gimbal lock issues that I was encountering
-        self.rotation = (
+        self.__rotation__ = (
             rotation if rotation is not None else np.quaternion(1.0, 0.0, 0.0, 0.0)
         )
 
         Entity.all_entities.append(self)
 
-        # print(f"Creating {self.__class__.__name__}({self.name if hasattr(self, "name") else ""}): {self.position} x{self.scale}")
+    @property
+    def position(self):
+        return self.__position__
+
+    @position.setter
+    def position(self, value):
+        self.clear_entity_cache()
+        self.__position__ = value
 
     @property
     def x(self) -> np.float32:
-        return self.position[0]
+        return self.__position__[0]
+
+    @x.setter
+    def x(self, value: float):
+        self.clear_entity_cache()
+        self.__position__[0] = value  # type: ignore
 
     @property
     def y(self) -> np.float32:
-        return self.position[1]
+        return self.__position__[1]
+
+    @y.setter
+    def y(self, value: float):
+        self.clear_entity_cache()
+        self.__position__[1] = value
 
     @property
     def z(self) -> np.float32:
-        return self.position[2]
+        return self.__position__[2]
+
+    @z.setter
+    def z(self, value: float):
+        self.clear_entity_cache()
+        self.__position__[2] = value
 
     @property
     def rotation_matrix(self):
         rotation_matrix = np.identity(4)
-        rotation_matrix[:3, :3] = quaternion.as_rotation_matrix(self.rotation)
+        rotation_matrix[:3, :3] = quaternion.as_rotation_matrix(self.__rotation__)
         return rotation_matrix
 
-    @x.setter
-    def x(self, value: float):
-        self.position[0] = value  # type: ignore
+    @property
+    def rotation(self):
+        return self.__rotation__
 
-    @y.setter
-    def y(self, value: float):
-        self.position[1] = value
+    @rotation.setter
+    def rotation(self, value):
+        self.clear_entity_cache()
+        self.__rotation__ = value
 
-    @z.setter
-    def z(self, value: float):
-        self.position[2] = value
+    @property
+    def scale(self):
+        return self.__scale__
+
+    @scale.setter
+    def scale(self, value):
+        self.clear_entity_cache()
+        self.__scale__ = value
+
+    def clear_entity_cache(self):
+        # print(f"MOVED! Clearning cache for {self.__class__.__name__}")
+        self.__cache_world_pose__ = None
+        self.__cache_world_translation__ = None
+        self.__cache_world_rotation__ = None
+
+        for child in self.children:
+            child.clear_entity_cache()
 
     @property
     def forwards(self):
         return np.matmul(
-            quaternion.as_rotation_matrix(self.rotation), np.array([0, 0, -1])
+            quaternion.as_rotation_matrix(self.__rotation__), np.array([0, 0, -1])
         )
 
     @property
@@ -81,9 +123,8 @@ class Entity:
         if self.__cache_world_translation__ is not None:
             return self.__cache_world_translation__
 
-        translation_matrix = translationMatrix([self.x, self.y, self.z])
+        translation_matrix = translationMatrix(self.__position__)
 
-        # TODO: This should be parents pose matrix +
         if self.parent is not None:
             translation_matrix = np.matmul(
                 self.parent.world_translation(), translation_matrix
@@ -111,8 +152,8 @@ class Entity:
         if self.__cache_world_pose__ is not None:
             return self.__cache_world_pose__
 
-        scale_matrix = scaleMatrix(self.scale)
-        translation_matrix = translationMatrix(self.position)
+        scale_matrix = scaleMatrix(self.__scale__)
+        translation_matrix = translationMatrix(self.__position__)
         local_pose_matrix = np.matmul(
             translation_matrix, np.matmul(scale_matrix, self.rotation_matrix)
         )
@@ -123,11 +164,6 @@ class Entity:
         self.__cache_world_pose__ = local_pose_matrix
 
         return local_pose_matrix
-
-    def clear_matrix_cache(self):
-        self.__cache_world_pose__ = None
-        self.__cache_world_translation__ = None
-        self.__cache_world_rotation__ = None
 
     def debug_menu(self):
         _, self.position = imgui.drag_float3(
@@ -150,3 +186,18 @@ class Entity:
 
         _, scale = imgui.drag_float("Scale", self.scale, change_speed=0.1)
         self.scale = scale if scale != 0 else 0.0001
+
+        parent_name = None
+        if self.parent is not None:
+            parent_name = (
+                self.parent.name
+                if hasattr(self.parent, "name")
+                else self.parent.__name__
+            )
+
+        child_names = list(
+            map(lambda c: c.name if hasattr(c, "name") else c.__name__, self.children)
+        )
+
+        imgui.text(f"Parent: {parent_name}")
+        imgui.text(f"Children: {child_names}")

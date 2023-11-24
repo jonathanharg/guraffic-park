@@ -41,6 +41,13 @@ class MainScene(Scene):
         )
         # self.camera.parent = self.box
 
+    def run(self):
+        self.debug_menu()
+        self.box.rotation = (
+            quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
+        )
+        super().run()
+
     def draw(self):
         """
         Draw all models in the scene
@@ -49,10 +56,6 @@ class MainScene(Scene):
         self.camera.update()
         self.environment.update()
 
-        self.box.rotation = (
-            quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
-        )
-
         # if self.skybox is not None:
         #     self.skybox.draw()
 
@@ -60,9 +63,7 @@ class MainScene(Scene):
         for model in self.models:
             model.draw()
 
-        if self.show_imgui_demo:
-            self.show_imgui_demo = imgui.show_demo_window(True)
-
+    def debug_menu(self):
         with imgui.begin("Scene", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE):
             imgui.text("Press ESC to interact with the menu")
             imgui.text(f"FPS: {self.clock.get_fps():.2f}")
@@ -109,9 +110,6 @@ class MainScene(Scene):
                 self.camera.debug_menu()
                 imgui.tree_pop()
 
-            if imgui.button("Open ImGui Demo"):
-                self.show_imgui_demo = True
-
             if imgui.button("Quit"):
                 self.running = False
 
@@ -122,4 +120,4 @@ if __name__ == "__main__":
     scene = MainScene()
 
     # starts drawing the scene
-    scene.run()
+    scene.start()
