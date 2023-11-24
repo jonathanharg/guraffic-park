@@ -8,11 +8,12 @@ from entity import Entity
 from mesh import Mesh
 from scene import Scene
 from shaders import (
-    EnvironmentShader,
+    # EnvironmentShader,
+    ALL_SHADERS,
     FlatShader,
     PhongShader,
     Shader,
-    ShadowMappingShader,
+    # ShadowMappingShader,
     SkyBoxShader,
     TextureShader,
 )
@@ -44,7 +45,7 @@ class Model(Entity):
         for mesh in self.meshes:
             mesh.parent = self
             # mesh.shader = shader
-            mesh.bind_shader(self.shader)
+            # mesh.bind_shader(self.shader)
 
         Scene.current_scene.models.append(self)
 
@@ -64,24 +65,9 @@ class Model(Entity):
         for mesh in self.meshes:
             mesh.draw()
 
-    def set_shader(self, shader: Shader):
-        self.shader = shader
-        for mesh in self.meshes:
-            mesh.bind_shader(shader)
-
     def debug_menu(self):
         super().debug_menu()
         _, self.visible = imgui.checkbox("Visible", self.visible)
-
-        ALL_SHADERS = [
-            Shader,
-            PhongShader,
-            FlatShader,
-            TextureShader,
-            SkyBoxShader,
-            EnvironmentShader,
-            ShadowMappingShader,
-        ]
 
         current_shader = ALL_SHADERS.index(type(self.shader))
         shader_changed, selected_index = imgui.combo(

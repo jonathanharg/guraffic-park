@@ -3,6 +3,8 @@ from OpenGL import GL as gl
 
 from entity import Entity
 from material import Material
+from matutils import homog, unhomog
+from scene import Scene
 from shaders import FlatShader, PhongShader, Shader
 from texture import Texture
 
@@ -68,8 +70,8 @@ class Mesh(Entity):
         if self.faces.shape[1] == 4:
             self.primitive = gl.GL_QUADS
 
-        self.bind()
-        self.bind_shader(self.shader)
+        # self.bind()
+        # self.bind_shader(self.shader)
 
     def calculate_normals(self):
         """
@@ -115,11 +117,76 @@ class Mesh(Entity):
         if self.texture_coords is not None:
             self.tangents /= np.linalg.norm(self.tangents, axis=1, keepdims=True)
             self.binormals /= np.linalg.norm(self.binormals, axis=1, keepdims=True)
+    
+    def set_uniforms(self):
+        projection_matrix = Scene.current_scene.projection_matrix
+        view_matrix = Scene.current_scene.camera.view_matrix
+        light = Scene.current_scene.light
+
+        vm = np.matmul(view_matrix, self.world_pose)
+        pvm = np.matmul(projection_matrix, vm)
+        vmit = np.linalg.inv(vm)[:3, :3].transpose()
+
+        pvm_location = gl.glGetUniformLocation(program=self.shader.program, name="PVM")
+        gl.glUniformMatrix4fv(pvm_location, 1, True, pvm)
+
+        vm_location = gl.glGetUniformLocation(program=self.shader.program, name="PVM")
+        gl.glUniformMatrix4fv(vm_location, 1, True, vm)
+
+        gl.glUniformMatrix4fv(vm_location, 1, True, [123])
+
+        vmit_location = gl.glGetUniformLocation(program=self.shader.program, name="VMiT")
+        gl.glUniformMatrix3fv(vmit_location, 1, True, vmit)
+
+        # # TODO REMOVE MODE FROM SHADER UNIFORMS
+        mode_location = gl.glGetUniformLocation(program=self.shader.program, name="mode")
+        gl.glUniform1i(mode_location, 1)
+
+        alpha_location = gl.glGetUniformLocation(program=self.shader.program, name="alpha")
+        gl.glUniform1f(alpha_location, self.material.alpha)
+
+        # # TODO DO WE EVEN NEED THESE
+        if len(self.textures) > 0:
+            texture_object_location = gl.glGetUniformLocation(program=self.shader.program, name="textureObject")
+            gl.glUniform1i(texture_object_location, 0)
+            has_texture_location = gl.glGetUniformLocation(program=self.shader.program, name="has_texture")
+            gl.glUniform1i(has_texture_location, 1)
+        else:
+            has_texture_location = gl.glGetUniformLocation(program=self.shader.program, name="has_texture")
+            gl.glUniform1i(has_texture_location, 1)
+        
+        ambient_location = gl.glGetUniformLocation(program=self.shader.program, name="Ka")
+        gl.glUniform3fv(ambient_location, 1, np.array(self.material.Ka, "f"))
+        
+        diffuse_location = gl.glGetUniformLocation(program=self.shader.program, name="Kd")
+        gl.glUniform3fv(diffuse_location, 1, np.array(self.material.Ka, "f"))
+
+        specular_location = gl.glGetUniformLocation(program=self.shader.program, name="Ks")
+        gl.glUniform3fv(specular_location, 1, np.array(self.material.Ka, "f"))
+
+        specular_exponent_location = gl.glGetUniformLocation(program=self.shader.program, name="Ns")
+        gl.glUniform1f(specular_exponent_location, self.material.Ns)
+
+
+        light_location = gl.glGetUniformLocation(program=self.shader.program, name="light")
+        gl.glUniform3fv(light_location, 1, unhomog(np.dot(view_matrix, homog(light.position))))
+
+        light_ambient_location = gl.glGetUniformLocation(program=self.shader.program, name="Ia")
+        gl.glUniform3fv(light_ambient_location, 1, np.array(self.material.Ka, "f"))
+        
+        light_diffuse_location = gl.glGetUniformLocation(program=self.shader.program, name="Id")
+        gl.glUniform3fv(light_diffuse_location, 1, np.array(self.material.Ka, "f"))
+
+        light_specular_location = gl.glGetUniformLocation(program=self.shader.program, name="Is")
+        gl.glUniform3fv(light_specular_location, 1, np.array(self.material.Ka, "f"))
 
     def draw(self):
         gl.glBindVertexArray(self.vertex_array_object)
 
-        self.shader.bind(self)
+        self.shader.bind()
+        self.set_uniforms()
+
+
 
         for offset, texture in enumerate(self.textures):
             gl.glActiveTexture(gl.GL_TEXTURE0 + offset)
@@ -208,24 +275,6 @@ class Mesh(Entity):
         # ... and we set the data in the buffer as the vertex array
         gl.glBufferData(gl.GL_ARRAY_BUFFER, data, gl.GL_STATIC_DRAW)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
-
-    # @property
-    # def shader_new(self):
-    #     return self.shader
-
-    # @shader_new.setter
-    # def shader(self, value: Shader):
-    #     value.compile(self.attributes)
-    #     self.shader = value
-
-    def bind_shader(self, shader: Shader):
-        """
-        If a new shader is bound, we need to re-link it to ensure attributes are correctly linked.
-        """
-        self.shader = shader
-        self.shader.compile(self.attributes)
-        # self.shader.bind_attributes(self.attributes)
-
 
 class CubeMesh(Mesh):
     def __init__(self, invert=False, **kwargs):

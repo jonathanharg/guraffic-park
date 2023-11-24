@@ -3,12 +3,12 @@ import quaternion
 from OpenGL import GL as gl
 
 from camera import Camera, FreeCamera, OrbitCamera
-from environmentMapping import EnvironmentMappingTexture
+# from environmentMapping import EnvironmentMappingTexture
 from lightSource import LightSource
 from mesh import CubeMesh
 from model import Model
 from scene import Scene
-from shaders import EnvironmentShader
+# from shaders import EnvironmentShader
 from skybox import SkyBox
 
 
@@ -23,22 +23,22 @@ class MainScene(Scene):
         # cube = Model()
 
         self.camera = OrbitCamera()
-        self.skybox = SkyBox()
-        self.environment = EnvironmentMappingTexture(width=400, height=400)
+        # self.skybox = SkyBox()
+        # self.environment = EnvironmentMappingTexture(width=400, height=400)
 
-        floor = Model.from_obj("scene.obj", scale=0.5)
-        table = Model.from_obj(
-            "quad_table.obj", position=(0, -6, 0), scale=2.0, parent=floor
-        )
-        self.box = Model.from_obj("fluid_border.obj", position=(0, 1, 0))
+        # floor = Model.from_obj("scene.obj", scale=0.5)
+        # table = Model.from_obj(
+        #     "quad_table.obj", position=(0, -6, 0), scale=2.0, parent=floor
+        # )
+        # self.box = Model.from_obj("fluid_border.obj", position=(0, 1, 0))
         Model.from_obj(
-            "bunny_world.obj", position=(0, 2, 0), scale=0.5, parent=self.box
+            "bunny_world.obj", position=(0, 2, 0), scale=0.5,# parent=self.box
         )
-        Model(
-            meshes=[CubeMesh()],
-            position=(5, 0, 0),
-            shader=EnvironmentShader(map=self.environment),
-        )
+        # Model(
+        #     meshes=[CubeMesh()],
+        #     position=(5, 0, 0),
+        #     shader=EnvironmentShader(map=self.environment),
+        # )
         # self.camera.parent = self.box
 
     def run(self):
@@ -53,7 +53,7 @@ class MainScene(Scene):
         :return: None
         """
         self.camera.update()
-        self.environment.update()
+        # self.environment.update()
 
         # if self.skybox is not None:
         #     self.skybox.draw()

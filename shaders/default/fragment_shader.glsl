@@ -1,4 +1,6 @@
 #version 130
+
+out vec4 fragColor;
 void main() {                   
-        gl_FragColor = vec4(1.0f);      // for now, we just apply the colour uniformly
+        fragColor = vec4(1.0f);      // for now, we just apply the colour uniformly
 }

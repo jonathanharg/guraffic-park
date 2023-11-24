@@ -12,6 +12,7 @@ from OpenGL import GL as gl
 from camera import Camera
 from entity import Entity
 from matutils import frustumMatrix
+from shaders import ALL_SHADERS
 
 if TYPE_CHECKING:
     from model import Model
