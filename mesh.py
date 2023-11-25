@@ -3,7 +3,7 @@ from OpenGL import GL as gl
 
 from entity import Entity
 from material import Material
-from matutils import unhomog, homog
+from matutils import homog, unhomog
 from scene import Scene
 from shaders import FlatShader, PhongShader, Shader
 from texture import Texture
@@ -47,6 +47,7 @@ class Mesh(Entity):
         self.attributes = {}
         self.vertex_array_object = gl.glGenVertexArrays(1)
         self.index_buffer = None
+        self.uniform_locations = {}
 
         if normals is None:
             if faces is None:
@@ -127,56 +128,101 @@ class Mesh(Entity):
         pvm = np.matmul(projection_matrix, vm)
         vmit = np.linalg.inv(vm)[:3, :3].transpose()
 
-        pvm_location = gl.glGetUniformLocation(program=self.shader.program, name="PVM")
-        gl.glUniformMatrix4fv(pvm_location, 1, True, pvm)
+        if not bool(self.uniform_locations):
+            # If location dict is empty
+            # TODO REMOVE MODE FROM SHADER UNIFORMS
+            self.uniform_locations = {
+                "pvm": gl.glGetUniformLocation(program=self.shader.program, name="PVM"),
+                "vm": gl.glGetUniformLocation(program=self.shader.program, name="VM"),
+                "vmit": gl.glGetUniformLocation(
+                    program=self.shader.program, name="VMiT"
+                ),
+                "mode": gl.glGetUniformLocation(
+                    program=self.shader.program, name="mode"
+                ),
+                "alpha": gl.glGetUniformLocation(
+                    program=self.shader.program, name="alpha"
+                ),
+                "texture_object": gl.glGetUniformLocation(
+                    program=self.shader.program, name="textureObject"
+                ),
+                "has_texture": gl.glGetUniformLocation(
+                    program=self.shader.program, name="has_texture"
+                ),
+                "ambient": gl.glGetUniformLocation(
+                    program=self.shader.program, name="Ka"
+                ),
+                "diffuse": gl.glGetUniformLocation(
+                    program=self.shader.program, name="Kd"
+                ),
+                "specular": gl.glGetUniformLocation(
+                    program=self.shader.program, name="Ks"
+                ),
+                "specular_exponent": gl.glGetUniformLocation(
+                    program=self.shader.program, name="Ns"
+                ),
+                "light": gl.glGetUniformLocation(
+                    program=self.shader.program, name="light"
+                ),
+                "light_ambient": gl.glGetUniformLocation(
+                    program=self.shader.program, name="Ia"
+                ),
+                "light_diffuse": gl.glGetUniformLocation(
+                    program=self.shader.program, name="Id"
+                ),
+                "light_specular": gl.glGetUniformLocation(
+                    program=self.shader.program, name="Is"
+                ),
+            }
 
-        vm_location = gl.glGetUniformLocation(program=self.shader.program, name="VM")
-        gl.glUniformMatrix4fv(vm_location, 1, True, vm)
+        gl.glUniformMatrix4fv(self.uniform_locations["pvm"], 1, True, pvm)
 
-        vmit_location = gl.glGetUniformLocation(program=self.shader.program, name="VMiT")
-        gl.glUniformMatrix3fv(vmit_location, 1, True, vmit)
+        gl.glUniformMatrix4fv(self.uniform_locations["vm"], 1, True, vm)
 
-        # # TODO REMOVE MODE FROM SHADER UNIFORMS
-        mode_location = gl.glGetUniformLocation(program=self.shader.program, name="mode")
-        gl.glUniform1i(mode_location, 1)
+        gl.glUniformMatrix3fv(self.uniform_locations["vmit"], 1, True, vmit)
 
-        alpha_location = gl.glGetUniformLocation(program=self.shader.program, name="alpha")
-        gl.glUniform1f(alpha_location, self.material.alpha)
+        gl.glUniform1i(self.uniform_locations["mode"], 1)
+
+        gl.glUniform1f(self.uniform_locations["alpha"], self.material.alpha)
 
         # # TODO DO WE EVEN NEED THESE
         if len(self.textures) > 0:
-            texture_object_location = gl.glGetUniformLocation(program=self.shader.program, name="textureObject")
-            gl.glUniform1i(texture_object_location, 0)
-            has_texture_location = gl.glGetUniformLocation(program=self.shader.program, name="has_texture")
-            gl.glUniform1i(has_texture_location, 1)
+            gl.glUniform1i(self.uniform_locations["texture_object"], 0)
+            gl.glUniform1i(self.uniform_locations["has_texture"], 1)
         else:
-            has_texture_location = gl.glGetUniformLocation(program=self.shader.program, name="has_texture")
-            gl.glUniform1i(has_texture_location, 1)
-        
-        ambient_location = gl.glGetUniformLocation(program=self.shader.program, name="Ka")
-        gl.glUniform3fv(ambient_location, 1, np.array(self.material.Ka, "f")) 
-        
-        diffuse_location = gl.glGetUniformLocation(program=self.shader.program, name="Kd")
-        gl.glUniform3fv(diffuse_location, 1, np.array(self.material.Kd, "f"))
+            gl.glUniform1i(self.uniform_locations["has_texture"], 1)
 
-        specular_location = gl.glGetUniformLocation(program=self.shader.program, name="Ks")
-        gl.glUniform3fv(specular_location, 1, np.array(self.material.Ks, "f"))
+        gl.glUniform3fv(
+            self.uniform_locations["ambient"], 1, np.array(self.material.Ka, "f")
+        )
 
-        specular_exponent_location = gl.glGetUniformLocation(program=self.shader.program, name="Ns")
-        gl.glUniform1f(specular_exponent_location, self.material.Ns) 
+        gl.glUniform3fv(
+            self.uniform_locations["diffuse"], 1, np.array(self.material.Kd, "f")
+        )
 
+        gl.glUniform3fv(
+            self.uniform_locations["specular"], 1, np.array(self.material.Ks, "f")
+        )
 
-        light_location = gl.glGetUniformLocation(program=self.shader.program, name="light")
-        gl.glUniform3fv(light_location, 1, unhomog(np.dot(view_matrix, homog(light.position))))
+        gl.glUniform1f(self.uniform_locations["specular_exponent"], self.material.Ns)
 
-        light_ambient_location = gl.glGetUniformLocation(program=self.shader.program, name="Ia")
-        gl.glUniform3fv(light_ambient_location, 1, np.array(light.Ia, "f"))
-        
-        light_diffuse_location = gl.glGetUniformLocation(program=self.shader.program, name="Id")
-        gl.glUniform3fv(light_diffuse_location, 1, np.array(light.Id, "f"))
+        gl.glUniform3fv(
+            self.uniform_locations["light"],
+            1,
+            unhomog(np.dot(view_matrix, homog(light.position))),
+        )
 
-        light_specular_location = gl.glGetUniformLocation(program=self.shader.program, name="Is")
-        gl.glUniform3fv(light_specular_location, 1, np.array(light.Is, "f"))
+        gl.glUniform3fv(
+            self.uniform_locations["light_ambient"], 1, np.array(light.Ia, "f")
+        )
+
+        gl.glUniform3fv(
+            self.uniform_locations["light_diffuse"], 1, np.array(light.Id, "f")
+        )
+
+        gl.glUniform3fv(
+            self.uniform_locations["light_specular"], 1, np.array(light.Is, "f")
+        )
 
     def draw(self):
         gl.glBindVertexArray(self.vertex_array_object)

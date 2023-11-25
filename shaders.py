@@ -176,7 +176,7 @@ class Shader:
         if self.compiled:
             print("UNECESSARY COMPILE")
             return
-        
+
         try:
             if self.__class__.__name__ not in Shader.compiled_program_ids:
                 self.program = gl.glCreateProgram()
@@ -213,7 +213,7 @@ class Shader:
         # link all uniforms
         for uniform in self.uniforms:
             self.uniforms[uniform].link(self.program)
-        
+
         self.compiled = True
 
     def bind_attributes(self, attributes):
@@ -233,13 +233,13 @@ class Shader:
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
 
-        projection_matrix = Scene.current_scene.projection_matrix
-        view_matrix = Scene.current_scene.camera.view_matrix
+        # projection_matrix = Scene.current_scene.projection_matrix
+        # view_matrix = Scene.current_scene.camera.view_matrix
 
-        # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(
-            np.matmul(projection_matrix, np.matmul(view_matrix, model.world_pose))
-        )
+        # # set the PVM matrix uniform
+        # self.uniforms["PVM"].bind(
+        #     np.matmul(projection_matrix, np.matmul(view_matrix, model.world_pose))
+        # )
 
     def unbind(self):
         gl.glUseProgram(0)
@@ -293,7 +293,6 @@ class PhongShader(Shader):
 
         # # set the PVM matrix uniform
         # self.uniforms["VMiT"].bind(np.linalg.inv(vm)[:3, :3].transpose())
-
 
         # # bind the mode to the program
         # self.uniforms["mode"].bind(Scene.current_scene.mode)
