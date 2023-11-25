@@ -154,20 +154,29 @@ class Shader:
             "PVM": Uniform("PVM"),  # projection view model matrix
         }
 
+        self.compiled = False
+
         # print(f"CHECK: v{gl.glGetString(gl.GL_VERSION)} {bool(gl.glCreateProgram)}")
 
         # self.compile({})
 
     def add_uniform(self, name: str):
+        if not self.compiled:
+            self.compile()
+
         self.uniforms[name] = Uniform(name)
         if self.program is not None:
             self.uniforms[name].link(self.program)
 
-    def compile(self, attributes):
+    def compile(self):
         """
         Call this function to compile the GLSL codes for both shaders.
         :return:
         """
+        if self.compiled:
+            print("UNECESSARY COMPILE")
+            return
+        
         try:
             if self.__class__.__name__ not in Shader.compiled_program_ids:
                 self.program = gl.glCreateProgram()
@@ -194,7 +203,7 @@ class Shader:
         except Exception as e:
             raise RuntimeError(f"Error compiling {self.name} shader: {e}") from e
 
-        self.bind_attributes(attributes)
+        # self.bind_attributes(attributes)
 
         gl.glLinkProgram(self.program)
 
@@ -204,8 +213,12 @@ class Shader:
         # link all uniforms
         for uniform in self.uniforms:
             self.uniforms[uniform].link(self.program)
+        
+        self.compiled = True
 
     def bind_attributes(self, attributes):
+        if not self.compiled:
+            self.compile()
         # bind all shader attributes to the correct locations in the VAO
         for name, location in attributes.items():
             gl.glBindAttribLocation(self.program, location, name)
@@ -214,6 +227,8 @@ class Shader:
         """
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         """
+        if not self.compiled:
+            self.compile()
 
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
@@ -268,34 +283,35 @@ class PhongShader(Shader):
         # tell OpenGL to use this shader program for rendering
         gl.glUseProgram(self.program)
 
-        vm = np.matmul(view_matrix, model.world_pose)
+        # vm = np.matmul(view_matrix, model.world_pose)
 
-        # set the PVM matrix uniform
-        self.uniforms["PVM"].bind(np.matmul(projection_matrix, vm))
+        # # set the PVM matrix uniform
+        # self.uniforms["PVM"].bind(np.matmul(projection_matrix, vm))
 
-        # set the PVM matrix uniform
-        self.uniforms["VM"].bind(vm)
+        # # set the PVM matrix uniform
+        # self.uniforms["VM"].bind(vm)
 
-        # set the PVM matrix uniform
-        self.uniforms["VMiT"].bind(np.linalg.inv(vm)[:3, :3].transpose())
+        # # set the PVM matrix uniform
+        # self.uniforms["VMiT"].bind(np.linalg.inv(vm)[:3, :3].transpose())
 
-        # bind the mode to the program
-        self.uniforms["mode"].bind(Scene.current_scene.mode)
 
-        self.uniforms["alpha"].bind(model.material.alpha)
+        # # bind the mode to the program
+        # self.uniforms["mode"].bind(Scene.current_scene.mode)
 
-        if len(model.textures) > 0:
-            # bind the texture(s)
-            self.uniforms["textureObject"].bind(0)
-            self.uniforms["has_texture"].bind(1)
-        else:
-            self.uniforms["has_texture"].bind(0)
+        # self.uniforms["alpha"].bind(model.material.alpha)
 
-        # bind material properties
-        self.bind_material_uniforms(model.material)
+        # if len(model.textures) > 0:
+        #     # bind the texture(s)
+        #     self.uniforms["textureObject"].bind(0)
+        #     self.uniforms["has_texture"].bind(1)
+        # else:
+        #     self.uniforms["has_texture"].bind(0)
 
-        # bind the light properties
-        self.bind_light_uniforms(Scene.current_scene.light, view_matrix)
+        # # bind material properties
+        # self.bind_material_uniforms(model.material)
+
+        # # bind the light properties
+        # self.bind_light_uniforms(Scene.current_scene.light, view_matrix)
 
     def bind_light_uniforms(self, light, V):
         self.uniforms["light"].bind_vector(unhomog(np.dot(V, homog(light.position))))
@@ -338,7 +354,7 @@ class TextureShader(PhongShader):
 class SkyBoxShader(Shader):
     def __init__(self, name="skybox"):
         super().__init__(name=name)
-        self.compile({})
+        # self.compile()
         self.add_uniform("sampler_cube")
 
     def bind(self, model):
@@ -355,7 +371,7 @@ class SkyBoxShader(Shader):
 class EnvironmentShader(Shader):
     def __init__(self, name="environment", map=None):
         super().__init__(name=name)
-        self.compile({})
+        self.compile()
         self.add_uniform("sampler_cube")
         self.add_uniform("VM")
         self.add_uniform("VMiT")
