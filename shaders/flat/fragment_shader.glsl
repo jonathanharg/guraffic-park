@@ -8,8 +8,6 @@ in vec2 fragment_texCoord;
 //=== 'out' attributes are the output image, usually only one for the colour of each pixel
 out vec4 final_color;
 
-// === uniform here the texture object to sample from
-uniform int mode;	// the rendering mode (better to code different shaders!)
 
 uniform int has_texture;
 

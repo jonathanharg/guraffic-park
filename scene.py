@@ -212,16 +212,6 @@ class Scene:
 
             self.camera.handle_pygame_event(event)
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mods = pygame.key.get_mods()
-                if event.button == 4:
-                    if mods & pygame.KMOD_CTRL:
-                        self.light.position *= 1.1
-                        self.light.update()
-                elif event.button == 5:
-                    if mods & pygame.KMOD_CTRL:
-                        self.light.position *= 0.9
-                        self.light.update()
 
             if self.mouse_locked:
                 pygame.mouse.set_pos(

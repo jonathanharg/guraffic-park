@@ -37,12 +37,12 @@ class CubeMap(Texture):
 
         # This dictionary contains the file name for each face, if loading from disk (otherwise ignored)
         self.files = {
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: "left.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: "back.bmp",
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: "right.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: "front.bmp",
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: "left.bmp",
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: "top.bmp",
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: "bottom.bmp",
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: "back.bmp",
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: "front.bmp",
         }
 
         # generate the texture.
@@ -58,6 +58,7 @@ class CubeMap(Texture):
         # set what happens for texture coordinates outside [0,1]
         gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_S, wrap)
         gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_T, wrap)
+        gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_R, wrap)
 
         # set how sampling from the texture is done.
         gl.glTexParameteri(self.target, gl.GL_TEXTURE_MAG_FILTER, sample)

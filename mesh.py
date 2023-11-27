@@ -127,51 +127,50 @@ class Mesh(Entity):
         vm = np.matmul(view_matrix, self.world_pose)
         pvm = np.matmul(projection_matrix, vm)
         vmit = np.linalg.inv(vm)[:3, :3].transpose()
+        vt = view_matrix.transpose()[:3, :3]
 
         if not bool(self.uniform_locations):
             # If location dict is empty
             # TODO REMOVE MODE FROM SHADER UNIFORMS
             self.uniform_locations = {
-                "pvm": gl.glGetUniformLocation(program=self.shader.program, name="PVM"),
-                "vm": gl.glGetUniformLocation(program=self.shader.program, name="VM"),
+                "pvm": gl.glGetUniformLocation(program=self.shader.program_id, name="PVM"),
+                "vm": gl.glGetUniformLocation(program=self.shader.program_id, name="VM"),
+                "vt": gl.glGetUniformLocation(program=self.shader.program_id, name="VT"),
                 "vmit": gl.glGetUniformLocation(
-                    program=self.shader.program, name="VMiT"
-                ),
-                "mode": gl.glGetUniformLocation(
-                    program=self.shader.program, name="mode"
+                    program=self.shader.program_id, name="VMiT"
                 ),
                 "alpha": gl.glGetUniformLocation(
-                    program=self.shader.program, name="alpha"
+                    program=self.shader.program_id, name="alpha"
                 ),
                 "texture_object": gl.glGetUniformLocation(
-                    program=self.shader.program, name="textureObject"
+                    program=self.shader.program_id, name="textureObject"
                 ),
                 "has_texture": gl.glGetUniformLocation(
-                    program=self.shader.program, name="has_texture"
+                    program=self.shader.program_id, name="has_texture"
                 ),
                 "ambient": gl.glGetUniformLocation(
-                    program=self.shader.program, name="Ka"
+                    program=self.shader.program_id, name="Ka"
                 ),
                 "diffuse": gl.glGetUniformLocation(
-                    program=self.shader.program, name="Kd"
+                    program=self.shader.program_id, name="Kd"
                 ),
                 "specular": gl.glGetUniformLocation(
-                    program=self.shader.program, name="Ks"
+                    program=self.shader.program_id, name="Ks"
                 ),
                 "specular_exponent": gl.glGetUniformLocation(
-                    program=self.shader.program, name="Ns"
+                    program=self.shader.program_id, name="Ns"
                 ),
                 "light": gl.glGetUniformLocation(
-                    program=self.shader.program, name="light"
+                    program=self.shader.program_id, name="light"
                 ),
                 "light_ambient": gl.glGetUniformLocation(
-                    program=self.shader.program, name="Ia"
+                    program=self.shader.program_id, name="Ia"
                 ),
                 "light_diffuse": gl.glGetUniformLocation(
-                    program=self.shader.program, name="Id"
+                    program=self.shader.program_id, name="Id"
                 ),
                 "light_specular": gl.glGetUniformLocation(
-                    program=self.shader.program, name="Is"
+                    program=self.shader.program_id, name="Is"
                 ),
             }
 
@@ -181,7 +180,7 @@ class Mesh(Entity):
 
         gl.glUniformMatrix3fv(self.uniform_locations["vmit"], 1, True, vmit)
 
-        gl.glUniform1i(self.uniform_locations["mode"], 1)
+        gl.glUniformMatrix3fv(self.uniform_locations["vt"], 1, True, vt)
 
         gl.glUniform1f(self.uniform_locations["alpha"], self.material.alpha)
 
@@ -190,7 +189,7 @@ class Mesh(Entity):
             gl.glUniform1i(self.uniform_locations["texture_object"], 0)
             gl.glUniform1i(self.uniform_locations["has_texture"], 1)
         else:
-            gl.glUniform1i(self.uniform_locations["has_texture"], 1)
+            gl.glUniform1i(self.uniform_locations["has_texture"], 0)
 
         gl.glUniform3fv(
             self.uniform_locations["ambient"], 1, np.array(self.material.Ka, "f")
@@ -244,6 +243,7 @@ class Mesh(Entity):
         else:
             gl.glDrawArrays(self.primitive, 0, self.vertices.shape[0])
 
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
         gl.glBindVertexArray(0)
         self.shader.unbind()
 
@@ -332,6 +332,7 @@ class Mesh(Entity):
         If a new shader is bound, we need to re-link it to ensure attributes are correctly linked.
         """
         self.shader = shader
+        self.uniform_locations = {}
         # self.shader.compile(self.attributes)
         self.shader.bind_attributes(self.attributes)
 

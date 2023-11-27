@@ -3,8 +3,9 @@ import quaternion
 from OpenGL import GL as gl
 
 from camera import Camera, FreeCamera, OrbitCamera
+from cubeMap import CubeMap
 from environmentMapping import EnvironmentMappingTexture
-from lightSource import LightSource
+from lightSource import Light
 from mesh import CubeMesh
 from model import Model
 from scene import Scene
@@ -16,7 +17,7 @@ class MainScene(Scene):
     def __init__(self):
         Scene.__init__(self)
 
-        self.light = LightSource(self, position=[5.0, 3.0, 5.0])
+        self.light = Light(self, position=[1.0, 1.0, 1.0])
 
         # ldn = Model.from_obj("london.obj")
 
@@ -25,21 +26,24 @@ class MainScene(Scene):
         self.camera = OrbitCamera()
         self.skybox = SkyBox()
         self.environment = EnvironmentMappingTexture(width=400, height=400)
+        self.environment = CubeMap(name="skybox/debug")
 
         floor = Model.from_obj("scene.obj", scale=0.5)
         table = Model.from_obj(
-            "quad_table.obj", position=(0, -6, 0), scale=2.0, parent=floor
+            "quad_table.obj", position=(10, -6, 0), scale=2.0, parent=floor
         )
         self.box = Model.from_obj("fluid_border.obj", position=(0, 1, 0))
         Model.from_obj(
             "bunny_world.obj", position=(0, 2, 0), scale=0.5, parent=self.box
         )
+        # self.mirror = Model.from_obj("mirror.obj", shader=EnvironmentShader(map=self.environment))
         Model(
             meshes=[CubeMesh()],
-            position=(5, 0, 0),
+            position=(0, 0, 0),
+            scale=1,
             shader=EnvironmentShader(map=self.environment),
         )
-        # self.camera.parent = self.box
+        self.camera.parent = self.box
 
     def run(self):
         # self.box.rotation = (
@@ -53,7 +57,7 @@ class MainScene(Scene):
         :return: None
         """
         self.camera.update()
-        self.environment.update()
+        # self.environment.update()
 
         # if self.skybox is not None:
         #     self.skybox.draw()
@@ -108,7 +112,13 @@ class MainScene(Scene):
             if imgui.tree_node("Camera"):
                 self.camera.debug_menu()
                 imgui.tree_pop()
+            
+            imgui.separator()
+            if imgui.tree_node("Light"):
+                self.light.debug_menu()
+                imgui.tree_pop()
 
+            imgui.separator()
             if imgui.button("Quit"):
                 self.running = False
 

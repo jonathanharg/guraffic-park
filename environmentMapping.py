@@ -17,7 +17,7 @@ from shaders import EnvironmentShader
 
 class EnvironmentMappingTexture(CubeMap):
     def __init__(self, width=200, height=200):
-        CubeMap.__init__(self)
+        super().__init__()
 
         self.done = False
 
@@ -42,13 +42,13 @@ class EnvironmentMappingTexture(CubeMap):
                 translationMatrix([0, 0, t]), rotationMatrixY(+np.pi / 2.0)
             ),
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: np.matmul(
-                translationMatrix([0, 0, t]), rotationMatrixX(+np.pi / 2.0)
-            ),
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: np.matmul(
                 translationMatrix([0, 0, t]), rotationMatrixX(-np.pi / 2.0)
             ),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: np.matmul(
+                translationMatrix([0, 0, t]), rotationMatrixX(np.pi / 2.0)
+            ),
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: np.matmul(
-                translationMatrix([0, 0, t]), rotationMatrixY(-np.pi)
+                translationMatrix([0, 0, t]), rotationMatrixY(np.pi)
             ),
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: translationMatrix([0, 0, t]),
         }
@@ -89,8 +89,13 @@ class EnvironmentMappingTexture(CubeMap):
             scene.camera.view_matrix = self.views[face]
 
             # # scene.draw_reflections()
-            # for model in scene.models:
-            #     model.draw()
+            for model in scene.models:
+                if model.visible is False:
+                    continue
+                for mesh in model.meshes:
+                    if not isinstance(mesh.shader, EnvironmentShader):
+                        mesh.draw()
+                # model.draw()
 
             scene.camera.update()
             fbo.unbind()
@@ -101,6 +106,7 @@ class EnvironmentMappingTexture(CubeMap):
         scene.projection_matrix = old_p
 
         self.unbind()
+        self.done=True
 
 
 # class EnvironmentBox(Mesh):
