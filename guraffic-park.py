@@ -1,4 +1,5 @@
 import imgui
+import numpy as np
 import quaternion
 from OpenGL import GL as gl
 
@@ -70,6 +71,7 @@ class MainScene(Scene):
             imgui.text(
                 f"OpenGL v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
             )
+            imgui.plot_lines("Frametime",np.array(self.frame_times, dtype=np.float32), scale_min=0.0)
 
             # FOV Slider
             (fov_changed, self.fov) = imgui.slider_float("FOV", self.fov, 30, 150)

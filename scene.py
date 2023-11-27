@@ -1,6 +1,7 @@
 import cProfile
 import pstats
 import stat
+from collections import deque
 from typing import TYPE_CHECKING, Self, Type
 
 import imgui
@@ -58,7 +59,8 @@ class Scene:
         self.x_sensitivity = 3
         self.y_sensitivity = 3
         self.fps_max = 300
-        self.clock = pygame.time.Clock()
+        self.frame_times = deque(maxlen=100)
+        self.clock:pygame.time.Clock = None
         self.delta_time = 0
         self.mouse_locked = True
         self.show_imgui_demo = False
@@ -248,8 +250,10 @@ class Scene:
         # with cProfile.Profile() as pr:
         # We have a classic program loop
         self.running = True
+        self.clock = pygame.time.Clock()
         while self.running:
             self.delta_time = self.clock.tick(self.fps_max) / 1000
+            self.frame_times.append(self.clock.get_time())
             self.run()
             self.imgui_impl.process_inputs()
             imgui.new_frame()
