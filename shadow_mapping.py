@@ -2,7 +2,7 @@ import numpy as np
 from OpenGL import GL as gl
 
 from framebuffer import Framebuffer
-from matutils import frustumMatrix, translationMatrix
+from matutils import translation_matrix
 from texture import Texture
 
 
@@ -10,7 +10,7 @@ def normalize(v):
     return v / np.linalg.norm(v)
 
 
-def lookAt(eye, center, up=np.array([0, 1, 0])):
+def look_at(eye, center, up=np.array([0, 1, 0])):
     f = normalize(center - eye)
     u = normalize(up)
 
@@ -27,7 +27,7 @@ def lookAt(eye, center, up=np.array([0, 1, 0])):
                 [0, 0, 0, 1],
             ]
         ),
-        translationMatrix(-eye),
+        translation_matrix(-eye),
     )
 
 

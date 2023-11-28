@@ -26,6 +26,3 @@ class DirectionalLight(Entity):
         self.diffuse_illumination = np.array(diffuse_illumination, dtype=np.float32)
         self.specular_illumination = np.array(specular_illumination, dtype=np.float32)
         super().__init__(position=(0, 0, -1))
-
-    def debug_menu(self):
-        return super().debug_menu()

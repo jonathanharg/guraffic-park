@@ -4,7 +4,7 @@ import imgui
 import numpy as np
 import quaternion
 
-from matutils import scaleMatrix, translationMatrix
+from matutils import scale_matrix, translation_matrix
 
 
 class Entity:
@@ -123,15 +123,13 @@ class Entity:
         if self.__cache_world_translation__ is not None:
             return self.__cache_world_translation__
 
-        translation_matrix = translationMatrix(self.__position__)
+        translation = translation_matrix(self.__position__)
 
         if self.parent is not None:
-            translation_matrix = np.matmul(
-                self.parent.world_translation(), translation_matrix
-            )
+            translation = np.matmul(self.parent.world_translation(), translation)
 
-        self.__cache_world_translation__ = translation_matrix
-        return translation_matrix
+        self.__cache_world_translation__ = translation
+        return translation
 
     def world_rotation(self):
         if self.__cache_world_rotation__ is not None:
@@ -140,22 +138,20 @@ class Entity:
         if self.parent is None:
             self.__cache_world_rotation__ = self.rotation_matrix
             return self.__cache_world_rotation__
-        else:
-            world_rotation = np.matmul(
-                self.parent.world_rotation(), self.rotation_matrix
-            )
-            self.__cache_world_rotation__ = world_rotation
-            return world_rotation
+
+        world_rotation = np.matmul(self.parent.world_rotation(), self.rotation_matrix)
+        self.__cache_world_rotation__ = world_rotation
+        return world_rotation
 
     @property
     def world_pose(self):
         if self.__cache_world_pose__ is not None:
             return self.__cache_world_pose__
 
-        scale_matrix = scaleMatrix(self.__scale__)
-        translation_matrix = translationMatrix(self.__position__)
+        scale = scale_matrix(self.__scale__)
+        translation = translation_matrix(self.__position__)
         local_pose_matrix = np.matmul(
-            translation_matrix, np.matmul(scale_matrix, self.rotation_matrix)
+            translation, np.matmul(scale, self.rotation_matrix)
         )
 
         if self.parent is not None:

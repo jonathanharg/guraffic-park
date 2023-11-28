@@ -3,9 +3,14 @@ from OpenGL import GL as gl
 
 from entity import Entity
 from material import Material
-from matutils import homog, scaleMatrix, translationMatrix, unhomog
+from matutils import (
+    make_homogeneous,
+    make_unhomogeneous,
+    scale_matrix,
+    translation_matrix,
+)
 from scene import Scene
-from shaders import FlatShader, PhongShader, Shader, ShadowMappingShader
+from shaders import PhongShader, Shader, ShadowMappingShader
 from texture import Texture
 
 
@@ -194,15 +199,15 @@ class Mesh(Entity):
                     program=self.shader.program_id, name="shadow_map_matrix"
                 )
 
-            VsT = np.linalg.inv(Scene.current_scene.camera.view_matrix)
-            SM = np.matmul(Scene.current_scene.camera.view_matrix, VsT)
-            SM = np.matmul(Scene.current_scene.projection_matrix, SM)
-            SM = np.matmul(translationMatrix([1, 1, 1]), SM)
-            SM = np.matmul(scaleMatrix(0.5), SM)
+            vst = np.linalg.inv(Scene.current_scene.camera.view_matrix)
+            sm = np.matmul(Scene.current_scene.camera.view_matrix, vst)
+            sm = np.matmul(Scene.current_scene.projection_matrix, sm)
+            sm = np.matmul(translation_matrix([1, 1, 1]), sm)
+            sm = np.matmul(scale_matrix(0.5), sm)
 
             gl.glUniform1i(self.uniform_locations["shadow_map"], 1)
             gl.glUniformMatrix4fv(
-                self.uniform_locations["shadow_map_matrix"], 1, True, SM
+                self.uniform_locations["shadow_map_matrix"], 1, True, sm
             )
 
         # NEW
@@ -247,7 +252,7 @@ class Mesh(Entity):
         gl.glUniform3fv(
             self.uniform_locations["light"],
             1,
-            unhomog(np.dot(view_matrix, homog(light.position))),
+            make_unhomogeneous(np.dot(view_matrix, make_homogeneous(light.position))),
         )
 
         gl.glUniform3fv(

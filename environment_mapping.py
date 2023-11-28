@@ -1,16 +1,14 @@
 import numpy as np
-from cubeMap import CubeMap
 from OpenGL import GL as gl
 
+from cube_map import CubeMap
 from framebuffer import Framebuffer
 from matutils import (
-    frustumMatrix,
-    poseMatrix,
-    rotationMatrixX,
-    rotationMatrixY,
-    translationMatrix,
+    frustrum_matrix,
+    rotation_matrix_x,
+    rotation_matrix_y,
+    translation_matrix,
 )
-from mesh import CubeMesh, Mesh
 from scene import Scene
 from shaders import EnvironmentShader
 
@@ -36,21 +34,21 @@ class EnvironmentMappingTexture(CubeMap):
         t = 0.0
         self.views = {
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: np.matmul(
-                translationMatrix([0, 0, t]), rotationMatrixY(-np.pi / 2.0)
+                translation_matrix([0, 0, t]), rotation_matrix_y(-np.pi / 2.0)
             ),
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: np.matmul(
-                translationMatrix([0, 0, t]), rotationMatrixY(+np.pi / 2.0)
+                translation_matrix([0, 0, t]), rotation_matrix_y(+np.pi / 2.0)
             ),
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: np.matmul(
-                translationMatrix([0, 0, t]), rotationMatrixX(-np.pi / 2.0)
+                translation_matrix([0, 0, t]), rotation_matrix_x(-np.pi / 2.0)
             ),
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: np.matmul(
-                translationMatrix([0, 0, t]), rotationMatrixX(np.pi / 2.0)
+                translation_matrix([0, 0, t]), rotation_matrix_x(np.pi / 2.0)
             ),
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: np.matmul(
-                translationMatrix([0, 0, t]), rotationMatrixY(np.pi)
+                translation_matrix([0, 0, t]), rotation_matrix_y(np.pi)
             ),
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: translationMatrix([0, 0, t]),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: translation_matrix([0, 0, t]),
         }
 
         self.bind()
@@ -79,7 +77,7 @@ class EnvironmentMappingTexture(CubeMap):
 
         old_p = scene.projection_matrix
 
-        scene.projection_matrix = frustumMatrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
+        scene.projection_matrix = frustrum_matrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
 
         gl.glViewport(0, 0, self.width, self.height)
 

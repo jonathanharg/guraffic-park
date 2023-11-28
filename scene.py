@@ -7,12 +7,12 @@ import imgui
 import numpy as np
 import pygame
 from imgui.integrations.pygame import PygameRenderer
-from lightSource import DirectionalLight
 from OpenGL import GL as gl
 
 from camera import Camera
 from entity import Entity
-from matutils import frustumMatrix
+from light import DirectionalLight
+from matutils import frustrum_matrix
 
 if TYPE_CHECKING:
     from model import Model
@@ -41,7 +41,7 @@ class Scene:
 
         # to start with, we use an orthographic projection; change this.
         # self.P = frustumMatrix(left, right, top, bottom, near, far)
-        self.projection_matrix = frustumMatrix(
+        self.projection_matrix = frustrum_matrix(
             left, right, top, bottom, self.near_clipping, self.far_clipping
         )
 
@@ -151,29 +151,23 @@ class Scene:
         for model in models_list:
             self.add_model(model)
 
-    def draw(self, framebuffer=False):
+    def draw(self):
         """
         Draw all models in the scene
         :return: None
         """
 
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        if not framebuffer:
-            gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-            # ensure that the camera view matrix is up to date
-            self.camera.update()
+        # ensure that the camera view matrix is up to date
+        self.camera.update()
 
         # then we loop over all models in the list and draw them
         for model in self.models:
             model.draw()
 
-        # once we are done drawing, we display the scene
-        # Note that here we use double buffering to avoid artefacts:
-        # we draw on a different buffer than the one we display,
-        # and flip the two buffers once we are done drawing.
-        if not framebuffer:
-            pygame.display.flip()
+        pygame.display.flip()
 
     def keyboard(self, event):
         """

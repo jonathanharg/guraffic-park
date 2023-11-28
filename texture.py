@@ -20,7 +20,7 @@ class ImageWrapper:
         # convert the python image object to a plain byte array for passing to OpenGL
         if image_format == gl.GL_RGBA:
             return pygame.image.tostring(self.img, "RGBA", 1)
-        elif image_format == gl.GL_RGB:
+        if image_format == gl.GL_RGB:
             return pygame.image.tostring(self.img, "RGB", 1)
 
 

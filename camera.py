@@ -5,7 +5,7 @@ import quaternion
 from pygame.event import Event
 
 from entity import Entity
-from matutils import translationMatrix
+from matutils import translation_matrix
 
 
 class Camera(Entity):
@@ -111,8 +111,8 @@ class OrbitCamera(FreeCamera):
         # Calculate the view matrix for a regular camera
         super().update()
         # Translate the camera distance units away from the regular camera
-        translation_matrix = translationMatrix([0.0, 0.0, -self.distance])
-        self.view_matrix = np.matmul(translation_matrix, self.view_matrix)
+        translation = translation_matrix([0.0, 0.0, -self.distance])
+        self.view_matrix = np.matmul(translation, self.view_matrix)
 
     def debug_menu(self):
         super().debug_menu()

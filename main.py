@@ -2,17 +2,15 @@ import imgui
 import numpy as np
 import pygame
 import quaternion
-from cubeMap import CubeMap
-from environmentMapping import EnvironmentMappingTexture
-from lightSource import DirectionalLight
 from OpenGL import GL as gl
-from ShadowMapping import ShadowMap
 
 from camera import Camera, FreeCamera, OrbitCamera
+from environment_mapping import EnvironmentMappingTexture
 from mesh import CubeMesh
 from model import Model
 from scene import Scene
-from shaders import EnvironmentShader, ShadowMappingShader
+from shaders import EnvironmentShader
+from shadow_mapping import ShadowMap
 from skybox import SkyBox
 
 

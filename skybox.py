@@ -1,6 +1,6 @@
-from cubeMap import CubeMap
 from OpenGL import GL as gl
 
+from cube_map import CubeMap
 from material import Material
 from mesh import CubeMesh
 from model import Model
