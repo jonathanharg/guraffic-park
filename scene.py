@@ -7,6 +7,7 @@ import imgui
 import numpy as np
 import pygame
 from imgui.integrations.pygame import PygameRenderer
+from lightSource import DirectionalLight
 from OpenGL import GL as gl
 
 from camera import Camera
@@ -104,7 +105,8 @@ class Scene:
         gl.glClearColor(0.0, 0.0, 0.0, 1.0)
 
         # enable back face culling (see lecture on clipping and visibility
-        gl.glEnable(gl.GL_CULL_FACE)
+        # TODO: UNCOMMENT
+        # gl.glEnable(gl.GL_CULL_FACE)
         # depending on your model, or your projection matrix, the winding order may be inverted,
         # Typically, you see the far side of the model instead of the front one
         # uncommenting the following line should provide an easy fix.
@@ -117,17 +119,12 @@ class Scene:
         # enable depth test for clean output (see lecture on clipping & visibility for an explanation
         gl.glEnable(gl.GL_DEPTH_TEST)
 
-        # set the default shader program (can be set on a per-mesh basis)
-        self.shaders = "flat"
-
         # initialises the camera object
         self.camera = Camera()
+        self.light = DirectionalLight()
 
         # initialise the light source
         # self.light = LightSource(self, position=[5.0, 5.0, 5.0])
-
-        # rendering mode for the shaders
-        self.mode = 1  # initialise to full interpolated shading
 
         # This class will maintain a list of models to draw in the scene,
         self.models: list[Type["Model"]] = []
@@ -211,7 +208,6 @@ class Scene:
                 self.keyboard(event)
 
             self.camera.handle_pygame_event(event)
-
 
             if self.mouse_locked:
                 pygame.mouse.set_pos(

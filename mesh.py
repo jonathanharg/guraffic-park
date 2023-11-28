@@ -3,9 +3,9 @@ from OpenGL import GL as gl
 
 from entity import Entity
 from material import Material
-from matutils import homog, unhomog
+from matutils import homog, scaleMatrix, translationMatrix, unhomog
 from scene import Scene
-from shaders import FlatShader, PhongShader, Shader
+from shaders import FlatShader, PhongShader, Shader, ShadowMappingShader
 from texture import Texture
 
 
@@ -133,9 +133,20 @@ class Mesh(Entity):
             # If location dict is empty
             # TODO REMOVE MODE FROM SHADER UNIFORMS
             self.uniform_locations = {
-                "pvm": gl.glGetUniformLocation(program=self.shader.program_id, name="PVM"),
-                "vm": gl.glGetUniformLocation(program=self.shader.program_id, name="VM"),
-                "vt": gl.glGetUniformLocation(program=self.shader.program_id, name="VT"),
+                # NEW
+                "viewPos": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="viewPos"
+                ),
+                # OLD
+                "pvm": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="PVM"
+                ),
+                "vm": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="VM"
+                ),
+                "vt": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="VT"
+                ),
                 "vmit": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="VMiT"
                 ),
@@ -163,16 +174,44 @@ class Mesh(Entity):
                 "light": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="light"
                 ),
-                "light_ambient": gl.glGetUniformLocation(
+                "ambient_illumination": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="Ia"
                 ),
-                "light_diffuse": gl.glGetUniformLocation(
+                "diffuse_illumination": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="Id"
                 ),
-                "light_specular": gl.glGetUniformLocation(
+                "specular_illumination": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="Is"
                 ),
             }
+
+        if isinstance(self.shader, ShadowMappingShader):
+            if not "shadow_map" in self.uniform_locations:
+                self.uniform_locations["shadow_map"] = gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="shadow_map"
+                )
+                self.uniform_locations["shadow_map_matrix"] = gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="shadow_map_matrix"
+                )
+
+            VsT = np.linalg.inv(Scene.current_scene.camera.view_matrix)
+            SM = np.matmul(Scene.current_scene.camera.view_matrix, VsT)
+            SM = np.matmul(Scene.current_scene.projection_matrix, SM)
+            SM = np.matmul(translationMatrix([1, 1, 1]), SM)
+            SM = np.matmul(scaleMatrix(0.5), SM)
+
+            gl.glUniform1i(self.uniform_locations["shadow_map"], 1)
+            gl.glUniformMatrix4fv(
+                self.uniform_locations["shadow_map_matrix"], 1, True, SM
+            )
+
+        # NEW
+
+        gl.glUniform3fv(
+            self.uniform_locations["viewPos"], 1, Scene.current_scene.camera.position
+        )
+
+        # OLD
 
         gl.glUniformMatrix4fv(self.uniform_locations["pvm"], 1, True, pvm)
 
@@ -212,15 +251,21 @@ class Mesh(Entity):
         )
 
         gl.glUniform3fv(
-            self.uniform_locations["light_ambient"], 1, np.array(light.Ia, "f")
+            self.uniform_locations["ambient_illumination"],
+            1,
+            np.array(light.ambient_illumination, "f"),
         )
 
         gl.glUniform3fv(
-            self.uniform_locations["light_diffuse"], 1, np.array(light.Id, "f")
+            self.uniform_locations["diffuse_illumination"],
+            1,
+            np.array(light.diffuse_illumination, "f"),
         )
 
         gl.glUniform3fv(
-            self.uniform_locations["light_specular"], 1, np.array(light.Is, "f")
+            self.uniform_locations["specular_illumination"],
+            1,
+            np.array(light.specular_illumination, "f"),
         )
 
     def draw(self):

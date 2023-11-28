@@ -153,7 +153,6 @@ class Shader:
 
         self.compiled = False
 
-
     # def add_uniform(self, name: str):
     #     if not self.compiled:
     #         self.compile()
@@ -174,9 +173,7 @@ class Shader:
         try:
             if self.program_name not in Shader.compiled_program_ids:
                 self.program_id = gl.glCreateProgram()
-                print(
-                    f"Compiling {self.program_name} shader"
-                )
+                print(f"Compiling {self.program_name} shader")
                 gl.glAttachShader(
                     self.program_id,
                     shaders.compileShader(
@@ -194,7 +191,9 @@ class Shader:
                 self.program_id = self.compiled_program_ids[self.program_name]
 
         except Exception as e:
-            raise RuntimeError(f"Error compiling {self.program_name} shader: {e}") from e
+            raise RuntimeError(
+                f"Error compiling {self.program_name} shader: {e}"
+            ) from e
 
         # self.bind_attributes(attributes)
 
@@ -233,6 +232,11 @@ class Shader:
 class PhongShader(Shader):
     def __init__(self):
         super().__init__(program_name="phong")
+
+
+class NewShader(Shader):
+    def __init__(self):
+        super().__init__(program_name="new")
 
 
 class FlatShader(Shader):
@@ -278,19 +282,18 @@ class EnvironmentShader(Shader):
         gl.glUseProgram(self.program_id)
 
 
-
 class ShadowMappingShader(Shader):
     def __init__(self, shadow_map=None):
         super().__init__(program_name="shadow_mapping")
         self.compile()
-        self.add_uniform("shadow_map")
-        # self.add_uniform('old_map')
-        self.add_uniform("shadow_map_matrix")
+        # self.add_uniform("shadow_map")
+        ##### self.add_uniform('old_map')
+        # self.add_uniform("shadow_map_matrix")
         self.shadow_map = shadow_map
 
     def bind(self, model):
         super().bind(model)
-        self.uniforms["shadow_map"].bind(1)
+        # self.uniforms["shadow_map"].bind(1)
 
         gl.glActiveTexture(gl.GL_TEXTURE1)
         self.shadow_map.bind()
@@ -299,11 +302,3 @@ class ShadowMappingShader(Shader):
         # self.shadow_map.bind()
 
         gl.glActiveTexture(gl.GL_TEXTURE0)
-
-        # setup the shadow map matrix
-        VsT = np.linalg.inv(Scene.current_scene.camera.view_matrix)
-        self.SM = np.matmul(self.shadow_map.view_matrix, VsT)
-        self.SM = np.matmul(self.shadow_map.projection_matrix, self.SM)
-        self.SM = np.matmul(translationMatrix([1, 1, 1]), self.SM)
-        self.SM = np.matmul(scaleMatrix(0.5), self.SM)
-        self.uniforms["shadow_map_matrix"].bind(self.SM)

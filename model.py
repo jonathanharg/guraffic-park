@@ -10,6 +10,7 @@ from scene import Scene
 from shaders import (
     EnvironmentShader,
     FlatShader,
+    NewShader,
     PhongShader,
     Shader,
     ShadowMappingShader,
@@ -77,6 +78,7 @@ class Model(Entity):
             Shader,
             PhongShader,
             FlatShader,
+            NewShader,
             TextureShader,
             SkyBoxShader,
             EnvironmentShader,
