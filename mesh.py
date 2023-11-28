@@ -3,7 +3,14 @@ from OpenGL import GL as gl
 
 from entity import Entity
 from material import Material
-from shaders import FlatShader, PhongShader, Shader
+from matutils import (
+    make_homogeneous,
+    make_unhomogeneous,
+    scale_matrix,
+    translation_matrix,
+)
+from scene import Scene
+from shaders import PhongShader, Shader, ShadowMappingShader
 from texture import Texture
 
 
@@ -45,6 +52,7 @@ class Mesh(Entity):
         self.attributes = {}
         self.vertex_array_object = gl.glGenVertexArrays(1)
         self.index_buffer = None
+        self.uniform_locations = {}
 
         if normals is None:
             if faces is None:
@@ -116,10 +124,160 @@ class Mesh(Entity):
             self.tangents /= np.linalg.norm(self.tangents, axis=1, keepdims=True)
             self.binormals /= np.linalg.norm(self.binormals, axis=1, keepdims=True)
 
+    def set_uniforms(self):
+        projection_matrix = Scene.current_scene.projection_matrix
+        view_matrix = Scene.current_scene.camera.view_matrix
+        light = Scene.current_scene.light
+
+        vm = np.matmul(view_matrix, self.world_pose)
+        pvm = np.matmul(projection_matrix, vm)
+        vmit = np.linalg.inv(vm)[:3, :3].transpose()
+        vt = view_matrix.transpose()[:3, :3]
+
+        if not bool(self.uniform_locations):
+            # If location dict is empty
+            # TODO REMOVE MODE FROM SHADER UNIFORMS
+            self.uniform_locations = {
+                # NEW
+                "viewPos": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="viewPos"
+                ),
+                # OLD
+                "pvm": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="PVM"
+                ),
+                "vm": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="VM"
+                ),
+                "vt": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="VT"
+                ),
+                "vmit": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="VMiT"
+                ),
+                "alpha": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="alpha"
+                ),
+                "texture_object": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="textureObject"
+                ),
+                "has_texture": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="has_texture"
+                ),
+                "ambient": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="Ka"
+                ),
+                "diffuse": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="Kd"
+                ),
+                "specular": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="Ks"
+                ),
+                "specular_exponent": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="Ns"
+                ),
+                "light": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="light"
+                ),
+                "ambient_illumination": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="Ia"
+                ),
+                "diffuse_illumination": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="Id"
+                ),
+                "specular_illumination": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="Is"
+                ),
+            }
+
+        if isinstance(self.shader, ShadowMappingShader):
+            if not "shadow_map" in self.uniform_locations:
+                self.uniform_locations["shadow_map"] = gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="shadow_map"
+                )
+                self.uniform_locations["shadow_map_matrix"] = gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="shadow_map_matrix"
+                )
+
+            vst = np.linalg.inv(Scene.current_scene.camera.view_matrix)
+            sm = np.matmul(Scene.current_scene.camera.view_matrix, vst)
+            sm = np.matmul(Scene.current_scene.projection_matrix, sm)
+            sm = np.matmul(translation_matrix([1, 1, 1]), sm)
+            sm = np.matmul(scale_matrix(0.5), sm)
+
+            gl.glUniform1i(self.uniform_locations["shadow_map"], 1)
+            gl.glUniformMatrix4fv(
+                self.uniform_locations["shadow_map_matrix"], 1, True, sm
+            )
+
+        # NEW
+
+        gl.glUniform3fv(
+            self.uniform_locations["viewPos"], 1, Scene.current_scene.camera.position
+        )
+
+        # OLD
+
+        gl.glUniformMatrix4fv(self.uniform_locations["pvm"], 1, True, pvm)
+
+        gl.glUniformMatrix4fv(self.uniform_locations["vm"], 1, True, vm)
+
+        gl.glUniformMatrix3fv(self.uniform_locations["vmit"], 1, True, vmit)
+
+        gl.glUniformMatrix3fv(self.uniform_locations["vt"], 1, True, vt)
+
+        gl.glUniform1f(self.uniform_locations["alpha"], self.material.alpha)
+
+        # # TODO DO WE EVEN NEED THESE
+        if len(self.textures) > 0:
+            gl.glUniform1i(self.uniform_locations["texture_object"], 0)
+            gl.glUniform1i(self.uniform_locations["has_texture"], 1)
+        else:
+            gl.glUniform1i(self.uniform_locations["has_texture"], 0)
+
+        gl.glUniform3fv(
+            self.uniform_locations["ambient"], 1, np.array(self.material.Ka, "f")
+        )
+
+        gl.glUniform3fv(
+            self.uniform_locations["diffuse"], 1, np.array(self.material.Kd, "f")
+        )
+
+        gl.glUniform3fv(
+            self.uniform_locations["specular"], 1, np.array(self.material.Ks, "f")
+        )
+
+        gl.glUniform1f(self.uniform_locations["specular_exponent"], self.material.Ns)
+
+        gl.glUniform3fv(
+            self.uniform_locations["light"],
+            1,
+            make_unhomogeneous(np.dot(view_matrix, make_homogeneous(light.position))),
+        )
+
+        gl.glUniform3fv(
+            self.uniform_locations["ambient_illumination"],
+            1,
+            np.array(light.ambient_illumination, "f"),
+        )
+
+        gl.glUniform3fv(
+            self.uniform_locations["diffuse_illumination"],
+            1,
+            np.array(light.diffuse_illumination, "f"),
+        )
+
+        gl.glUniform3fv(
+            self.uniform_locations["specular_illumination"],
+            1,
+            np.array(light.specular_illumination, "f"),
+        )
+
     def draw(self):
         gl.glBindVertexArray(self.vertex_array_object)
 
         self.shader.bind(self)
+        self.set_uniforms()
 
         for offset, texture in enumerate(self.textures):
             gl.glActiveTexture(gl.GL_TEXTURE0 + offset)
@@ -135,6 +293,7 @@ class Mesh(Entity):
         else:
             gl.glDrawArrays(self.primitive, 0, self.vertices.shape[0])
 
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
         gl.glBindVertexArray(0)
         self.shader.unbind()
 
@@ -223,8 +382,9 @@ class Mesh(Entity):
         If a new shader is bound, we need to re-link it to ensure attributes are correctly linked.
         """
         self.shader = shader
-        self.shader.compile(self.attributes)
-        # self.shader.bind_attributes(self.attributes)
+        self.uniform_locations = {}
+        # self.shader.compile(self.attributes)
+        self.shader.bind_attributes(self.attributes)
 
 
 class CubeMesh(Mesh):

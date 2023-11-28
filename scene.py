@@ -12,7 +12,8 @@ from OpenGL import GL as gl
 
 from camera import Camera
 from entity import Entity
-from matutils import frustumMatrix
+from light import DirectionalLight
+from matutils import frustrum_matrix
 
 if TYPE_CHECKING:
     from model import Model
@@ -41,7 +42,7 @@ class Scene:
 
         # to start with, we use an orthographic projection; change this.
         # self.P = frustumMatrix(left, right, top, bottom, near, far)
-        self.projection_matrix = frustumMatrix(
+        self.projection_matrix = frustrum_matrix(
             left, right, top, bottom, self.near_clipping, self.far_clipping
         )
 
@@ -60,7 +61,7 @@ class Scene:
         self.y_sensitivity = 3
         self.fps_max = 300
         self.frame_times = deque(maxlen=100)
-        self.clock:pygame.time.Clock = None
+        self.clock: pygame.time.Clock = None
         self.delta_time = 0
         self.mouse_locked = True
         self.show_imgui_demo = False
@@ -106,7 +107,8 @@ class Scene:
         gl.glClearColor(0.0, 0.0, 0.0, 1.0)
 
         # enable back face culling (see lecture on clipping and visibility
-        gl.glEnable(gl.GL_CULL_FACE)
+        # TODO: UNCOMMENT
+        # gl.glEnable(gl.GL_CULL_FACE)
         # depending on your model, or your projection matrix, the winding order may be inverted,
         # Typically, you see the far side of the model instead of the front one
         # uncommenting the following line should provide an easy fix.
@@ -119,17 +121,12 @@ class Scene:
         # enable depth test for clean output (see lecture on clipping & visibility for an explanation
         gl.glEnable(gl.GL_DEPTH_TEST)
 
-        # set the default shader program (can be set on a per-mesh basis)
-        self.shaders = "flat"
-
         # initialises the camera object
         self.camera = Camera()
+        self.light = DirectionalLight()
 
         # initialise the light source
         # self.light = LightSource(self, position=[5.0, 5.0, 5.0])
-
-        # rendering mode for the shaders
-        self.mode = 1  # initialise to full interpolated shading
 
         # This class will maintain a list of models to draw in the scene,
         self.models: list[Type["Model"]] = []
@@ -156,29 +153,23 @@ class Scene:
         for model in models_list:
             self.add_model(model)
 
-    def draw(self, framebuffer=False):
+    def draw(self):
         """
         Draw all models in the scene
         :return: None
         """
 
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-        if not framebuffer:
-            gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-            # ensure that the camera view matrix is up to date
-            self.camera.update()
+        # ensure that the camera view matrix is up to date
+        self.camera.update()
 
         # then we loop over all models in the list and draw them
         for model in self.models:
             model.draw()
 
-        # once we are done drawing, we display the scene
-        # Note that here we use double buffering to avoid artefacts:
-        # we draw on a different buffer than the one we display,
-        # and flip the two buffers once we are done drawing.
-        if not framebuffer:
-            pygame.display.flip()
+        pygame.display.flip()
 
     def keyboard(self, event):
         """
@@ -213,17 +204,6 @@ class Scene:
                 self.keyboard(event)
 
             self.camera.handle_pygame_event(event)
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mods = pygame.key.get_mods()
-                if event.button == 4:
-                    if mods & pygame.KMOD_CTRL:
-                        self.light.position *= 1.1
-                        self.light.update()
-                elif event.button == 5:
-                    if mods & pygame.KMOD_CTRL:
-                        self.light.position *= 0.9
-                        self.light.update()
 
             if self.mouse_locked:
                 pygame.mouse.set_pos(

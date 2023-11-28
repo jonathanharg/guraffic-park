@@ -14,7 +14,6 @@ out vec2 fragment_texCoord;
 uniform mat4 PVM; 	// the Perspective-View-Model matrix is received as a Uniform
 uniform mat4 VM; 	// the View-Model matrix is received as a Uniform
 uniform mat3 VMiT;  // The inverse-transpose of the view model matrix, used for normals
-uniform int mode;	// the rendering mode (better to code different shaders!)
 
 
 void main() {

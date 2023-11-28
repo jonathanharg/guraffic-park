@@ -10,7 +10,6 @@ in vec2 fragment_texCoord;
 out vec4 final_color;
 
 //=== uniforms
-uniform int mode;	// the rendering mode (better to code different shaders!)
 uniform int has_texture;
 uniform sampler2D textureObject; // texture object
 

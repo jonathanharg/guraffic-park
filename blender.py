@@ -1,3 +1,8 @@
+"""
+Functions for reading models from blender. 
+Source: 
+https://en.wikipedia.org/wiki/Wavefront_.obj_file
+"""
 import os
 
 import numpy as np
@@ -5,14 +10,10 @@ import numpy as np
 from material import Material, MaterialLibrary
 from mesh import Mesh
 
-"""
-Functions for reading models from blender. 
-Source: 
-https://en.wikipedia.org/wiki/Wavefront_.obj_file
-"""
 
-
-def find_file(name: str, subfolders: list[str] = ["textures/", "models/"]):
+def find_file(name: str, subfolders: list[str] = None):
+    if subfolders is None:
+        subfolders = ["textures/", "models/"]
     main_dir = os.path.dirname(__file__)
 
     if os.path.isfile(os.path.join(main_dir, name)):
@@ -43,16 +44,14 @@ def process_line(line):
         if len(fields) != 2:
             print("(E) Error, material library file name missing")
             return None
-        else:
-            return (label, fields[1])
+        return (label, fields[1])
 
     if fields[0] == "usemtl":
         label = "material"
         if len(fields) != 2:
             print("(E) Error, material file name missing")
             return None
-        else:
-            return (label, fields[1])
+        return (label, fields[1])
 
     if fields[0] == "v":
         label = "vertex"
@@ -69,7 +68,7 @@ def process_line(line):
     elif fields[0] == "f":
         label = "face"
         if len(fields) != 4 and len(fields) != 5:
-            print("(E) Error, 3 or 4 entries expected for faces\n{}".format(line))
+            print(f"(E) Error, 3 or 4 entries expected for faces (line {line})")
             return None
 
         # multiple formats for faces lines, eg
@@ -81,7 +80,7 @@ def process_line(line):
         return (label, [[np.uint32(i) for i in v.split("/")] for v in fields[1:]])
 
     else:
-        print("(E) Unknown line: {}".format(fields))
+        # print("(E) Unknown line: {}".format(fields))
         return None
 
     return (label, [float(token) for token in fields[1:]])
@@ -93,32 +92,32 @@ def load_material_library(file_name):
 
     # print("-- Loading material library {}".format(file_name))
 
-    mtlfile = open(file_name, encoding="utf-8")
-    for line in mtlfile:
-        fields = line.split()
-        if len(fields) != 0:
-            if fields[0] == "newmtl":
-                if material is not None:
-                    library.add_material(material)
+    with open(file_name, encoding="utf-8") as mtlfile:
+        for line in mtlfile:
+            fields = line.split()
+            if len(fields) != 0:
+                if fields[0] == "newmtl":
+                    if material is not None:
+                        library.add_material(material)
 
-                material = Material(fields[1])
-                # print("Found material definition: {}".format(material.name))
-            elif fields[0] == "Ka":
-                material.Ka = np.array(fields[1:], "f")
-            elif fields[0] == "Kd":
-                material.Kd = np.array(fields[1:], "f")
-            elif fields[0] == "Ks":
-                material.Ks = np.array(fields[1:], "f")
-            elif fields[0] == "Ns":
-                material.Ns = float(fields[1])
-            elif fields[0] == "d":
-                material.d = float(fields[1])
-            elif fields[0] == "Tr":
-                material.d = 1.0 - float(fields[1])
-            elif fields[0] == "illum":
-                material.illumination = int(fields[1])
-            elif fields[0] == "map_Kd":
-                material.texture = fields[1]
+                    material = Material(fields[1])
+                    # print("Found material definition: {}".format(material.name))
+                elif fields[0] == "Ka":
+                    material.Ka = np.array(fields[1:], "f")
+                elif fields[0] == "Kd":
+                    material.Kd = np.array(fields[1:], "f")
+                elif fields[0] == "Ks":
+                    material.Ks = np.array(fields[1:], "f")
+                elif fields[0] == "Ns":
+                    material.Ns = float(fields[1])
+                elif fields[0] == "d":
+                    material.d = float(fields[1])
+                elif fields[0] == "Tr":
+                    material.d = 1.0 - float(fields[1])
+                elif fields[0] == "illum":
+                    material.illumination = int(fields[1])
+                elif fields[0] == "map_Kd":
+                    material.texture = fields[1]
 
     library.add_material(material)
 
@@ -160,7 +159,7 @@ def load_obj_file(file_name):
             if data is None:
                 continue
 
-            elif data[0] == "vertex":
+            if data[0] == "vertex":
                 vertices.append(data[1])
 
             elif data[0] == "normal":
@@ -206,12 +205,11 @@ def load_obj_file(file_name):
         vertex_textures,
         library,
         mesh_list,
-        line_no_list,
     )
 
 
 def create_meshes_from_blender(
-    vertices, faces, material_names, vertex_textures, library, mesh_list, line_no_list
+    vertices, faces, material_names, vertex_textures, library, mesh_list
 ):
     start_face = 0
     mesh_id = 1
