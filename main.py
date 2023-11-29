@@ -18,19 +18,20 @@ class MainScene(Scene):
     def __init__(self):
         Scene.__init__(self)
 
-        # ldn = Model.from_obj("london.obj")
+        ldn = Model.from_obj("london.obj")
+        Model.from_obj("shard.obj")
 
         # cube = Model()
 
         self.camera = OrbitCamera()
         self.skybox = SkyBox()
         self.shadows = ShadowMap(light=self.light)
-        self.cube = Model.from_obj("colour_cube.obj", position=(-5, 2, -5))
+        # self.cube = Model.from_obj("colour_cube.obj", position=(-5, 2, -5))
 
         self.environment = EnvironmentMappingTexture(width=400, height=400)
 
         # floor = Model.from_obj("scene.obj", scale=0.5, shader=ShadowMappingShader(shadow_map=self.shadows))
-        floor = Model.from_obj("scene.obj", scale=0.5)
+        # floor = Model.from_obj("scene.obj", scale=0.5)
         self.dino = Model.from_obj(
             "dino_body.obj",
             rotation=quaternion.from_rotation_vector((0, np.pi, 0)),
@@ -42,26 +43,26 @@ class MainScene(Scene):
         self.dino_right_wing = Model.from_obj(
             "dino_right.obj", position=(-2.5, 0, 2), parent=self.dino
         )
-        table = Model.from_obj(
-            "quad_table.obj", position=(10, -6, 0), scale=2.0, parent=floor
-        )
-        self.box = Model.from_obj("fluid_border.obj", position=(-3, 1, 0))
-        Model.from_obj(
-            "bunny_world.obj", position=(0, 2, 0), scale=0.5, parent=self.box
-        )
+        # table = Model.from_obj(
+        #     "quad_table.obj", position=(10, -6, 0), scale=2.0, parent=floor
+        # )
+        # self.box = Model.from_obj("fluid_border.obj", position=(-3, 1, 0))
+        # Model.from_obj(
+        #     "bunny_world.obj", position=(0, 2, 0), scale=0.5, parent=self.box
+        # )
         # self.mirror = Model.from_obj("mirror.obj", shader=EnvironmentShader(map=self.environment))
-        Model(
-            meshes=[CubeMesh()],
-            position=(0, 0, 0),
-            scale=1,
-            shader=EnvironmentShader(map=self.environment),
-        )
+        # Model(
+        #     meshes=[CubeMesh()],
+        #     position=(0, 0, 0),
+        #     scale=1,
+        #     shader=EnvironmentShader(map=self.environment),
+        # )
         # self.camera.parent = self.box
 
     def run(self):
-        self.box.rotation = (
-            quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
-        )
+        # self.box.rotation = (
+        #     quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
+        # )
 
         wing_resting_pose = np.quaternion(1.0, 0.0, 0.0, 0.0)
         left_wing_down_pose = quaternion.from_rotation_vector((0, 0, -np.pi / 4))
@@ -69,7 +70,6 @@ class MainScene(Scene):
 
         flap_start = 0
         flap_end = 1000  # Take this many milliseconds to rotate
-        t = abs((pygame.time.get_ticks() % 2000) - 1000)
         t = 500 * np.cos((np.pi / 1000) * pygame.time.get_ticks()) + 500
 
         left_wing_rotation = quaternion.slerp(

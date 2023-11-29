@@ -37,12 +37,12 @@ class CubeMap(Texture):
 
         # This dictionary contains the file name for each face, if loading from disk (otherwise ignored)
         self.files = {
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: "right.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: "left.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: "top.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: "bottom.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: "back.bmp",
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: "front.bmp",
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: "right.png",
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: "left.png",
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: "top.png",
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: "bottom.png",
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: "back.png",
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: "front.png",
         }
 
         # generate the texture.

@@ -40,6 +40,8 @@ class FreeCamera(Camera):
     def debug_menu(self):
         super().debug_menu()
 
+        _, self.move_speed = imgui.slider_float('Movement Speed', self.move_speed, 0.0, 1000.0)
+
         right = np.cross(self.forwards, self.facing)
         right = right / np.linalg.norm(right)  # Normalise vector
         imgui.text(f"Right: {right}")

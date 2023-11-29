@@ -10,10 +10,10 @@ from shaders import SkyBoxShader
 class SkyBox(Model):
     def __init__(self):
         # material = Material(name="skybox", texture=CubeMap(name="skybox/debug"))
-        material = Material(name="skybox", texture=CubeMap(name="skybox/ame_ash"))
+        material = Material(name="skybox", texture=CubeMap(name="skybox/blue-sky"))
 
         super().__init__(
-            scale=700,
+            scale=1000,
             meshes=[CubeMesh(invert=True, material=material)],
             shader=SkyBoxShader(),
             name="Skybox",

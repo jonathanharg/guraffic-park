@@ -56,7 +56,7 @@ class Scene:
         self.fov = 90.0
         self.projection_matrix = None
         self.near_clipping = 0.5
-        self.far_clipping = 1000.0
+        self.far_clipping = 1500.0
         self.x_sensitivity = 3
         self.y_sensitivity = 3
         self.fps_max = 300
@@ -252,4 +252,4 @@ class Scene:
 
         # stats = pstats.Stats(pr)
         # stats.sort_stats(pstats.SortKey.TIME)
-        # stats.dump_stats(filename='last_run.prof')
+        # stats.dump_stats(filename="last_run.prof")
