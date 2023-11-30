@@ -1,3 +1,6 @@
+import cProfile
+import pstats
+
 import imgui
 import numpy as np
 import pygame
@@ -6,10 +9,9 @@ from OpenGL import GL as gl
 
 from camera import Camera, FreeCamera, OrbitCamera
 from environment_mapping import EnvironmentMappingTexture
-from mesh import CubeMesh
 from model import Model
 from scene import Scene
-from shaders import EnvironmentShader
+from shaders import EnvironmentShader, NewShader
 from shadow_mapping import ShadowMap
 from skybox import SkyBox
 
@@ -17,21 +19,27 @@ from skybox import SkyBox
 class MainScene(Scene):
     def __init__(self):
         Scene.__init__(self)
-
-        ldn = Model.from_obj("london.obj")
-        Model.from_obj("shard.obj")
+        self.light.position = (-0.2, -1.0, -0.3)
 
         # cube = Model()
+        self.orbit_camera = OrbitCamera()
+        self.free_camera = FreeCamera()
+        self.reflection_camera = Camera(position=(35, 5, -45))
+        self.camera = self.orbit_camera
+        self.environment = EnvironmentMappingTexture(
+            self.reflection_camera, width=400, height=400
+        )
 
-        self.camera = OrbitCamera()
         self.skybox = SkyBox()
         self.shadows = ShadowMap(light=self.light)
         # self.cube = Model.from_obj("colour_cube.obj", position=(-5, 2, -5))
 
-        self.environment = EnvironmentMappingTexture(width=400, height=400)
+        self.london = Model.from_obj("london.obj", shader=NewShader())
+        Model.from_obj("shard.obj", shader=EnvironmentShader())
+        Model.from_obj(
+            "colour_cube.obj", position=(35, 5, -45), shader=EnvironmentShader()
+        )
 
-        # floor = Model.from_obj("scene.obj", scale=0.5, shader=ShadowMappingShader(shadow_map=self.shadows))
-        # floor = Model.from_obj("scene.obj", scale=0.5)
         self.dino = Model.from_obj(
             "dino_body.obj",
             rotation=quaternion.from_rotation_vector((0, np.pi, 0)),
@@ -43,21 +51,6 @@ class MainScene(Scene):
         self.dino_right_wing = Model.from_obj(
             "dino_right.obj", position=(-2.5, 0, 2), parent=self.dino
         )
-        # table = Model.from_obj(
-        #     "quad_table.obj", position=(10, -6, 0), scale=2.0, parent=floor
-        # )
-        # self.box = Model.from_obj("fluid_border.obj", position=(-3, 1, 0))
-        # Model.from_obj(
-        #     "bunny_world.obj", position=(0, 2, 0), scale=0.5, parent=self.box
-        # )
-        # self.mirror = Model.from_obj("mirror.obj", shader=EnvironmentShader(map=self.environment))
-        # Model(
-        #     meshes=[CubeMesh()],
-        #     position=(0, 0, 0),
-        #     scale=1,
-        #     shader=EnvironmentShader(map=self.environment),
-        # )
-        # self.camera.parent = self.box
 
     def run(self):
         # self.box.rotation = (
@@ -150,14 +143,16 @@ class MainScene(Scene):
             _, self.fps_max = imgui.slider_float("Max FPS", self.fps_max, 15, 600)
 
             # Camera Selector
-            cameras = [Camera, FreeCamera, OrbitCamera]
-            current_camera = cameras.index(type(self.camera))
+            cameras = [self.reflection_camera, self.free_camera, self.orbit_camera]
+            current_camera = cameras.index(self.camera)
             camera_changed, selected_index = imgui.combo(
-                "Camera Mode", current_camera, [cam.__name__ for cam in cameras]
+                "Camera Mode",
+                current_camera,
+                [cam.__class__.__name__ for cam in cameras],
             )
 
             if camera_changed:
-                self.camera = cameras[selected_index]()
+                self.camera = cameras[selected_index]
 
             # Wireframe Toggle
             _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
@@ -190,9 +185,15 @@ class MainScene(Scene):
 
 
 if __name__ == "__main__":
+    # with cProfile.Profile() as pr:
+
     # initialises the scene object
     # scene = Scene(shaders='gouraud')
     scene = MainScene()
 
     # starts drawing the scene
     scene.start()
+
+    # stats = pstats.Stats(pr)
+    # stats.sort_stats(pstats.SortKey.TIME)
+    # stats.dump_stats(filename="last_run.prof")

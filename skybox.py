@@ -13,7 +13,7 @@ class SkyBox(Model):
         material = Material(name="skybox", texture=CubeMap(name="skybox/blue-sky"))
 
         super().__init__(
-            scale=1000,
+            scale=700,
             meshes=[CubeMesh(invert=True, material=material)],
             shader=SkyBoxShader(),
             name="Skybox",

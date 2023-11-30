@@ -10,7 +10,7 @@ from matutils import (
     translation_matrix,
 )
 from scene import Scene
-from shaders import PhongShader, Shader, ShadowMappingShader
+from shaders import EnvironmentShader, PhongShader, Shader, ShadowMappingShader
 from texture import Texture
 
 
@@ -125,8 +125,9 @@ class Mesh(Entity):
             self.binormals /= np.linalg.norm(self.binormals, axis=1, keepdims=True)
 
     def set_uniforms(self):
+        camera = Scene.current_scene.camera
         projection_matrix = Scene.current_scene.projection_matrix
-        view_matrix = Scene.current_scene.camera.view_matrix
+        view_matrix = camera.view_matrix
         light = Scene.current_scene.light
 
         vm = np.matmul(view_matrix, self.world_pose)
@@ -139,8 +140,14 @@ class Mesh(Entity):
             # TODO REMOVE MODE FROM SHADER UNIFORMS
             self.uniform_locations = {
                 # NEW
-                "viewPos": gl.glGetUniformLocation(
-                    program=self.shader.program_id, name="viewPos"
+                "view_pos": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="view_pos"
+                ),
+                "light_pos": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="light_pos"
+                ),
+                "model": gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="model"
                 ),
                 # OLD
                 "pvm": gl.glGetUniformLocation(
@@ -199,8 +206,8 @@ class Mesh(Entity):
                     program=self.shader.program_id, name="shadow_map_matrix"
                 )
 
-            vst = np.linalg.inv(Scene.current_scene.camera.view_matrix)
-            sm = np.matmul(Scene.current_scene.camera.view_matrix, vst)
+            vst = np.linalg.inv(camera.view_matrix)
+            sm = np.matmul(camera.view_matrix, vst)
             sm = np.matmul(Scene.current_scene.projection_matrix, sm)
             sm = np.matmul(translation_matrix([1, 1, 1]), sm)
             sm = np.matmul(scale_matrix(0.5), sm)
@@ -210,11 +217,21 @@ class Mesh(Entity):
                 self.uniform_locations["shadow_map_matrix"], 1, True, sm
             )
 
+        if isinstance(self.shader, EnvironmentShader):
+            if Scene.current_scene.environment is not None:
+                gl.glActiveTexture(gl.GL_TEXTURE0)
+                sampler_cube = gl.glGetUniformLocation(
+                    program=self.shader.program_id, name="sampler_cube"
+                )
+                gl.glUniform1i(sampler_cube, 0)
+
         # NEW
 
-        gl.glUniform3fv(
-            self.uniform_locations["viewPos"], 1, Scene.current_scene.camera.position
-        )
+        gl.glUniform3fv(self.uniform_locations["light_pos"], 1, light.position)
+
+        gl.glUniform3fv(self.uniform_locations["view_pos"], 1, camera.position)
+
+        gl.glUniformMatrix4fv(self.uniform_locations["model"], 1, True, self.world_pose)
 
         # OLD
 
@@ -276,7 +293,7 @@ class Mesh(Entity):
     def draw(self):
         gl.glBindVertexArray(self.vertex_array_object)
 
-        self.shader.bind(self)
+        self.shader.bind()
         self.set_uniforms()
 
         for offset, texture in enumerate(self.textures):

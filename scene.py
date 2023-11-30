@@ -10,9 +10,9 @@ import pygame
 from imgui.integrations.pygame import PygameRenderer
 from OpenGL import GL as gl
 
-from camera import Camera
+from camera import Camera, FreeCamera, OrbitCamera
 from entity import Entity
-from light import DirectionalLight
+from light import Light
 from matutils import frustrum_matrix
 
 if TYPE_CHECKING:
@@ -56,7 +56,7 @@ class Scene:
         self.fov = 90.0
         self.projection_matrix = None
         self.near_clipping = 0.5
-        self.far_clipping = 1500.0
+        self.far_clipping = 1700.0
         self.x_sensitivity = 3
         self.y_sensitivity = 3
         self.fps_max = 300
@@ -122,8 +122,11 @@ class Scene:
         gl.glEnable(gl.GL_DEPTH_TEST)
 
         # initialises the camera object
-        self.camera = Camera()
-        self.light = DirectionalLight()
+        self.orbit_camera = OrbitCamera()
+        self.free_camera = FreeCamera()
+        self.reflection_camera = Camera()
+        self.camera = self.free_camera
+        self.light = Light()
 
         # initialise the light source
         # self.light = LightSource(self, position=[5.0, 5.0, 5.0])

@@ -45,7 +45,7 @@ class Entity:
     @position.setter
     def position(self, value):
         self.clear_entity_cache()
-        self.__position__ = value
+        self.__position__ = np.array(value, dtype=np.float32)
 
     @property
     def x(self) -> np.float32:

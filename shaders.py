@@ -1,15 +1,8 @@
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
 from OpenGL import GL as gl
 from OpenGL.GL import shaders
 
-from matutils import (
-    make_homogeneous,
-    make_unhomogeneous,
-    scale_matrix,
-    translation_matrix,
-)
 from scene import Scene
 
 if TYPE_CHECKING:
@@ -109,7 +102,7 @@ class Shader:
         for name, location in attributes.items():
             gl.glBindAttribLocation(self.program_id, location, name)
 
-    def bind(self, model: Type["Model"]):
+    def bind(self):
         """
         Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
         """
@@ -161,17 +154,13 @@ class SkyBoxShader(Shader):
 
 
 class EnvironmentShader(Shader):
-    def __init__(self, name="environment", map=None):
+    def __init__(self, name="environment"):
         super().__init__(program_name=name)
-        self.map = map
 
-    def bind(self, model):
-        if self.map is not None:
-            # self.map.update(model.scene)
-            # unit = len(model.textures)
+    def bind(self):
+        if Scene.current_scene.environment is not None:
             gl.glActiveTexture(gl.GL_TEXTURE0)
-            self.map.bind()
-            # self.uniforms["sampler_cube"].bind(0)
+            Scene.current_scene.environment.bind()
 
         gl.glUseProgram(self.program_id)
 
@@ -185,8 +174,8 @@ class ShadowMappingShader(Shader):
         # self.add_uniform("shadow_map_matrix")
         self.shadow_map = shadow_map
 
-    def bind(self, model):
-        super().bind(model)
+    def bind(self):
+        super().bind()
         # self.uniforms["shadow_map"].bind(1)
 
         gl.glActiveTexture(gl.GL_TEXTURE1)

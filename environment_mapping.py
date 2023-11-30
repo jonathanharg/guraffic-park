@@ -1,28 +1,25 @@
 import numpy as np
+import quaternion
 from OpenGL import GL as gl
 
+from camera import Camera
 from cube_map import CubeMap
 from framebuffer import Framebuffer
-from matutils import (
-    frustrum_matrix,
-    rotation_matrix_x,
-    rotation_matrix_y,
-    translation_matrix,
-)
 from scene import Scene
 from shaders import EnvironmentShader
 
 
 class EnvironmentMappingTexture(CubeMap):
-    def __init__(self, width=200, height=200):
+    def __init__(self, camera: Camera, width=200, height=200):
         super().__init__()
+        self.rendered = False
 
-        self.done = False
+        self.camera = camera
 
         self.width = width
         self.height = height
 
-        self.fbos = {
+        self.frame_buffers = {
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: Framebuffer(),
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: Framebuffer(),
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: Framebuffer(),
@@ -31,28 +28,29 @@ class EnvironmentMappingTexture(CubeMap):
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: Framebuffer(),
         }
 
-        t = 0.0
         self.views = {
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: np.matmul(
-                translation_matrix([0, 0, t]), rotation_matrix_y(-np.pi / 2.0)
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: quaternion.from_rotation_vector(
+                [0, np.pi / 2, 0]
             ),
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: np.matmul(
-                translation_matrix([0, 0, t]), rotation_matrix_y(+np.pi / 2.0)
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: quaternion.from_rotation_vector(
+                [0, -np.pi / 2, 0]
             ),
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: np.matmul(
-                translation_matrix([0, 0, t]), rotation_matrix_x(-np.pi / 2.0)
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: quaternion.from_rotation_vector(
+                [-np.pi / 2, 0, 0]
             ),
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: np.matmul(
-                translation_matrix([0, 0, t]), rotation_matrix_x(np.pi / 2.0)
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: quaternion.from_rotation_vector(
+                [np.pi / 2, 0, 0]
             ),
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: np.matmul(
-                translation_matrix([0, 0, t]), rotation_matrix_y(np.pi)
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: quaternion.from_rotation_vector(
+                [0, 0, 0]
             ),
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: translation_matrix([0, 0, t]),
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: quaternion.from_rotation_vector(
+                [0, np.pi, 0]
+            ),
         }
 
         self.bind()
-        for face, fbo in self.fbos.items():
+        for face, fbo in self.frame_buffers.items():
             gl.glTexImage2D(
                 face,
                 0,
@@ -68,23 +66,23 @@ class EnvironmentMappingTexture(CubeMap):
         self.unbind()
 
     def update(self):
-        if self.done:
+        if self.rendered:
             return
 
         self.bind()
 
         scene = Scene.current_scene
 
-        old_p = scene.projection_matrix
-
-        scene.projection_matrix = frustrum_matrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
+        previous_camera = scene.camera
+        scene.camera = self.camera
 
         gl.glViewport(0, 0, self.width, self.height)
 
-        for face, fbo in self.fbos.items():
-            fbo.bind()
-            # scene.camera.V = np.identity(4)
-            scene.camera.view_matrix = self.views[face]
+        for face, frame_buffer in self.frame_buffers.items():
+            gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+            frame_buffer.bind()
+            scene.camera.rotation = self.views[face]
+            self.camera.update()
 
             # # scene.draw_reflections()
             for model in scene.models:
@@ -96,15 +94,16 @@ class EnvironmentMappingTexture(CubeMap):
                 # model.draw()
 
             scene.camera.update()
-            fbo.unbind()
+            frame_buffer.unbind()
 
         # reset the viewport
         gl.glViewport(0, 0, scene.window_size[0], scene.window_size[1])
 
-        scene.projection_matrix = old_p
+        # scene.projection_matrix = old_p
+        scene.camera = previous_camera
 
         self.unbind()
-        self.done = True
+        self.rendered = True
 
 
 # class EnvironmentBox(Mesh):
