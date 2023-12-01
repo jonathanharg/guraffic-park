@@ -1,3 +1,4 @@
+"""Code for managing OpenGL framebuffers"""
 from OpenGL import GL as gl
 
 

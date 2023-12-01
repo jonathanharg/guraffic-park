@@ -2,6 +2,8 @@
 Functions for reading models from blender. 
 Source: 
 https://en.wikipedia.org/wiki/Wavefront_.obj_file
+
+Minor changes from workshop code. Some variable renaming and improved file finding.
 """
 import os
 
@@ -11,17 +13,32 @@ from material import Material, MaterialLibrary
 from mesh import Mesh
 
 
-def find_file(name: str, subfolders: list[str] = None):
+def find_file(name: str, subfolders: list[str] = None) -> str:
+    """Find a file in the project directory by name
+
+    Args:
+        name (str): Name of the file
+        subfolders (list[str], optional): Folders to search. Defaults to "textures/" and "models/".
+
+    Raises:
+        FileNotFoundError: Throws if file is not found.
+
+    Returns:
+        str: Full file path
+    """
     if subfolders is None:
         subfolders = ["textures/", "models/"]
-    main_dir = os.path.dirname(__file__)
 
-    if os.path.isfile(os.path.join(main_dir, name)):
-        return os.path.join(main_dir, name)
+    main_directory = os.path.dirname(__file__)
 
+    # Search in parent directory first
+    if os.path.isfile(os.path.join(main_directory, name)):
+        return os.path.join(main_directory, name)
+
+    # Then search in the subfolders
     for folder in subfolders:
-        if os.path.isfile(os.path.join(main_dir, folder, name)):
-            return os.path.join(main_dir, folder, name)
+        if os.path.isfile(os.path.join(main_directory, folder, name)):
+            return os.path.join(main_directory, folder, name)
 
     raise FileNotFoundError(f" (E) File {name} not found!")
 
@@ -35,7 +52,6 @@ def process_line(line):
     fields = line.split()
 
     # If line is empty or its a comment or enables/disables smooth shading
-    # NOTE: No smooth shading support
     if len(fields) == 0 or fields[0] == "#" or fields[0] == "s":
         return None
 

@@ -4,6 +4,8 @@
     "--extension-pkg-whitelist=pygame,imgui"
   ],
   "cSpell.words": [
+    "Framebuffer",
+    "framebuffers",
     "pygame"
   ]
 }

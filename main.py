@@ -264,18 +264,6 @@ class MainScene(Scene):
                     scale_min=0.0,
                 )
 
-                # Camera Selector
-                cameras = [self.reflection_camera, self.free_camera, self.orbit_camera]
-                current_camera = cameras.index(self.camera)
-                camera_changed, selected_index = imgui.combo(
-                    "Camera Mode",
-                    current_camera,
-                    [cam.__class__.__name__ for cam in cameras],
-                )
-
-                if camera_changed:
-                    self.camera = cameras[selected_index]
-
                 # Wireframe Toggle
                 _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
                 if self.wireframe:

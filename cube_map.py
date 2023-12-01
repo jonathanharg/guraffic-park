@@ -1,3 +1,5 @@
+"""Cube map textures.
+"""
 from OpenGL import GL as gl
 
 from texture import ImageWrapper, Texture
@@ -92,9 +94,3 @@ class CubeMap(Texture):
                 self.texture_type,
                 img.data(self.texture_format),
             )
-
-    def update(self):
-        """
-        Used to update the texture, does not do anything at the moment, but could be extended for the environment mapping.
-        """
-        pass

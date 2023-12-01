@@ -1,3 +1,6 @@
+"""
+Contains the class for a 3D light entity.
+"""
 import imgui
 import numpy as np
 
@@ -6,8 +9,7 @@ from entity import Entity
 
 class Light(Entity):
     """
-    Base class for maintaining a light source in the scene. Inheriting from Sphere allows to visualize the light
-    source position easily.
+    Base class for maintaining a light source in the scene. By default lights are rendered as directional lights, which are infinitely far away (like the sun). The position of the light represents its direction.
     """
 
     def __init__(

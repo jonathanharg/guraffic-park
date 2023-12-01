@@ -1,3 +1,6 @@
+"""
+Environment Mapping Texture.
+"""
 import numpy as np
 import quaternion
 from OpenGL import GL as gl
@@ -10,7 +13,16 @@ from shaders import EnvironmentShader
 
 
 class EnvironmentMappingTexture(CubeMap):
+    """Generate an environment map for reflections."""
+
     def __init__(self, camera: Camera, width=200, height=200):
+        """Create an EnvironmentMap.
+
+        Args:
+            camera (Camera): The camera to use for the reflection cubemap.
+            width (int, optional): Width of the reflection map. Defaults to 200.
+            height (int, optional): Height of the reflection map. Defaults to 200.
+        """
         super().__init__()
         self.rendered = False
 
@@ -28,6 +40,7 @@ class EnvironmentMappingTexture(CubeMap):
             gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: Framebuffer(),
         }
 
+        # Rotate the camera to the correct axis
         self.views = {
             gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: quaternion.from_rotation_vector(
                 [0, np.pi / 2, 0]
@@ -66,6 +79,8 @@ class EnvironmentMappingTexture(CubeMap):
         self.unbind()
 
     def update(self):
+        """Update the environment map. If you want to update the environment map after it has already been rendered, set `self.rendered` to `False` first"""
+        # Don't re-render the map unless necessary
         if self.rendered:
             return
 
@@ -89,9 +104,9 @@ class EnvironmentMappingTexture(CubeMap):
                 if model.visible is False:
                     continue
                 for mesh in model.meshes:
+                    # Don't draw models with reflections, because they will not have an environment map, and appear black.
                     if not isinstance(mesh.shader, EnvironmentShader):
                         mesh.draw()
-                # model.draw()
 
             scene.camera.update()
             frame_buffer.unbind()
@@ -99,21 +114,7 @@ class EnvironmentMappingTexture(CubeMap):
         # reset the viewport
         gl.glViewport(0, 0, scene.window_size[0], scene.window_size[1])
 
-        # scene.projection_matrix = old_p
         scene.camera = previous_camera
 
         self.unbind()
         self.rendered = True
-
-
-# class EnvironmentBox(Mesh):
-#     def __init__(self, scene, shader=EnvironmentShader(), width=200, height=200):
-#         self.done = False
-#         self.map = EnvironmentMappingTexture(width, height)
-
-#         super().__init__(
-#             scene=scene,
-#             mesh=CubeMesh(shader.map),
-#             shader=shader,
-#             visible=False,
-#         )

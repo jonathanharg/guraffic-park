@@ -1,3 +1,6 @@
+"""
+3D Entity management.
+"""
 from typing import Self, Type
 
 import imgui
@@ -7,7 +10,24 @@ import quaternion
 from matutils import scale_matrix, translation_matrix
 
 
+def get_name(entity):
+    """Safely get the name of an Entity"""
+    if hasattr(entity, "name"):
+        return entity.name
+    if hasattr(entity, "__name__"):
+        return entity.__name__
+    if hasattr(entity.__class__, "__name__"):
+        return entity.__class__.__name__
+    return "Unknown"
+
+
 class Entity:
+    """
+    The Entity class. Anything in the 3D world is represented by an Entity.
+    An entity has a world position, rotation and scale. Each entity can also have one parent, and many children.
+    A parents location, rotation and scale will influence its children.
+    """
+
     all_entities: list[Self] = []
 
     def __init__(
@@ -17,31 +37,40 @@ class Entity:
         rotation=None,
         parent: Type["Entity"] | None = None,
     ) -> None:
+        # Raw position, scale and rotation values aren't publicly accessible. This is so we can cache them.
         self.__position__ = np.array(position, dtype=np.float32)
         self.__scale__ = scale
+
         self.children: list[Type["Entity"]] = []
         self.parent = parent
 
         if parent is not None:
             self.parent.children.append(self)
 
+        # We cache all world matrices so they aren't re-calculated unless something changes.
         self.__cache_world_pose__ = None
         self.__cache_world_translation__ = None
         self.__cache_world_rotation__ = None
-        # Note. I use quaternions instead of a matrix to store rotation information
-        # This is because I encountered some bugs when trying to implement animations
+
+        # NOTE: I use quaternions instead of a matrix to store rotation information
         # Interpolating between two quaternions is much easier, and allows for smooth animations
         # They also avoid euler angle related gimbal lock issues that I was encountering
+        # To learn more about quaternions for 3D rotations, here is a paper I wrote on them https://jonathanharg.dev/projects/ee
+
         self.__rotation__ = (
-            rotation if rotation is not None else np.quaternion(1.0, 0.0, 0.0, 0.0)
+            rotation
+            if rotation is not None
+            else np.quaternion(1.0, 0.0, 0.0, 0.0)  # Equivalent to no rotation
         )
 
         Entity.all_entities.append(self)
 
+    # We use properties so that the position can be access like usual
     @property
     def position(self):
         return self.__position__
 
+    # Properties mean we can clear the cache if the position is updated
     @position.setter
     def position(self, value):
         self.clear_entity_cache()
@@ -99,7 +128,7 @@ class Entity:
         self.__scale__ = value
 
     def clear_entity_cache(self):
-        # print(f"MOVED! Clearning cache for {self.__class__.__name__}")
+        """Clear the location, rotation, scale cache for the entity. You should not need to call this outside entity.py"""
         self.__cache_world_pose__ = None
         self.__cache_world_translation__ = None
         self.__cache_world_rotation__ = None
@@ -109,17 +138,20 @@ class Entity:
 
     @property
     def forwards(self):
+        """The forwards vector for this entity. Where the entity is 'looking'"""
         return np.matmul(
             quaternion.as_rotation_matrix(self.__rotation__), np.array([0, 0, -1])
         )
 
     @property
     def facing(self):
+        """The vector this entity is facing. Relative to the upwards direction of the world"""
         forwards = self.forwards
         forwards[1] = 0
         return forwards / np.linalg.norm(forwards)
 
     def world_translation(self):
+        """Get the world translation matrix for this entity."""
         if self.__cache_world_translation__ is not None:
             return self.__cache_world_translation__
 
@@ -132,6 +164,7 @@ class Entity:
         return translation
 
     def world_rotation(self):
+        """Get the world rotation matrix for this entity"""
         if self.__cache_world_rotation__ is not None:
             return self.__cache_world_rotation__
 
@@ -145,6 +178,7 @@ class Entity:
 
     @property
     def world_pose(self):
+        """Get the world pose matrix for this entity"""
         if self.__cache_world_pose__ is not None:
             return self.__cache_world_pose__
 
@@ -162,6 +196,9 @@ class Entity:
         return local_pose_matrix
 
     def debug_menu(self):
+        """
+        Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu.
+        """
         _, self.position = imgui.drag_float3(
             "Position", self.x, self.y, self.z, change_speed=0.1
         )
@@ -171,6 +208,7 @@ class Entity:
 
         angles = quaternion.as_euler_angles(self.rotation)
 
+        # This is slightly buggy due to the nature of quaternions being 4 dimensional. But good enough for debugging/testing
         z_rot_changed, new_z_rot = imgui.slider_angle("Z Rotation", angles[2])
         y_rot_changed, new_y_rot = imgui.slider_angle("Y Rotation", angles[1])
         x_rot_changed, new_x_rot = imgui.slider_angle("X Rotation", angles[0])
@@ -183,27 +221,7 @@ class Entity:
         _, scale = imgui.drag_float("Scale", self.scale, change_speed=0.1)
         self.scale = scale if scale != 0 else 0.0001
 
-        parent_name = None
-        if self.parent is not None:
-            parent_name = (
-                self.parent.name
-                if hasattr(self.parent, "name")
-                else self.parent.__name__
-            )
-
-        child_names = []
-        for child in self.children:
-            if hasattr(child, "name"):
-                child_names.append(child.name)
-                continue
-            elif hasattr(child, "__name__"):
-                child_names.append(child.__name__)
-                continue
-            elif hasattr(child.__class__, "__name__"):
-                child_names.append(child.__class__.__name__)
-                continue
-            else:
-                child_names.append("Unknown")
-
-        imgui.text(f"Parent: {parent_name}")
-        imgui.text(f"Children: {child_names}")
+        imgui.text(
+            f"Parent: {get_name(self.parent) if self.parent is not None else None}"
+        )
+        imgui.text(f"Children: {list(map(get_name,self.children))}")
