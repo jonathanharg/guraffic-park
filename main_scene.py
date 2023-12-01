@@ -13,7 +13,7 @@ from environment_mapping import EnvironmentMappingTexture
 from model import Model
 from scene import Scene
 from shaders import EnvironmentShader, NewShader
-from shadow_mapping import ShadowMap
+# from shadow_mapping import ShadowMap
 from skybox import SkyBox
 
 
@@ -33,13 +33,48 @@ class MainScene(Scene):
 
         self.london = Model.from_obj("london.obj", shader=NewShader())
         Model.from_obj("shard.obj", shader=EnvironmentShader())
-        Model.from_obj(
-            "colour_cube.obj", position=(35, 5, -45), shader=EnvironmentShader()
-        )
 
         # self.m = 0
         # self.h = 0
 
+        #
+        # Define the parts for the dinosaur
+        #
+        self.dino = Model.from_obj(
+            "dino_body.obj",
+            rotation=quaternion.from_rotation_vector((0, np.pi, 0)),
+            scale=0.08,
+        )
+        # Parent the wings to the body & offset to the arms position
+        self.dino_left_wing = Model.from_obj(
+            "dino_left.obj", position=(2.5, 0, 2), parent=self.dino
+        )
+        self.dino_right_wing = Model.from_obj(
+            "dino_right.obj", position=(-2.5, 0, 2), parent=self.dino
+        )
+
+        # Creates a piecewise polynomial to represent the dinosaurs path.
+        # See lecture Week 9 Lecture 1, https://en.wikipedia.org/wiki/B-spline,
+        # or https://nurbs-python.readthedocs.io/en/5.x/index.html
+        self.dino_path = BSpline.Curve()
+        self.dino_path.degree = 3
+        self.dino_path.ctrlpts = exchange.import_txt("./dino_path.txt")
+        self.dino_path.knotvector = knotvector.generate(
+            self.dino_path.degree, self.dino_path.ctrlpts_size
+        )
+
+        # Create the main camera, position it, and parent it to the dinosaur
+        self.orbit_camera = OrbitCamera(
+            rotation=quaternion.from_rotation_vector((0, np.pi, np.pi/6)),
+            distance=4.0
+            parent=self.dino,
+        )
+        # Setup debug camera for the future
+        self.free_camera = FreeCamera()
+        # Set the active camera to the orbit camera
+        self.camera = self.orbit_camera
+
+        # Define the Big Ben clock hands
         face1_center = [-16.6, 5.52, 4.38]
         face2_center = [-18.3, 5.52, 2.66]
         face3_center = [-20.1, 5.52, 4.38]
@@ -62,39 +97,20 @@ class MainScene(Scene):
             "minute_hand.obj", name="face3_minute", position=face3_center
         )
 
-        self.dino = Model.from_obj(
-            "dino_body.obj",
-            rotation=quaternion.from_rotation_vector((0, np.pi, 0)),
-            scale=0.08,
-        )
-        self.dino_left_wing = Model.from_obj(
-            "dino_left.obj", position=(2.5, 0, 2), parent=self.dino
-        )
-        self.dino_right_wing = Model.from_obj(
-            "dino_right.obj", position=(-2.5, 0, 2), parent=self.dino
-        )
-
-        self.dino_path = BSpline.Curve()
-        self.dino_path.degree = 3
-        self.dino_path.ctrlpts = exchange.import_txt("./dino_path.txt")
-        self.dino_path.knotvector = knotvector.generate(
-            self.dino_path.degree, self.dino_path.ctrlpts_size
-        )
-
-        self.orbit_camera = OrbitCamera(
-            parent=self.dino,
-            rotation=quaternion.from_rotation_vector((0, np.pi, 0)),
-        )
-        self.free_camera = FreeCamera()
-        self.camera = self.orbit_camera
-
+        # Load the credits into memory to display on the GUI
         with open("./credits.txt", encoding="utf-8") as credits_list:
             self.credits = credits_list.read()
 
     def run(self):
-        # self.box.rotation = (
-        #     quaternion.from_rotation_vector([self.delta_time, 0, 0]) * self.box.rotation
-        # )
+        """Run the scene each tick. No rendering is done, but any moving entities/interactions should be calculated."""
+
+        #
+        # Wing animations
+        #
+
+        # Animation parameter
+        t = 500 * np.cos((np.pi / 1000) * pygame.time.get_ticks()) + 500
+        # Trigonometric function to define animation of wing flaps
 
         wing_resting_pose = np.quaternion(1.0, 0.0, 0.0, 0.0)
         left_wing_down_pose = quaternion.from_rotation_vector((0, 0, -np.pi / 4))
@@ -102,8 +118,9 @@ class MainScene(Scene):
 
         flap_start = 0
         flap_end = 1000  # Take this many milliseconds to rotate
-        t = 500 * np.cos((np.pi / 1000) * pygame.time.get_ticks()) + 500
 
+        # Spherical Linear interpolation between start and end pose
+        # https://en.wikipedia.org/wiki/Slerp
         left_wing_rotation = quaternion.slerp(
             wing_resting_pose, left_wing_down_pose, flap_start, flap_end, t
         )
@@ -114,17 +131,28 @@ class MainScene(Scene):
         self.dino_left_wing.rotation = left_wing_rotation
         self.dino_right_wing.rotation = right_wing_rotation
 
-        t = (pygame.time.get_ticks() / 30000) % 1
-        path_derivatives = self.dino_path.derivatives(t, order=1)
-        self.dino.position = path_derivatives[
-            0
-        ]  # 0th derivative at t, i.e. the original function at t
 
-        forward = path_derivatives[1] / np.linalg.norm(
-            path_derivatives[1]
-        )  # Path normal, aka forward vector on the path
+        #
+        # Dinosaur Path/Movement Animations
+        #
+
+        # Animation parameter
+        t = (pygame.time.get_ticks() / 30000) % 1
+
+        # Calculate path and its 1st derivative (normal)
+        path_derivatives = self.dino_path.derivatives(t, order=1)
+
+        # 0th derivative at t, i.e. the original function at t
+        self.dino.position = path_derivatives[0]
+
+        # Path normal, aka forward vector on the path
+        forward = path_derivatives[1] / np.linalg.norm(path_derivatives[1])
+
+        # Relative right vector
         right = np.cross([0, 1, 0], forward)
         right = right / np.linalg.norm(right)
+
+        # Relative up vector
         up = np.cross(forward, right)
         up = up / np.linalg.norm(up)
 
@@ -135,9 +163,14 @@ class MainScene(Scene):
 
         self.dino.rotation = quaternion.from_rotation_matrix(rotation)
 
+        #
+        # Big Ben Clock hand animations
+        #
         t = time.localtime()
+
         minute_decimal = t.tm_min / 60
         hour_decimal = ((t.tm_hour % 12) / 12) + (minute_decimal / 10)
+        # TODO: REMOVE
         # minute_decimal = self.m / 60
         # hour_decimal = ((self.h % 12) / 12) + (self.h / 10)
 
@@ -153,21 +186,12 @@ class MainScene(Scene):
 
         self.face1_hour.rotation = hour_rotation
         self.face1_minute.rotation = minute_rotation
+
         self.face2_hour.rotation = face2_direction * hour_rotation
         self.face2_minute.rotation = face2_direction * minute_rotation
+
         self.face3_hour.rotation = face3_direction * hour_rotation
         self.face3_minute.rotation = face3_direction * minute_rotation
-
-        # self.face1_hour.rotation = quaternion.from_rotation_vector([])
-
-        # tick = (pygame.time.get_ticks()/10000) % 14
-
-        # if int(tick) > len(self.dino_path) - 1:
-        #     print(f"ERROR: TRYING TO ACCESS INDEX {int(tick)} for {tick}")
-        #     tick = len(self.dino_path) - 1
-
-        # self.dino_pos = self.dino_path[int(tick)].evaluate(float(tick % 1))[:,0]
-        # self.dino.position = self.dino_pos.tolist()
 
         super().run()
 
@@ -183,10 +207,6 @@ class MainScene(Scene):
 
         self.environment.update()
 
-        # if self.skybox is not None:
-        #     self.skybox.draw()
-
-        # then we loop over all models in the list and draw them
         for model in self.models:
             model.draw()
 
@@ -217,7 +237,10 @@ class MainScene(Scene):
     #         scene.camera.update()
 
     def debug_menu(self):
-        with imgui.begin("Scene", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE):
+        """
+        Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu.
+        """
+        with imgui.begin("Menu", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE):
             imgui.text("Press ESC to interact with the menu")
             imgui.text(
                 f"FPS: {self.clock.get_fps():.2f} ({self.clock.get_time():.2f}ms)"
@@ -248,6 +271,7 @@ class MainScene(Scene):
 
             imgui.separator()
             if imgui.tree_node("Debug"):
+                # TODO: Remove
                 # _, self.h = imgui.slider_float("Hour sim", self.h, 0, 23)
                 # _, self.m = imgui.slider_float("Min sim", self.m, 0, 60)
                 imgui.text(
@@ -260,16 +284,17 @@ class MainScene(Scene):
                     scale_min=0.0,
                 )
 
-                # Wireframe Toggle
-                _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
-                if self.wireframe:
-                    gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-                else:
-                    gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+                wireframe_changed, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
+                if wireframe_changed:
+                    if self.wireframe:
+                        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+                    else:
+                        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
                 imgui.tree_pop()
 
             imgui.separator()
             if imgui.tree_node("Models"):
+                # Render every models debug menu
                 for model in self.models:
                     if imgui.tree_node(model.name):
                         model.debug_menu()
@@ -278,11 +303,13 @@ class MainScene(Scene):
 
             imgui.separator()
             if imgui.tree_node("Camera"):
+                # Render camera debug menu
                 self.camera.debug_menu()
                 imgui.tree_pop()
 
             imgui.separator()
             if imgui.tree_node("Light"):
+                # Render the lights debug menu
                 self.light.debug_menu()
                 imgui.tree_pop()
 

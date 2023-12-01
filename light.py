@@ -34,6 +34,9 @@ class Light(Entity):
         super().__init__(position=(0, 0, -1))
 
     def debug_menu(self):
+        """
+        Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu.
+        """
         ambient_changed, ambient_values = imgui.slider_float3(
             "Ambient",
             self.ambient_illumination[0],

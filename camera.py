@@ -9,7 +9,7 @@ import quaternion
 from pygame.event import Event
 
 from entity import Entity
-from matutils import translation_matrix
+from math_utils import translation_matrix
 
 
 class Camera(Entity):

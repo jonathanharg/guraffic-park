@@ -13,7 +13,7 @@ from OpenGL import GL as gl
 from camera import Camera, FreeCamera, OrbitCamera
 from entity import Entity
 from light import Light
-from matutils import frustrum_matrix
+from math_utils import frustrum_matrix
 
 if TYPE_CHECKING:
     from model import Model

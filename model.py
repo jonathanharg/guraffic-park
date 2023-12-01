@@ -26,7 +26,7 @@ class Model(Entity):
         self,
         meshes: list[Type[Mesh]],
         name=None,
-        shader: Shader = PhongShader(),
+        shader: Shader = NewShader(),
         **kwargs,
     ) -> None:
         # TODO: FIX issue if the model is loaded multiple times

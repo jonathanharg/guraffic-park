@@ -2,7 +2,7 @@ import numpy as np
 from OpenGL import GL as gl
 
 from framebuffer import Framebuffer
-from matutils import translation_matrix
+from math_utils import translation_matrix
 from texture import Texture
 
 

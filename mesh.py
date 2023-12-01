@@ -3,7 +3,7 @@ from OpenGL import GL as gl
 
 from entity import Entity
 from material import Material
-from matutils import (
+from math_utils import (
     make_homogeneous,
     make_unhomogeneous,
     scale_matrix,

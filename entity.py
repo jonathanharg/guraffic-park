@@ -8,7 +8,7 @@ import imgui
 import numpy as np
 import quaternion
 
-from matutils import scale_matrix, translation_matrix
+from math_utils import scale_matrix, translation_matrix
 
 
 def get_name(entity):
