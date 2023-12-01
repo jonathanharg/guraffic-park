@@ -146,12 +146,12 @@ class MainScene(Scene):
         # minute_decimal = self.m / 60
         # hour_decimal = ((self.h % 12) / 12) + (self.h / 10)
 
-        minute_rotation = quaternion.from_rotation_vector(
-            [-minute_decimal * 2 * np.pi, 0, 0]
-        )
-        hour_rotation = quaternion.from_rotation_vector(
-            [-hour_decimal * 2 * np.pi, 0, 0]
-        )
+        minute_rotation = quaternion.from_rotation_vector([
+            -minute_decimal * 2 * np.pi, 0, 0
+        ])
+        hour_rotation = quaternion.from_rotation_vector([
+            -hour_decimal * 2 * np.pi, 0, 0
+        ])
 
         face2_direction = quaternion.from_rotation_vector([0, np.pi / 2, 0])
         face3_direction = quaternion.from_rotation_vector([0, np.pi, 0])
@@ -256,7 +256,8 @@ class MainScene(Scene):
                 # _, self.h = imgui.slider_float("Hour sim", self.h, 0, 23)
                 # _, self.m = imgui.slider_float("Min sim", self.m, 0, 60)
                 imgui.text(
-                    f"OpenGL v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
+                    "OpenGL"
+                    f" v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
                 )
                 imgui.plot_lines(
                     "Frametime",

@@ -57,7 +57,8 @@ class Mesh(Entity):
         if normals is None:
             if faces is None:
                 print(
-                    "(W) Warning: the current code only calculates normals using the face vector of indices, which was not provided here."
+                    "(W) Warning: the current code only calculates normals using the"
+                    " face vector of indices, which was not provided here."
                 )
             else:
                 self.calculate_normals()

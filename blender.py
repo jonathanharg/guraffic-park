@@ -5,6 +5,7 @@ https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
 Minor changes from workshop code. Some variable renaming and improved file finding.
 """
+
 import os
 
 import numpy as np

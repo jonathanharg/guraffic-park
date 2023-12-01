@@ -1,6 +1,7 @@
 """
 All of the various types of 3D cameras. Includes a base Camera, free camera (first person camera) and an orbit camera.
 """
+
 import imgui
 import numpy as np
 import pygame

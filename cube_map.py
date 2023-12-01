@@ -1,5 +1,6 @@
 """Cube map textures.
 """
+
 from OpenGL import GL as gl
 
 from texture import ImageWrapper, Texture

@@ -19,14 +19,12 @@ def look_at(eye, center, up=np.array([0, 1, 0])):
     u = np.cross(s, f)
 
     return np.matmul(
-        np.array(
-            [
-                [s[0], s[1], s[2], 0],
-                [u[0], u[1], u[2], 0],
-                [-f[0], -f[1], -f[2], 0],
-                [0, 0, 0, 1],
-            ]
-        ),
+        np.array([
+            [s[0], s[1], s[2], 0],
+            [u[0], u[1], u[2], 0],
+            [-f[0], -f[1], -f[2], 0],
+            [0, 0, 0, 1],
+        ]),
         translation_matrix(-eye),
     )
 

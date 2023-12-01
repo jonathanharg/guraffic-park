@@ -1,6 +1,7 @@
 """
 3D Entity management.
 """
+
 from typing import Self, Type
 
 import imgui

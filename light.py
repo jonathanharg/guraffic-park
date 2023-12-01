@@ -1,6 +1,7 @@
 """
 Contains the class for a 3D light entity.
 """
+
 import imgui
 import numpy as np
 

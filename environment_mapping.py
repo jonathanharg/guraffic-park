@@ -1,6 +1,7 @@
 """
 Environment Mapping Texture.
 """
+
 import numpy as np
 import quaternion
 from OpenGL import GL as gl
@@ -42,24 +43,24 @@ class EnvironmentMappingTexture(CubeMap):
 
         # Rotate the camera to the correct axis
         self.views = {
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: quaternion.from_rotation_vector(
-                [0, np.pi / 2, 0]
-            ),
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: quaternion.from_rotation_vector(
-                [0, -np.pi / 2, 0]
-            ),
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: quaternion.from_rotation_vector(
-                [-np.pi / 2, 0, 0]
-            ),
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: quaternion.from_rotation_vector(
-                [np.pi / 2, 0, 0]
-            ),
-            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: quaternion.from_rotation_vector(
-                [0, 0, 0]
-            ),
-            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: quaternion.from_rotation_vector(
-                [0, np.pi, 0]
-            ),
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_X: quaternion.from_rotation_vector([
+                0, np.pi / 2, 0
+            ]),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_X: quaternion.from_rotation_vector([
+                0, -np.pi / 2, 0
+            ]),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Y: quaternion.from_rotation_vector([
+                -np.pi / 2, 0, 0
+            ]),
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y: quaternion.from_rotation_vector([
+                np.pi / 2, 0, 0
+            ]),
+            gl.GL_TEXTURE_CUBE_MAP_POSITIVE_Z: quaternion.from_rotation_vector([
+                0, 0, 0
+            ]),
+            gl.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z: quaternion.from_rotation_vector([
+                0, np.pi, 0
+            ]),
         }
 
         self.bind()

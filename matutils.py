@@ -110,25 +110,21 @@ def orthogonal_matrix(l, r, t, b, n, f):
     :param f: far clip plane
     :return: A 4x4 orthographic projection matrix
     """
-    return np.array(
-        [
-            [2.0 / (r - l), 0.0, 0.0, (r + l) / (r - l)],
-            [0.0, -2.0 / (t - b), 0.0, (t + b) / (t - b)],
-            [0.0, 0.0, 2.0 / (f - n), (f + n) / (f - n)],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-    )
+    return np.array([
+        [2.0 / (r - l), 0.0, 0.0, (r + l) / (r - l)],
+        [0.0, -2.0 / (t - b), 0.0, (t + b) / (t - b)],
+        [0.0, 0.0, 2.0 / (f - n), (f + n) / (f - n)],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
 
 
 def frustrum_matrix(l, r, t, b, n, f):
-    return np.array(
-        [
-            [2 * n / (r - l), 0, (r + l) / (r - l), 0],
-            [0, -2 * n / (t - b), (t + b) / (t - b), 0],
-            [0, 0, -(f + n) / (f - n), -2 * f * n / (f - n)],
-            [0, 0, -1, 0],
-        ]
-    )
+    return np.array([
+        [2 * n / (r - l), 0, (r + l) / (r - l), 0],
+        [0, -2 * n / (t - b), (t + b) / (t - b), 0],
+        [0, 0, -(f + n) / (f - n), -2 * f * n / (f - n)],
+        [0, 0, -1, 0],
+    ])
 
 
 # Homogeneous coordinates helpers
