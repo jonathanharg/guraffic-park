@@ -2,7 +2,6 @@
 
 from main_scene import MainScene
 
-
 if __name__ == "__main__":
     scene = MainScene()
 

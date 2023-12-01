@@ -1,7 +1,8 @@
 """Guraffic Park 3D Scene. Run with `python .` or `python main_scene.py`."""
 
-import imgui
 import time
+
+import imgui
 import numpy as np
 import pygame
 import quaternion
@@ -13,6 +14,7 @@ from environment_mapping import EnvironmentMappingTexture
 from model import Model
 from scene import Scene
 from shaders import EnvironmentShader, NewShader
+
 # from shadow_mapping import ShadowMap
 from skybox import SkyBox
 
@@ -21,7 +23,6 @@ class MainScene(Scene):
     def __init__(self):
         Scene.__init__(self)
         self.light.position = (-0.2, -1.0, -0.3)
-
 
         self.reflection_camera = Camera(position=(35, 5, -45))
         self.environment = EnvironmentMappingTexture(
@@ -65,8 +66,8 @@ class MainScene(Scene):
 
         # Create the main camera, position it, and parent it to the dinosaur
         self.orbit_camera = OrbitCamera(
-            rotation=quaternion.from_rotation_vector((0, np.pi, np.pi/6)),
-            distance=4.0
+            rotation=quaternion.from_rotation_vector((0, np.pi, np.pi / 6)),
+            distance=4.0,
             parent=self.dino,
         )
         # Setup debug camera for the future
@@ -130,7 +131,6 @@ class MainScene(Scene):
 
         self.dino_left_wing.rotation = left_wing_rotation
         self.dino_right_wing.rotation = right_wing_rotation
-
 
         #
         # Dinosaur Path/Movement Animations
@@ -284,7 +284,9 @@ class MainScene(Scene):
                     scale_min=0.0,
                 )
 
-                wireframe_changed, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
+                wireframe_changed, self.wireframe = imgui.checkbox(
+                    "Wireframe", self.wireframe
+                )
                 if wireframe_changed:
                     if self.wireframe:
                         gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
