@@ -70,16 +70,18 @@ class Scene:
         pygame.init()
 
         # # TODO: REMOVE THIS, IT BUGS OUT IMGUI
-        pygame.display.gl_set_attribute(
-            pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
-        )
-        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
-        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
-        pygame.display.gl_set_attribute(
-            pygame.GL_CONTEXT_FLAGS, pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG
-        )
+        # pygame.display.gl_set_attribute(
+        #     pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
+        # )
+        # pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
+        # pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
+        # pygame.display.gl_set_attribute(
+        #     pygame.GL_CONTEXT_FLAGS, pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG
+        # )
         # # TODO: REMOVE THIS, IT BUGS OUT IMGUI
 
+        pygame.display.set_caption("Guraffic Park")
+        pygame.display.set_icon(pygame.image.load("./textures/logo.png"))
         pygame.display.set_mode(
             self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
         )

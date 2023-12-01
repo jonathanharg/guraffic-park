@@ -191,9 +191,20 @@ class Entity:
                 else self.parent.__name__
             )
 
-        child_names = list(
-            map(lambda c: c.name if hasattr(c, "name") else c.__name__, self.children)
-        )
+        child_names = []
+        for child in self.children:
+            if hasattr(child, "name"):
+                child_names.append(child.name)
+                continue
+            elif hasattr(child, "__name__"):
+                child_names.append(child.__name__)
+                continue
+            elif hasattr(child.__class__, "__name__"):
+                child_names.append(child.__class__.__name__)
+                continue
+            else:
+                child_names.append("Unknown")
+
 
         imgui.text(f"Parent: {parent_name}")
         imgui.text(f"Children: {child_names}")

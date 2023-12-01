@@ -6,6 +6,10 @@ import numpy as np
 import pygame
 import quaternion
 from OpenGL import GL as gl
+from bezier import Curve
+from geomdl import BSpline
+from geomdl import exchange
+from geomdl import knotvector
 
 from camera import Camera, FreeCamera, OrbitCamera
 from environment_mapping import EnvironmentMappingTexture
@@ -14,6 +18,7 @@ from scene import Scene
 from shaders import EnvironmentShader, NewShader
 from shadow_mapping import ShadowMap
 from skybox import SkyBox
+# from spline import get_curves
 
 
 class MainScene(Scene):
@@ -22,17 +27,15 @@ class MainScene(Scene):
         self.light.position = (-0.2, -1.0, -0.3)
 
         # cube = Model()
-        self.orbit_camera = OrbitCamera()
-        self.free_camera = FreeCamera()
+
         self.reflection_camera = Camera(position=(35, 5, -45))
-        self.camera = self.orbit_camera
         self.environment = EnvironmentMappingTexture(
             self.reflection_camera, width=400, height=400
         )
 
         self.skybox = SkyBox()
         self.shadows = ShadowMap(light=self.light)
-        # self.cube = Model.from_obj("colour_cube.obj", position=(-5, 2, -5))
+        self.cube = Model.from_obj("colour_cube.obj")
 
         self.london = Model.from_obj("london.obj", shader=NewShader())
         Model.from_obj("shard.obj", shader=EnvironmentShader())
@@ -43,7 +46,7 @@ class MainScene(Scene):
         self.dino = Model.from_obj(
             "dino_body.obj",
             rotation=quaternion.from_rotation_vector((0, np.pi, 0)),
-            scale=0.3,
+            scale=0.08,
         )
         self.dino_left_wing = Model.from_obj(
             "dino_left.obj", position=(2.5, 0, 2), parent=self.dino
@@ -51,6 +54,19 @@ class MainScene(Scene):
         self.dino_right_wing = Model.from_obj(
             "dino_right.obj", position=(-2.5, 0, 2), parent=self.dino
         )
+
+
+        self.dino_path = BSpline.Curve()
+        self.dino_path.degree = 3
+        self.dino_path.ctrlpts = exchange.import_txt("./dino_path.txt")
+        self.dino_path.knotvector = knotvector.generate(self.dino_path.degree, self.dino_path.ctrlpts_size)
+
+        self.orbit_camera = OrbitCamera(parent=self.dino,  rotation=quaternion.from_rotation_vector((0, np.pi, 0)),)
+        self.free_camera = FreeCamera()
+        self.camera = self.orbit_camera
+
+        with open("./credits.txt", encoding="utf-8") as credits_list:
+            self.credits = credits_list.read()
 
     def run(self):
         # self.box.rotation = (
@@ -74,6 +90,33 @@ class MainScene(Scene):
 
         self.dino_left_wing.rotation = left_wing_rotation
         self.dino_right_wing.rotation = right_wing_rotation
+
+        t = (pygame.time.get_ticks()/30000) % 1
+        path_derivatives = self.dino_path.derivatives(t, order=1)
+        self.dino.position = path_derivatives[0] # 0th derivative at t, i.e. the original function at t
+
+        forward = path_derivatives[1] / np.linalg.norm(path_derivatives[1]) # Path normal, aka forward vector on the path
+        right = np.cross([0,1,0], forward)
+        right = right / np.linalg.norm(right)
+        up = np.cross(forward, right)
+        up = up / np.linalg.norm(up)
+
+        rotation = np.identity(3)
+        rotation[:,0] = right
+        rotation[:,1] = up
+        rotation[:,2] = forward
+
+        self.dino.rotation = quaternion.from_rotation_matrix(rotation)
+
+
+        # tick = (pygame.time.get_ticks()/10000) % 14
+
+        # if int(tick) > len(self.dino_path) - 1:
+        #     print(f"ERROR: TRYING TO ACCESS INDEX {int(tick)} for {tick}")
+        #     tick = len(self.dino_path) - 1
+        
+        # self.dino_pos = self.dino_path[int(tick)].evaluate(float(tick % 1))[:,0]
+        # self.dino.position = self.dino_pos.tolist()
 
         super().run()
 
@@ -125,41 +168,51 @@ class MainScene(Scene):
     def debug_menu(self):
         with imgui.begin("Scene", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE):
             imgui.text("Press ESC to interact with the menu")
-            imgui.text(f"FPS: {self.clock.get_fps():.2f}")
-            imgui.text(f"Frametime: {self.clock.get_time():.2f}ms")
-            imgui.text(
-                f"OpenGL v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
-            )
-            imgui.plot_lines(
-                "Frametime", np.array(self.frame_times, dtype=np.float32), scale_min=0.0
-            )
+            imgui.text(f"FPS: {self.clock.get_fps():.2f} ({self.clock.get_time():.2f}ms)")
 
-            # FOV Slider
-            (fov_changed, self.fov) = imgui.slider_float("FOV", self.fov, 30, 150)
-            if fov_changed:
-                self.update_viewport()
+            if imgui.tree_node("Settings"):
+                _, self.fps_max = imgui.slider_float("Max FPS", self.fps_max, 15, 600)
 
-            # Max FPS Slider
-            _, self.fps_max = imgui.slider_float("Max FPS", self.fps_max, 15, 600)
+                _, self.x_sensitivity = imgui.slider_float("Horizontal mouse sensitivity", self.x_sensitivity, -10, 10)
+                _, self.y_sensitivity = imgui.slider_float("Vertical mouse sensitivity", self.y_sensitivity, -10, 10)
 
-            # Camera Selector
-            cameras = [self.reflection_camera, self.free_camera, self.orbit_camera]
-            current_camera = cameras.index(self.camera)
-            camera_changed, selected_index = imgui.combo(
-                "Camera Mode",
-                current_camera,
-                [cam.__class__.__name__ for cam in cameras],
-            )
+                near_clip_changed, self.near_clipping = imgui.slider_float("Near clipping plane", self.near_clipping, 0.01, 20)
+                far_clip_changed, self.far_clipping = imgui.slider_float("Far clipping plane", self.far_clipping, 25, 2500)
+                fov_changed, self.fov = imgui.slider_float("FOV", self.fov, 30, 150)
 
-            if camera_changed:
-                self.camera = cameras[selected_index]
+                if near_clip_changed or far_clip_changed or fov_changed:
+                    self.update_viewport()
 
-            # Wireframe Toggle
-            _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
-            if self.wireframe:
-                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-            else:
-                gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+                imgui.tree_pop()
+
+            imgui.separator()
+            if imgui.tree_node("Debug"):
+                imgui.text(
+                    f"OpenGL v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
+                )
+                imgui.plot_lines(
+                    "Frametime", np.array(self.frame_times, dtype=np.float32), scale_min=0.0,
+                )
+
+                # Camera Selector
+                cameras = [self.reflection_camera, self.free_camera, self.orbit_camera]
+                current_camera = cameras.index(self.camera)
+                camera_changed, selected_index = imgui.combo(
+                    "Camera Mode",
+                    current_camera,
+                    [cam.__class__.__name__ for cam in cameras],
+                )
+
+                if camera_changed:
+                    self.camera = cameras[selected_index]
+
+                # Wireframe Toggle
+                _, self.wireframe = imgui.checkbox("Wireframe", self.wireframe)
+                if self.wireframe:
+                    gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+                else:
+                    gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+                imgui.tree_pop()
 
             imgui.separator()
             if imgui.tree_node("Models"):
@@ -168,8 +221,8 @@ class MainScene(Scene):
                         model.debug_menu()
                         imgui.tree_pop()
                 imgui.tree_pop()
+            
             imgui.separator()
-
             if imgui.tree_node("Camera"):
                 self.camera.debug_menu()
                 imgui.tree_pop()
@@ -177,6 +230,12 @@ class MainScene(Scene):
             imgui.separator()
             if imgui.tree_node("Light"):
                 self.light.debug_menu()
+                imgui.tree_pop()
+
+            imgui.separator()
+            if imgui.tree_node("Credits"):
+                with imgui.begin_child("credits_scroll", 0.0, 200.0):
+                    imgui.text_wrapped(self.credits)
                 imgui.tree_pop()
 
             imgui.separator()

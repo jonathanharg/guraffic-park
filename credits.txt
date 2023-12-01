@@ -1,5 +1,8 @@
 Models:
-https://sketchfab.com/3d-models/animated-flying-pteradactal-dinosaur-loop-09f6b1ff7bfd4a2d8d9c0b9827f2a708
 "Animated Flying Pteradactal Dinosaur Loop" (https://skfb.ly/o9nTY) by LasquetiSpice is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
-
 "london loop" (https://skfb.ly/oJJFZ) by amogusstrikesback2 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+Libraries:
+NURBS-Python: Onur R. Bingol, 'NURBS-Python (geomdl) v5.2.10'. Jul. 08, 2020. doi: 10.5281/zenodo.3934899.
+Quaternion: Mike Boyle, 'moble/quaternion: Release v2022.4.4'. Dec. 01, 2023. doi: 10.5281/zenodo.10237609.
+pyimgui: KinoxKlark, 'pyimgui/pyimgui v2.0.0'. Apr. 19, 2023.
