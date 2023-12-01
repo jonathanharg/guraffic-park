@@ -10,12 +10,9 @@ from scene import Scene
 from shaders import (
     CartoonShader,
     EnvironmentShader,
-    FlatShader,
-    PhongShader,
     Shader,
     ShadowMappingShader,
     SkyBoxShader,
-    TextureShader,
 )
 
 

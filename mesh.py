@@ -13,7 +13,6 @@ from scene import Scene
 from shaders import (
     CartoonShader,
     EnvironmentShader,
-    PhongShader,
     Shader,
     ShadowMappingShader,
 )

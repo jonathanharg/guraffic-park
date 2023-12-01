@@ -89,7 +89,7 @@ class CubeMap(Texture):
                 0,
                 self.texture_format,
                 img.image_data.get_width(),
-                img.image_data.height(),
+                img.image_data.get_height(),
                 0,
                 self.texture_format,
                 self.texture_type,
