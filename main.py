@@ -2,6 +2,7 @@ import cProfile
 import pstats
 
 import imgui
+import time
 import numpy as np
 import pygame
 import quaternion
@@ -39,6 +40,31 @@ class MainScene(Scene):
         Model.from_obj("shard.obj", shader=EnvironmentShader())
         Model.from_obj(
             "colour_cube.obj", position=(35, 5, -45), shader=EnvironmentShader()
+        )
+
+        # self.m = 0
+        # self.h = 0
+
+        face1_center = [-16.6, 5.52, 4.38]
+        face2_center = [-18.3, 5.52, 2.66]
+        face3_center = [-20.1, 5.52, 4.38]
+        self.face1_hour = Model.from_obj(
+            "hour_hand.obj", name="face1_hour", position=face1_center
+        )
+        self.face1_minute = Model.from_obj(
+            "minute_hand.obj", name="face1_minute", position=face1_center
+        )
+        self.face2_hour = Model.from_obj(
+            "hour_hand.obj", name="face2_hour", position=face2_center
+        )
+        self.face2_minute = Model.from_obj(
+            "minute_hand.obj", name="face2_minute", position=face2_center
+        )
+        self.face3_hour = Model.from_obj(
+            "hour_hand.obj", name="face3_hour", position=face3_center
+        )
+        self.face3_minute = Model.from_obj(
+            "minute_hand.obj", name="face3_minute", position=face3_center
         )
 
         self.dino = Model.from_obj(
@@ -113,6 +139,31 @@ class MainScene(Scene):
         rotation[:, 2] = forward
 
         self.dino.rotation = quaternion.from_rotation_matrix(rotation)
+
+        t = time.localtime()
+        minute_decimal = t.tm_min / 60
+        hour_decimal = ((t.tm_hour % 12) / 12) + (minute_decimal / 10)
+        # minute_decimal = self.m / 60
+        # hour_decimal = ((self.h % 12) / 12) + (self.h / 10)
+
+        minute_rotation = quaternion.from_rotation_vector(
+            [-minute_decimal * 2 * np.pi, 0, 0]
+        )
+        hour_rotation = quaternion.from_rotation_vector(
+            [-hour_decimal * 2 * np.pi, 0, 0]
+        )
+
+        face2_direction = quaternion.from_rotation_vector([0, np.pi / 2, 0])
+        face3_direction = quaternion.from_rotation_vector([0, np.pi, 0])
+
+        self.face1_hour.rotation = hour_rotation
+        self.face1_minute.rotation = minute_rotation
+        self.face2_hour.rotation = face2_direction * hour_rotation
+        self.face2_minute.rotation = face2_direction * minute_rotation
+        self.face3_hour.rotation = face3_direction * hour_rotation
+        self.face3_minute.rotation = face3_direction * minute_rotation
+
+        # self.face1_hour.rotation = quaternion.from_rotation_vector([])
 
         # tick = (pygame.time.get_ticks()/10000) % 14
 
@@ -202,6 +253,8 @@ class MainScene(Scene):
 
             imgui.separator()
             if imgui.tree_node("Debug"):
+                # _, self.h = imgui.slider_float("Hour sim", self.h, 0, 23)
+                # _, self.m = imgui.slider_float("Min sim", self.m, 0, 60)
                 imgui.text(
                     f"OpenGL v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
                 )

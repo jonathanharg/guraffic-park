@@ -52,10 +52,11 @@ class Model(Entity):
     @classmethod
     def from_obj(self, obj_path: str, **kwargs) -> Self:
         file_path = find_file(obj_path, ["models/"])
-        name = os.path.basename(file_path)
+        if "name" not in kwargs:
+            kwargs["name"] = os.path.basename(file_path)
         meshes = load_obj_file(obj_path)
         print(f"Creating model from {obj_path}")
-        model = Model(meshes, name=name, **kwargs)
+        model = Model(meshes, **kwargs)
         return model
 
     def draw(self):
