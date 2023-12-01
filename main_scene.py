@@ -211,6 +211,7 @@ class MainScene(Scene):
     def debug_menu(self):
         """Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu."""
         with imgui.begin("Menu", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE):
+            imgui.set_window_position(0.0,0.0, imgui.FIRST_USE_EVER)
             imgui.text("Press ESC to interact with the menu")
             imgui.text(
                 f"FPS: {self.clock.get_fps():.2f} ({self.clock.get_time():.2f}ms)"

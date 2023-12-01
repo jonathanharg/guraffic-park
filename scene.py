@@ -34,7 +34,6 @@ class Scene:
 
         aspect_ratio = self.window_size[1] / self.window_size[0]
 
-        # TODO: This should be in the camera class
         right = self.near_clipping * np.tan(self.fov * np.pi / 360.0)
         left = -right
         top = -right * aspect_ratio
@@ -63,17 +62,6 @@ class Scene:
         self.running = False
 
         pygame.init()
-
-        # # TODO: REMOVE THIS, IT BUGS OUT IMGUI
-        # pygame.display.gl_set_attribute(
-        #     pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
-        # )
-        # pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
-        # pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
-        # pygame.display.gl_set_attribute(
-        #     pygame.GL_CONTEXT_FLAGS, pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG
-        # )
-        # # TODO: REMOVE THIS, IT BUGS OUT IMGUI
 
         pygame.display.set_caption("Guraffic Park")
         pygame.display.set_icon(pygame.image.load("./textures/logo.png"))
@@ -104,11 +92,7 @@ class Scene:
         # this selects the background color
         gl.glClearColor(0.0, 0.0, 0.0, 1.0)
 
-        # enable back face culling (see lecture on clipping and visibility
-        # TODO: UNCOMMENT
-
         # enable the vertex array capability
-        # TODO: ONLY DISABLE THIS WHEN DEBUGING WITH RENDERDOC
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
 
         # enable depth test for clean output (see lecture on clipping & visibility for an explanation

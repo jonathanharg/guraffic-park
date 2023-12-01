@@ -121,7 +121,6 @@ class Mesh(Entity):
             self.binormals /= np.linalg.norm(self.binormals, axis=1, keepdims=True)
 
     def set_uniforms(self):
-        # TODO: CLEAN THIS UP
         camera = Scene.current_scene.camera
         projection_matrix = Scene.current_scene.projection_matrix
         view_matrix = camera.view_matrix
