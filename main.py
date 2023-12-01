@@ -5,11 +5,8 @@ import imgui
 import numpy as np
 import pygame
 import quaternion
+from geomdl import BSpline, exchange, knotvector
 from OpenGL import GL as gl
-from bezier import Curve
-from geomdl import BSpline
-from geomdl import exchange
-from geomdl import knotvector
 
 from camera import Camera, FreeCamera, OrbitCamera
 from environment_mapping import EnvironmentMappingTexture
@@ -18,6 +15,7 @@ from scene import Scene
 from shaders import EnvironmentShader, NewShader
 from shadow_mapping import ShadowMap
 from skybox import SkyBox
+
 # from spline import get_curves
 
 
@@ -55,13 +53,17 @@ class MainScene(Scene):
             "dino_right.obj", position=(-2.5, 0, 2), parent=self.dino
         )
 
-
         self.dino_path = BSpline.Curve()
         self.dino_path.degree = 3
         self.dino_path.ctrlpts = exchange.import_txt("./dino_path.txt")
-        self.dino_path.knotvector = knotvector.generate(self.dino_path.degree, self.dino_path.ctrlpts_size)
+        self.dino_path.knotvector = knotvector.generate(
+            self.dino_path.degree, self.dino_path.ctrlpts_size
+        )
 
-        self.orbit_camera = OrbitCamera(parent=self.dino,  rotation=quaternion.from_rotation_vector((0, np.pi, 0)),)
+        self.orbit_camera = OrbitCamera(
+            parent=self.dino,
+            rotation=quaternion.from_rotation_vector((0, np.pi, 0)),
+        )
         self.free_camera = FreeCamera()
         self.camera = self.orbit_camera
 
@@ -91,30 +93,33 @@ class MainScene(Scene):
         self.dino_left_wing.rotation = left_wing_rotation
         self.dino_right_wing.rotation = right_wing_rotation
 
-        t = (pygame.time.get_ticks()/30000) % 1
+        t = (pygame.time.get_ticks() / 30000) % 1
         path_derivatives = self.dino_path.derivatives(t, order=1)
-        self.dino.position = path_derivatives[0] # 0th derivative at t, i.e. the original function at t
+        self.dino.position = path_derivatives[
+            0
+        ]  # 0th derivative at t, i.e. the original function at t
 
-        forward = path_derivatives[1] / np.linalg.norm(path_derivatives[1]) # Path normal, aka forward vector on the path
-        right = np.cross([0,1,0], forward)
+        forward = path_derivatives[1] / np.linalg.norm(
+            path_derivatives[1]
+        )  # Path normal, aka forward vector on the path
+        right = np.cross([0, 1, 0], forward)
         right = right / np.linalg.norm(right)
         up = np.cross(forward, right)
         up = up / np.linalg.norm(up)
 
         rotation = np.identity(3)
-        rotation[:,0] = right
-        rotation[:,1] = up
-        rotation[:,2] = forward
+        rotation[:, 0] = right
+        rotation[:, 1] = up
+        rotation[:, 2] = forward
 
         self.dino.rotation = quaternion.from_rotation_matrix(rotation)
-
 
         # tick = (pygame.time.get_ticks()/10000) % 14
 
         # if int(tick) > len(self.dino_path) - 1:
         #     print(f"ERROR: TRYING TO ACCESS INDEX {int(tick)} for {tick}")
         #     tick = len(self.dino_path) - 1
-        
+
         # self.dino_pos = self.dino_path[int(tick)].evaluate(float(tick % 1))[:,0]
         # self.dino.position = self.dino_pos.tolist()
 
@@ -168,16 +173,26 @@ class MainScene(Scene):
     def debug_menu(self):
         with imgui.begin("Scene", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE):
             imgui.text("Press ESC to interact with the menu")
-            imgui.text(f"FPS: {self.clock.get_fps():.2f} ({self.clock.get_time():.2f}ms)")
+            imgui.text(
+                f"FPS: {self.clock.get_fps():.2f} ({self.clock.get_time():.2f}ms)"
+            )
 
             if imgui.tree_node("Settings"):
                 _, self.fps_max = imgui.slider_float("Max FPS", self.fps_max, 15, 600)
 
-                _, self.x_sensitivity = imgui.slider_float("Horizontal mouse sensitivity", self.x_sensitivity, -10, 10)
-                _, self.y_sensitivity = imgui.slider_float("Vertical mouse sensitivity", self.y_sensitivity, -10, 10)
+                _, self.x_sensitivity = imgui.slider_float(
+                    "Horizontal mouse sensitivity", self.x_sensitivity, -10, 10
+                )
+                _, self.y_sensitivity = imgui.slider_float(
+                    "Vertical mouse sensitivity", self.y_sensitivity, -10, 10
+                )
 
-                near_clip_changed, self.near_clipping = imgui.slider_float("Near clipping plane", self.near_clipping, 0.01, 20)
-                far_clip_changed, self.far_clipping = imgui.slider_float("Far clipping plane", self.far_clipping, 25, 2500)
+                near_clip_changed, self.near_clipping = imgui.slider_float(
+                    "Near clipping plane", self.near_clipping, 0.01, 20
+                )
+                far_clip_changed, self.far_clipping = imgui.slider_float(
+                    "Far clipping plane", self.far_clipping, 25, 2500
+                )
                 fov_changed, self.fov = imgui.slider_float("FOV", self.fov, 30, 150)
 
                 if near_clip_changed or far_clip_changed or fov_changed:
@@ -191,7 +206,9 @@ class MainScene(Scene):
                     f"OpenGL v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
                 )
                 imgui.plot_lines(
-                    "Frametime", np.array(self.frame_times, dtype=np.float32), scale_min=0.0,
+                    "Frametime",
+                    np.array(self.frame_times, dtype=np.float32),
+                    scale_min=0.0,
                 )
 
                 # Camera Selector
@@ -221,7 +238,7 @@ class MainScene(Scene):
                         model.debug_menu()
                         imgui.tree_pop()
                 imgui.tree_pop()
-            
+
             imgui.separator()
             if imgui.tree_node("Camera"):
                 self.camera.debug_menu()

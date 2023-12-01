@@ -205,6 +205,5 @@ class Entity:
             else:
                 child_names.append("Unknown")
 
-
         imgui.text(f"Parent: {parent_name}")
         imgui.text(f"Children: {child_names}")
