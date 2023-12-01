@@ -1,5 +1,4 @@
-import cProfile
-import pstats
+"""Guraffic Park 3D Scene. Run with `python .` or `python main_scene.py`."""
 
 import imgui
 import time
@@ -17,24 +16,20 @@ from shaders import EnvironmentShader, NewShader
 from shadow_mapping import ShadowMap
 from skybox import SkyBox
 
-# from spline import get_curves
-
 
 class MainScene(Scene):
     def __init__(self):
         Scene.__init__(self)
         self.light.position = (-0.2, -1.0, -0.3)
 
-        # cube = Model()
 
         self.reflection_camera = Camera(position=(35, 5, -45))
         self.environment = EnvironmentMappingTexture(
-            self.reflection_camera, width=400, height=400
+            self.reflection_camera, width=800, height=800
         )
 
         self.skybox = SkyBox()
-        self.shadows = ShadowMap(light=self.light)
-        self.cube = Model.from_obj("colour_cube.obj")
+        # self.shadows = ShadowMap(light=self.light)
 
         self.london = Model.from_obj("london.obj", shader=NewShader())
         Model.from_obj("shard.obj", shader=EnvironmentShader())
@@ -302,16 +297,8 @@ class MainScene(Scene):
                 self.running = False
 
 
+# Run the scene if this file is called
 if __name__ == "__main__":
-    # with cProfile.Profile() as pr:
-
-    # initialises the scene object
-    # scene = Scene(shaders='gouraud')
     scene = MainScene()
 
-    # starts drawing the scene
     scene.start()
-
-    # stats = pstats.Stats(pr)
-    # stats.sort_stats(pstats.SortKey.TIME)
-    # stats.dump_stats(filename="last_run.prof")

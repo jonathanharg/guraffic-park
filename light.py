@@ -10,7 +10,9 @@ from entity import Entity
 
 class Light(Entity):
     """
-    Base class for maintaining a light source in the scene. By default lights are rendered as directional lights, which are infinitely far away (like the sun). The position of the light represents its direction.
+    Base class for maintaining a light source in the scene. By default lights are
+    rendered as directional lights, which are infinitely far away (like the sun).
+    The position of the light represents its direction.
     """
 
     def __init__(
