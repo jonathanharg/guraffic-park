@@ -32,9 +32,6 @@ class MainScene(Scene):
         Model.from_obj("london.obj")
         Model.from_obj("shard.obj", shader=EnvironmentShader())
 
-        # self.m = 0
-        # self.h = 0
-
         #
         # Define the parts for the dinosaur
         #
@@ -167,9 +164,6 @@ class MainScene(Scene):
 
         minute_decimal = t.tm_min / 60
         hour_decimal = ((t.tm_hour % 12) / 12) + (minute_decimal / 10)
-        # TODO: REMOVE
-        # minute_decimal = self.m / 60
-        # hour_decimal = ((self.h % 12) / 12) + (self.h / 10)
 
         minute_rotation = quaternion.from_rotation_vector([
             -minute_decimal * 2 * np.pi, 0, 0
@@ -242,9 +236,6 @@ class MainScene(Scene):
 
             imgui.separator()
             if imgui.tree_node("Debug"):
-                # TODO: Remove
-                # _, self.h = imgui.slider_float("Hour sim", self.h, 0, 23)
-                # _, self.m = imgui.slider_float("Min sim", self.m, 0, 60)
                 imgui.text(
                     "OpenGL"
                     f" v{gl.glGetIntegerv(gl.GL_MAJOR_VERSION)}.{gl.glGetIntegerv(gl.GL_MINOR_VERSION)}"
