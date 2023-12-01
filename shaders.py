@@ -121,25 +121,3 @@ class EnvironmentShader(Shader):
             Scene.current_scene.environment.bind()
 
         super().bind()
-
-
-class ShadowMappingShader(Shader):
-    def __init__(self, shadow_map=None):
-        super().__init__(program_name="shadow_mapping")
-        self.compile()
-        # self.add_uniform("shadow_map")
-        ##### self.add_uniform('old_map')
-        # self.add_uniform("shadow_map_matrix")
-        self.shadow_map = shadow_map
-
-    def bind(self):
-        super().bind()
-        # self.uniforms["shadow_map"].bind(1)
-
-        gl.glActiveTexture(gl.GL_TEXTURE1)
-        self.shadow_map.bind()
-
-        # gl.glActiveTexture(gl.GL_TEXTURE2)
-        # self.shadow_map.bind()
-
-        gl.glActiveTexture(gl.GL_TEXTURE0)

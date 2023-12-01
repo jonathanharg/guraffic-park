@@ -13,9 +13,7 @@ from camera import Camera, FreeCamera, OrbitCamera
 from environment_mapping import EnvironmentMappingTexture
 from model import Model
 from scene import Scene
-from shaders import CartoonShader, EnvironmentShader, Shader
-
-# from shadow_mapping import ShadowMap
+from shaders import EnvironmentShader, Shader
 from skybox import SkyBox
 
 
@@ -29,10 +27,9 @@ class MainScene(Scene):
             self.reflection_camera, width=800, height=800
         )
 
-        self.skybox = SkyBox()
-        # self.shadows = ShadowMap(light=self.light)
+        SkyBox()
 
-        self.london = Model.from_obj("london.obj")
+        Model.from_obj("london.obj")
         Model.from_obj("shard.obj", shader=EnvironmentShader())
 
         # self.m = 0
@@ -201,42 +198,15 @@ class MainScene(Scene):
         :return: None
         """
         self.camera.update()
-        # self.shadows.render(self)
-
-        # self.draw_shadow_map(self)
 
         self.environment.update()
 
         for model in self.models:
             model.draw()
+
+        # Unbind the shader
         gl.glUseProgram(0)
         Shader.current_shader = 0
-
-    # def draw_shadow_map(self):
-    #     if self.light is not None:
-    #         self.P = frustumMatrix(-1.0, +1.0, -1.0, +1.0, 1.0, 20.0)
-    #         self.V = lookAt(np.array(self.light.position), np.array(target))
-    #         scene.camera.V = self.V
-
-    #         # update the viewport for the image size
-    #         gl.glViewport(0, 0, self.width, self.height)
-
-    #         self.fbo.bind()
-    #                     # TODO: REMOVE THIS THIS IS TERRIBLE DESIGN
-    #         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
-    #         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-
-    #         # also all models from the table
-    #         for model in self.models:
-    #             model.draw()
-    #         self.fbo.unbind()
-
-    #         # reset the viewport to the windows size
-    #         gl.glViewport(0, 0, scene.window_size[0], scene.window_size[1])
-
-    #         # restore the view matrix
-    #         scene.camera.V = None
-    #         scene.camera.update()
 
     def debug_menu(self):
         """Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu."""

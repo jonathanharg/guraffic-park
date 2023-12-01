@@ -3,19 +3,9 @@ from OpenGL import GL as gl
 
 from entity import Entity
 from material import Material
-from math_utils import (
-    make_homogeneous,
-    make_unhomogeneous,
-    scale_matrix,
-    translation_matrix,
-)
+from math_utils import scale_matrix, translation_matrix
 from scene import Scene
-from shaders import (
-    CartoonShader,
-    EnvironmentShader,
-    Shader,
-    ShadowMappingShader,
-)
+from shaders import CartoonShader, EnvironmentShader, Shader
 from texture import Texture
 
 
@@ -144,9 +134,7 @@ class Mesh(Entity):
 
         if not bool(self.uniform_locations):
             # If location dict is empty
-            # TODO REMOVE MODE FROM SHADER UNIFORMS
             self.uniform_locations = {
-                # NEW
                 "view_pos": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="view_pos"
                 ),
@@ -156,7 +144,6 @@ class Mesh(Entity):
                 "model": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="model"
                 ),
-                # OLD
                 "pvm": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="PVM"
                 ),
@@ -169,7 +156,6 @@ class Mesh(Entity):
                 "vmit": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="VMiT"
                 ),
-
                 "texture_object": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="textureObject"
                 ),
@@ -199,26 +185,6 @@ class Mesh(Entity):
                 ),
             }
 
-        if isinstance(self.shader, ShadowMappingShader):
-            if not "shadow_map" in self.uniform_locations:
-                self.uniform_locations["shadow_map"] = gl.glGetUniformLocation(
-                    program=self.shader.program_id, name="shadow_map"
-                )
-                self.uniform_locations["shadow_map_matrix"] = gl.glGetUniformLocation(
-                    program=self.shader.program_id, name="shadow_map_matrix"
-                )
-
-            vst = np.linalg.inv(camera.view_matrix)
-            sm = np.matmul(camera.view_matrix, vst)
-            sm = np.matmul(Scene.current_scene.projection_matrix, sm)
-            sm = np.matmul(translation_matrix([1, 1, 1]), sm)
-            sm = np.matmul(scale_matrix(0.5), sm)
-
-            gl.glUniform1i(self.uniform_locations["shadow_map"], 1)
-            gl.glUniformMatrix4fv(
-                self.uniform_locations["shadow_map_matrix"], 1, True, sm
-            )
-
         if isinstance(self.shader, EnvironmentShader):
             if Scene.current_scene.environment is not None:
                 gl.glActiveTexture(gl.GL_TEXTURE0)
@@ -227,15 +193,11 @@ class Mesh(Entity):
                 )
                 gl.glUniform1i(sampler_cube, 0)
 
-        # NEW
-
         gl.glUniform3fv(self.uniform_locations["light_pos"], 1, light.position)
 
         gl.glUniform3fv(self.uniform_locations["view_pos"], 1, camera.position)
 
         gl.glUniformMatrix4fv(self.uniform_locations["model"], 1, True, self.world_pose)
-
-        # OLD
 
         gl.glUniformMatrix4fv(self.uniform_locations["pvm"], 1, True, pvm)
 

@@ -7,13 +7,7 @@ from blender import find_file, load_obj_file
 from entity import Entity
 from mesh import Mesh
 from scene import Scene
-from shaders import (
-    CartoonShader,
-    EnvironmentShader,
-    Shader,
-    ShadowMappingShader,
-    SkyBoxShader,
-)
+from shaders import CartoonShader, EnvironmentShader, Shader, SkyBoxShader
 
 
 class Model(Entity):
@@ -89,7 +83,6 @@ class Model(Entity):
             CartoonShader,
             SkyBoxShader,
             EnvironmentShader,
-            ShadowMappingShader,
         ]
 
         current_shader = all_shaders.index(type(self.shader))

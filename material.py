@@ -29,7 +29,6 @@ class Material:
         self.Ks = Ks if Ks is not None else [1.0, 1.0, 1.0]
         self.Ns = Ns if Ns is not None else [1.0, 1.0, 1.0]
         self.texture = texture
-        self.alpha = 1.0
 
 
 class MaterialLibrary:

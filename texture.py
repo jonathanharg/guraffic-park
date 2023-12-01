@@ -85,41 +85,6 @@ class Texture:
 
         self.unbind()
 
-    def set_shadow_comparison(self):
-        self.bind()
-        gl.glTexParameteri(
-            self.target, gl.GL_TEXTURE_COMPARE_MODE, gl.GL_COMPARE_REF_TO_TEXTURE
-        )
-        self.unbind()
-
-    def set_wrap_parameter(self, wrap=gl.GL_REPEAT):
-        self.wrap = wrap
-        self.bind()
-        gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_S, wrap)
-        gl.glTexParameteri(self.target, gl.GL_TEXTURE_WRAP_T, wrap)
-        self.unbind()
-
-    def set_sampling_parameter(self, sample=gl.GL_NEAREST):
-        self.sample = sample
-        self.bind()
-        gl.glTexParameteri(self.target, gl.GL_TEXTURE_MAG_FILTER, sample)
-        gl.glTexParameteri(self.target, gl.GL_TEXTURE_MIN_FILTER, sample)
-        self.unbind()
-
-    def set_data_from_image(self, data, width=None, height=None):
-        if isinstance(data, np.ndarray):
-            width = data.shape[0]
-            height = data.shape[1]
-
-        self.bind()
-
-        # load the texture in the buffer
-        gl.glTexImage2D(
-            self.target, 0, self.format, width, height, 0, self.format, self.type, data
-        )
-
-        self.unbind()
-
     def bind(self):
         gl.glBindTexture(self.target, self.texture_id)
 
