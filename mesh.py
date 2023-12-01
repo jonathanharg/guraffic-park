@@ -169,9 +169,7 @@ class Mesh(Entity):
                 "vmit": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="VMiT"
                 ),
-                "alpha": gl.glGetUniformLocation(
-                    program=self.shader.program_id, name="alpha"
-                ),
+
                 "texture_object": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="textureObject"
                 ),
@@ -189,9 +187,6 @@ class Mesh(Entity):
                 ),
                 "specular_exponent": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="Ns"
-                ),
-                "light": gl.glGetUniformLocation(
-                    program=self.shader.program_id, name="light"
                 ),
                 "ambient_illumination": gl.glGetUniformLocation(
                     program=self.shader.program_id, name="Ia"
@@ -250,9 +245,6 @@ class Mesh(Entity):
 
         gl.glUniformMatrix3fv(self.uniform_locations["vt"], 1, True, vt)
 
-        gl.glUniform1f(self.uniform_locations["alpha"], self.material.alpha)
-
-        # # TODO DO WE EVEN NEED THESE
         if len(self.textures) > 0:
             gl.glUniform1i(self.uniform_locations["texture_object"], 0)
             gl.glUniform1i(self.uniform_locations["has_texture"], 1)
@@ -272,12 +264,6 @@ class Mesh(Entity):
         )
 
         gl.glUniform1f(self.uniform_locations["specular_exponent"], self.material.Ns)
-
-        gl.glUniform3fv(
-            self.uniform_locations["light"],
-            1,
-            make_unhomogeneous(np.dot(view_matrix, make_homogeneous(light.position))),
-        )
 
         gl.glUniform3fv(
             self.uniform_locations["ambient_illumination"],

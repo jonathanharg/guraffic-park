@@ -12,7 +12,6 @@ out vec2 TexCoords;
 
 //=== uniforms
 uniform mat4 PVM; 	// the Perspective-View-Model matrix is received as a Uniform
-uniform mat4 VM; 	// the View-Model matrix is received as a Uniform
 uniform mat3 VMiT;  // The inverse-transpose of the view model matrix, used for normals
 uniform mat4 model;
 

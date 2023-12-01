@@ -210,7 +210,6 @@ class Scene:
             imgui.render()
             self.imgui_impl.render(imgui.get_draw_data())
 
-            # TODO: REMOVE THIS THIS IS SO BUGGED
             for entity in Entity.all_entities:
                 entity.clear_entity_cache()
             pygame.display.flip()

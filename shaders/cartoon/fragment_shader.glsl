@@ -18,7 +18,6 @@ uniform vec3 Ks;    // specular properties of the material
 uniform float Ns;   // specular exponent
 
 // light source
-uniform vec3 light; // light direction in view space
 uniform vec3 light_pos; // light direction
 uniform vec3 Ia;    // ambient light properties
 uniform vec3 Id;    // diffuse properties of the light source

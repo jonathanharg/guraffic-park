@@ -1,10 +1,6 @@
 #version 330 core
 
-//=== in attributes are read from the vertex array, one row per instance of the shader
-in vec3 position;	// the position attribute contains the vertex position
-//in vec3 vertex_position;
-
-//=== out attributes are interpolated on the face, and passed on to the fragment shader
+in vec3 position;
 out vec3 fragment_texCoord;
 
 uniform mat4 PVM;
