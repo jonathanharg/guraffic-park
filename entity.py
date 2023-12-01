@@ -197,8 +197,8 @@ class Entity:
         return local_pose_matrix
 
     def debug_menu(self):
-        """
-        Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu.
+        """Define the debug menu for this class. Uses the ImGui library to construct a UI.
+        Calling this function inside an ImGui context will render this debug menu.
         """
         _, self.position = imgui.drag_float3(
             "Position", self.x, self.y, self.z, change_speed=0.1

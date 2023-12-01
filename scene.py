@@ -1,6 +1,5 @@
-import cProfile
-import pstats
-import stat
+"""Base class for a PyGame based OpenGL scene."""
+
 from collections import deque
 from typing import TYPE_CHECKING, Self, Type
 
@@ -27,6 +26,7 @@ class Scene:
     current_scene: Self = None  # type: ignore
 
     def update_viewport(self):
+        """Update the viewport if the window size, fov, or clipping planes are changed."""
         pygame.display.set_mode(
             self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
         )
@@ -34,22 +34,18 @@ class Scene:
 
         aspect_ratio = self.window_size[1] / self.window_size[0]
 
-        # TODO: Move this into camera class
+        # TODO: This should be in the camera class
         right = self.near_clipping * np.tan(self.fov * np.pi / 360.0)
         left = -right
         top = -right * aspect_ratio
         bottom = right * aspect_ratio
 
-        # to start with, we use an orthographic projection; change this.
-        # self.P = frustumMatrix(left, right, top, bottom, near, far)
         self.projection_matrix = frustrum_matrix(
             left, right, top, bottom, self.near_clipping, self.far_clipping
         )
 
     def __init__(self, width=960, height=720):
-        """
-        Initialises the scene
-        """
+        """Initialises the scene"""
         Scene.current_scene = self
         self.window_size = (width, height)
         self.wireframe = False
@@ -64,7 +60,6 @@ class Scene:
         self.clock: pygame.time.Clock = None
         self.delta_time = 0
         self.mouse_locked = True
-        self.show_imgui_demo = False
         self.running = False
 
         pygame.init()
@@ -85,17 +80,18 @@ class Scene:
         pygame.display.set_mode(
             self.window_size, pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE
         )
+
         # Stops the mouse from being able to leave the window
         pygame.event.set_grab(True)
         pygame.mouse.set_visible(False)
-        # Increase key repeat window, Makes WASD movement smoother
-        pygame.key.set_repeat(0)
+
         # Center the mouse
         pygame.mouse.set_pos((self.window_size[0] / 2, self.window_size[1] / 2))
 
         # Print numpy matrices to a reasonable degree of accuracy for debugging
         np.set_printoptions(precision=3, suppress=True)
 
+        # Create the GUI context
         imgui.create_context()
         self.imgui_impl = PygameRenderer()
 
@@ -110,15 +106,10 @@ class Scene:
 
         # enable back face culling (see lecture on clipping and visibility
         # TODO: UNCOMMENT
-        # gl.glEnable(gl.GL_CULL_FACE)
-        # depending on your model, or your projection matrix, the winding order may be inverted,
-        # Typically, you see the far side of the model instead of the front one
-        # uncommenting the following line should provide an easy fix.
-        # gl.glCullFace(gl.GL_FRONT)
 
         # enable the vertex array capability
         # TODO: ONLY DISABLE THIS WHEN DEBUGING WITH RENDERDOC
-        # gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+        gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
 
         # enable depth test for clean output (see lecture on clipping & visibility for an explanation
         gl.glEnable(gl.GL_DEPTH_TEST)
@@ -130,40 +121,11 @@ class Scene:
         self.camera = self.free_camera
         self.light = Light()
 
-        # initialise the light source
-        # self.light = LightSource(self, position=[5.0, 5.0, 5.0])
-
-        # This class will maintain a list of models to draw in the scene,
+        # This will maintain a list of models to draw in the scene,
         self.models: list[Type["Model"]] = []
 
-    def add_model(self, model):
-        """
-        This method just adds a model to the scene.
-        :param model: The model object to add to the scene
-        :return: None
-        """
-
-        # bind the default shader to the mesh
-        # model.bind_shader(self.shaders)
-
-        # and add to the list
-        self.models.append(model)
-
-    def add_models_list(self, models_list):
-        """
-        This method just adds a model to the scene.
-        :param model: The model object to add to the scene
-        :return: None
-        """
-        for model in models_list:
-            self.add_model(model)
-
     def draw(self):
-        """
-        Draw all models in the scene
-        :return: None
-        """
-
+        """Draw all models in the scene"""
         # first we need to clear the scene, we also clear the depth buffer to handle occlusions
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -177,23 +139,21 @@ class Scene:
         pygame.display.flip()
 
     def keyboard(self, event):
-        """
-        Method to process keyboard events. Check Pygame documentation for a list of key events
+        """Method to process keyboard events.
         :param event: the event object that was raised
         """
         if event.key == pygame.K_q:
             self.running = False
 
         if event.key == pygame.K_ESCAPE and self.mouse_locked:
+            # Allow the mouse to leave the window
             self.mouse_locked = False
-            pygame.event.set_grab(False)  # Allow the mouse to leave the window
+            pygame.event.set_grab(False)
             pygame.mouse.set_visible(True)
             self.mouse_locked = False
 
     def run(self):
-        """
-        Method to handle PyGame events for user interaction.
-        """
+        """Method to handle PyGame events for user interaction."""
         # check whether the window has been closed
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -211,35 +171,33 @@ class Scene:
             self.camera.handle_pygame_event(event)
 
             if self.mouse_locked:
-                pygame.mouse.set_pos(
-                    (self.window_size[0] / 2, self.window_size[1] / 2)
-                )  # Re-center the mouse after every frame
+                # Re-center the mouse after every frame to stop it escaping
+                pygame.mouse.set_pos((self.window_size[0] / 2, self.window_size[1] / 2))
             else:
                 if (
                     not imgui.get_io().want_capture_mouse
                 ) and pygame.mouse.get_pressed()[0]:
-                    # We've clicked on the 3d scene and not the UI
-                    # Stops the mouse from being able to leave the window
+                    # We've clicked on the 3D scene and not the UI so grab the mouse
                     pygame.event.set_grab(True)
                     pygame.mouse.set_visible(False)
                     self.mouse_locked = True
 
     def debug_menu(self):
-        pass
+        """Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu."""
 
     def start(self):
-        """
-        Draws the scene in a loop until exit.
-        """
-
-        # with cProfile.Profile() as pr:
-        # We have a classic program loop
+        """Draws the scene in a loop until exit."""
         self.running = True
         self.clock = pygame.time.Clock()
+
         while self.running:
+            # Calculate frame time
             self.delta_time = self.clock.tick(self.fps_max) / 1000
             self.frame_times.append(self.clock.get_time())
+
             self.run()
+
+            # Generate GUI
             self.imgui_impl.process_inputs()
             imgui.new_frame()
             self.debug_menu()
@@ -248,13 +206,11 @@ class Scene:
 
             self.draw()
 
+            # Render GUI
             imgui.render()
             self.imgui_impl.render(imgui.get_draw_data())
 
+            # TODO: REMOVE THIS THIS IS SO BUGGED
             for entity in Entity.all_entities:
                 entity.clear_entity_cache()
             pygame.display.flip()
-
-        # stats = pstats.Stats(pr)
-        # stats.sort_stats(pstats.SortKey.TIME)
-        # stats.dump_stats(filename="last_run.prof")

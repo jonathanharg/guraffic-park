@@ -1,27 +1,23 @@
+"""Classes for loading and managing textures."""
+
 import numpy as np
 import pygame
 from OpenGL import GL as gl
 
 
 class ImageWrapper:
+    """A wrapper for a pygame image."""
+
     def __init__(self, name):
-        # TODO: BETTER FILE LOADING
-        # load the image from file using pyGame - any other image reading function could be used here.
-        # print("Loading image: texture/{}".format(name))
-        self.img = pygame.image.load(f"./textures/{name}")
-
-    def width(self):
-        return self.img.get_width()
-
-    def height(self):
-        return self.img.get_height()
+        # load the image from file using pyGame
+        self.image_data = pygame.image.load(f"./textures/{name}")
 
     def data(self, image_format=gl.GL_RGB):
-        # convert the python image object to a plain byte array for passing to OpenGL
+        """convert the python image object to a plain byte array for passing to OpenGL"""
         if image_format == gl.GL_RGBA:
-            return pygame.image.tostring(self.img, "RGBA", 1)
+            return pygame.image.tostring(self.image_data, "RGBA", 1)
         if image_format == gl.GL_RGB:
-            return pygame.image.tostring(self.img, "RGB", 1)
+            return pygame.image.tostring(self.image_data, "RGB", 1)
 
 
 class Texture:
@@ -58,8 +54,8 @@ class Texture:
                 self.target,
                 0,
                 image_format,
-                img.width(),
-                img.height(),
+                img.image_data.width(),
+                img.image_data.height(),
                 0,
                 image_format,
                 image_type,

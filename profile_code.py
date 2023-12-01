@@ -1,3 +1,6 @@
+"""Run the Guraffic Park scene with a debugger attached.
+"""
+
 import cProfile
 import pstats
 

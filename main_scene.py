@@ -13,7 +13,7 @@ from camera import Camera, FreeCamera, OrbitCamera
 from environment_mapping import EnvironmentMappingTexture
 from model import Model
 from scene import Scene
-from shaders import EnvironmentShader, NewShader
+from shaders import CartoonShader, EnvironmentShader, Shader
 
 # from shadow_mapping import ShadowMap
 from skybox import SkyBox
@@ -32,7 +32,7 @@ class MainScene(Scene):
         self.skybox = SkyBox()
         # self.shadows = ShadowMap(light=self.light)
 
-        self.london = Model.from_obj("london.obj", shader=NewShader())
+        self.london = Model.from_obj("london.obj")
         Model.from_obj("shard.obj", shader=EnvironmentShader())
 
         # self.m = 0
@@ -209,6 +209,8 @@ class MainScene(Scene):
 
         for model in self.models:
             model.draw()
+        gl.glUseProgram(0)
+        Shader.current_shader = 0
 
     # def draw_shadow_map(self):
     #     if self.light is not None:
@@ -237,9 +239,7 @@ class MainScene(Scene):
     #         scene.camera.update()
 
     def debug_menu(self):
-        """
-        Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu.
-        """
+        """Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu."""
         with imgui.begin("Menu", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE):
             imgui.text("Press ESC to interact with the menu")
             imgui.text(

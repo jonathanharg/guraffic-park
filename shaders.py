@@ -1,15 +1,16 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from OpenGL import GL as gl
 from OpenGL.GL import shaders
 
 from scene import Scene
 
-if TYPE_CHECKING:
-    from model import Model
-
 
 class Singleton(type):
+    """A singleton class. Only one instance of this class can ever exist.
+    If a second instance is ever created, it returns a pointer to the first instance.
+    """
+
     _instances = {}
 
     def __call__(cls, *args: Any, **kwds: Any) -> Any:
@@ -18,12 +19,12 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class Shader:
-    """
-    This is the base class for loading and compiling the GLSL shaders.
+class Shader(metaclass=Singleton):
+    """This is the base class for loading and compiling the GLSL shaders.
+    Each shader can only have one instance. The shader can be shared across models/meshes.
     """
 
-    compiled_program_ids = {}
+    current_shader: int = 0
 
     def __init__(self, program_name, vertex_shader=None, fragment_shader=None):
         """
@@ -36,7 +37,7 @@ class Shader:
         self.program_id = 0
 
         if program_name is None:
-            program_name = "default"
+            program_name = "cartoon"
 
         if vertex_shader is None:
             vertex_shader = f"shaders/{program_name}/vertex_shader.glsl"
@@ -53,49 +54,36 @@ class Shader:
         self.compiled = False
 
     def compile(self):
-        """
-        Call this function to compile the GLSL codes for both shaders.
+        """Call this function to compile the GLSL codes for both shaders.
         :return:
         """
         if self.compiled:
-            print("UNECESSARY COMPILE")
             return
 
         try:
-            if self.program_name not in Shader.compiled_program_ids:
-                self.program_id = gl.glCreateProgram()
-                print(f"Compiling {self.program_name} shader")
-                gl.glAttachShader(
-                    self.program_id,
-                    shaders.compileShader(
-                        self.vertex_shader_source, gl.GL_VERTEX_SHADER
-                    ),
-                )
-                gl.glAttachShader(
-                    self.program_id,
-                    shaders.compileShader(
-                        self.fragment_shader_source, gl.GL_FRAGMENT_SHADER
-                    ),
-                )
-                self.compiled_program_ids[self.program_name] = self.program_id
-            else:
-                self.program_id = self.compiled_program_ids[self.program_name]
+            self.program_id = gl.glCreateProgram()
+            print(f"Compiling {self.program_name} shader")
+            gl.glAttachShader(
+                self.program_id,
+                shaders.compileShader(self.vertex_shader_source, gl.GL_VERTEX_SHADER),
+            )
+            gl.glAttachShader(
+                self.program_id,
+                shaders.compileShader(
+                    self.fragment_shader_source, gl.GL_FRAGMENT_SHADER
+                ),
+            )
 
         except Exception as e:
             raise RuntimeError(
                 f"Error compiling {self.program_name} shader: {e}"
             ) from e
 
-        # self.bind_attributes(attributes)
-
         gl.glLinkProgram(self.program_id)
-
-        # tell OpenGL to use this shader program for rendering
-        gl.glUseProgram(self.program_id)
-
         self.compiled = True
 
     def bind_attributes(self, attributes):
+        """Bind attributes to the VAO"""
         if not self.compiled:
             self.compile()
         # bind all shader attributes to the correct locations in the VAO
@@ -103,54 +91,24 @@ class Shader:
             gl.glBindAttribLocation(self.program_id, location, name)
 
     def bind(self):
-        """
-        Call this function to enable this GLSL Program (you can have multiple GLSL programs used during rendering!)
-        """
+        """Bind the shader"""
         if not self.compiled:
             self.compile()
 
-        # tell OpenGL to use this shader program for rendering
-        gl.glUseProgram(self.program_id)
+        # Binding shaders is costly, dont bind unless we need to
+        if Shader.current_shader != self.program_id:
+            gl.glUseProgram(self.program_id)
+            Shader.current_shader = self.program_id
 
-    def unbind(self):
-        gl.glUseProgram(0)
 
-
-class PhongShader(Shader):
+class CartoonShader(Shader):
     def __init__(self):
-        super().__init__(program_name="phong")
-
-
-class NewShader(Shader):
-    def __init__(self):
-        super().__init__(program_name="new")
-
-
-class FlatShader(Shader):
-    def __init__(self):
-        super().__init__(program_name="flat")
-
-
-class GouraudShader(Shader):
-    def __init__(self):
-        super().__init__(program_name="gouraud")
-
-
-class BlinnShader(Shader):
-    def __init__(self):
-        super().__init__(program_name="blinn")
-
-
-class TextureShader(Shader):
-    def __init__(self):
-        super().__init__(program_name="texture")
+        super().__init__(program_name="cartoon")
 
 
 class SkyBoxShader(Shader):
     def __init__(self, name="skybox"):
         super().__init__(program_name=name)
-        # self.compile()
-        # self.add_uniform("sampler_cube")
 
 
 class EnvironmentShader(Shader):
@@ -162,7 +120,7 @@ class EnvironmentShader(Shader):
             gl.glActiveTexture(gl.GL_TEXTURE0)
             Scene.current_scene.environment.bind()
 
-        gl.glUseProgram(self.program_id)
+        super().bind()
 
 
 class ShadowMappingShader(Shader):

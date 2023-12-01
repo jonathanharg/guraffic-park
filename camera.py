@@ -1,5 +1,5 @@
-"""
-All of the various types of 3D cameras. Includes a base Camera, free camera (first person camera) and an orbit camera.
+"""All of the various types of 3D cameras. Includes a base Camera,
+free camera (first person camera) and an orbit camera.
 """
 
 import imgui
@@ -13,18 +13,13 @@ from math_utils import translation_matrix
 
 
 class Camera(Entity):
-    """
-    Base class for handling the camera.
-    """
+    """Base class for handling the camera."""
 
     def __init__(self, **kwargs):
         self.view_matrix = np.identity(4)
         super().__init__(**kwargs)
 
     def debug_menu(self):
-        """
-        Define the debug menu for this class. Calling this function inside an ImGui context will render this debug menu.
-        """
         # Bad practice to import outside the top level, but necessary to avoid circular imports.
         from scene import Scene
 
@@ -45,6 +40,7 @@ class Camera(Entity):
         super().debug_menu()
 
     def update(self):
+        """Update the camera view matrix"""
         # Invert the view matrix to give correct camera world coordinates & rotation
         # This means that the camera position and rotation will match 3D world space
         self.view_matrix = np.linalg.inv(
@@ -56,7 +52,9 @@ class Camera(Entity):
 
 
 class FreeCamera(Camera):
-    """A FreeCamera (first person camera), that can be aimed using the mouse and moved using W A S D."""
+    """A FreeCamera (first person camera), that can be aimed
+    using the mouse and moved using W A S D.
+    """
 
     def __init__(self, move_speed=10, **kwargs):
         """Create a FreeCamera.
@@ -68,9 +66,6 @@ class FreeCamera(Camera):
         self.move_speed = move_speed
 
     def debug_menu(self):
-        """
-        Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu.
-        """
         super().debug_menu()
 
         _, self.move_speed = imgui.slider_float(
@@ -94,7 +89,8 @@ class FreeCamera(Camera):
         x_angle = float(mouse_movement[0]) * scene.x_sensitivity / 10000
         y_angle = float(mouse_movement[1]) * scene.y_sensitivity / 10000
 
-        # The vector pointing right, relative to the camera. We will rotate looking up/down about this vector
+        # The vector pointing right, relative to the camera.
+        # We will rotate looking up/down about this vector
         right = np.cross(self.forwards, np.array([0, -1, 0]))
         right = right / np.linalg.norm(right)  # Normalise vector
 
@@ -182,9 +178,6 @@ class OrbitCamera(Camera):
         self.view_matrix = np.matmul(translation, self.view_matrix)
 
     def debug_menu(self):
-        """
-        Define the debug menu for this class. Uses the ImGui library to construct a UI. Calling this function inside an ImGui context will render this debug menu.
-        """
         super().debug_menu()
         _, self.distance = imgui.slider_float("Distance", self.distance, 0.0, 50.0)
 

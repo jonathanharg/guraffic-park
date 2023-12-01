@@ -1,5 +1,4 @@
-"""
-Functions for reading models from blender. 
+"""Functions for reading models from blender. 
 Source: 
 https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
@@ -45,8 +44,7 @@ def find_file(name: str, subfolders: list[str] = None) -> str:
 
 
 def process_line(line):
-    """
-    Function for reading the Blender3D object file, line by line. Clearly
+    """Function for reading the Blender3D object file, line by line. Clearly
     minimalistic and slow as it is, but it will do the job nicely for this course.
     """
     label = None
@@ -104,6 +102,7 @@ def process_line(line):
 
 
 def load_material_library(file_name):
+    """Load a material library .mtl file"""
     library = MaterialLibrary()
     material = None
 
@@ -144,8 +143,7 @@ def load_material_library(file_name):
 
 
 def load_obj_file(file_name):
-    """
-    Function for loading a Blender3D object file. minimalistic, and partial,
+    """Function for loading a Blender3D object file. minimalistic, and partial,
     but sufficient for this course. You do not really need to worry about it.
     """
     vertices = []  # list of vertices
@@ -209,7 +207,8 @@ def load_obj_file(file_name):
                 library_path = find_file(data[1], ["models/"])
                 library = load_material_library(library_path)
 
-            # material indicate a new mesh in the file, so we store the previous one if not empty and start
+            # material indicate a new mesh in the file,
+            # so we store the previous one if not empty and start
             # a new one.
             elif data[0] == "material":
                 material = library.names[data[1]]
@@ -318,8 +317,7 @@ def create_mesh(varray, tarray, flist, fstart, f, library, material):
 
 
 def fix_blender_textures(textures, faces, vertices):
-    """
-    Corrects the indexing of textures in Blender file for OpenGL.
+    """Corrects the indexing of textures in Blender file for OpenGL.
     Blender allows for multiple indexing of vertices and textures, which is not supported by OpenGL.
     This function ensures that indexing is consistent.
     :param textures: Original Blender texture UV values

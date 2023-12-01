@@ -1,3 +1,6 @@
+"""Sky box entity code.
+"""
+
 from OpenGL import GL as gl
 
 from cube_map import CubeMap
@@ -8,8 +11,9 @@ from shaders import SkyBoxShader
 
 
 class SkyBox(Model):
+    """A sky box object."""
+
     def __init__(self):
-        # material = Material(name="skybox", texture=CubeMap(name="skybox/debug"))
         material = Material(name="skybox", texture=CubeMap(name="skybox/blue-sky"))
 
         super().__init__(

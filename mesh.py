@@ -10,7 +10,13 @@ from math_utils import (
     translation_matrix,
 )
 from scene import Scene
-from shaders import EnvironmentShader, PhongShader, Shader, ShadowMappingShader
+from shaders import (
+    CartoonShader,
+    EnvironmentShader,
+    PhongShader,
+    Shader,
+    ShadowMappingShader,
+)
 from texture import Texture
 
 
@@ -27,7 +33,7 @@ class Mesh(Entity):
         normals=None,
         texture_coords=None,
         material: Material = Material(),
-        shader: Shader = PhongShader(),
+        shader: Shader = CartoonShader(),
         **kwargs
     ):
         """
@@ -126,6 +132,7 @@ class Mesh(Entity):
             self.binormals /= np.linalg.norm(self.binormals, axis=1, keepdims=True)
 
     def set_uniforms(self):
+        # TODO: CLEAN THIS UP
         camera = Scene.current_scene.camera
         projection_matrix = Scene.current_scene.projection_matrix
         view_matrix = camera.view_matrix
@@ -292,6 +299,7 @@ class Mesh(Entity):
         )
 
     def draw(self):
+        """Draw the mesh to the window"""
         gl.glBindVertexArray(self.vertex_array_object)
 
         self.shader.bind()
@@ -313,7 +321,6 @@ class Mesh(Entity):
 
         gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
         gl.glBindVertexArray(0)
-        self.shader.unbind()
 
     def vbo__del__(self):
         """
@@ -386,59 +393,45 @@ class Mesh(Entity):
         gl.glBufferData(gl.GL_ARRAY_BUFFER, data, gl.GL_STATIC_DRAW)
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
-    # @property
-    # def shader_new(self):
-    #     return self.shader
-
-    # @shader_new.setter
-    # def shader(self, value: Shader):
-    #     value.compile(self.attributes)
-    #     self.shader = value
-
     def bind_shader(self, shader: Shader):
         """
         If a new shader is bound, we need to re-link it to ensure attributes are correctly linked.
         """
         self.shader = shader
         self.uniform_locations = {}
-        # self.shader.compile(self.attributes)
         self.shader.bind_attributes(self.attributes)
 
 
 class CubeMesh(Mesh):
+    """A cuboid mesh that can be used for CubeMaps."""
+
     def __init__(self, invert=False, **kwargs):
         vertices = np.array(
             [
-                [-1.0, -1.0, -1.0],  # 0
-                [+1.0, -1.0, -1.0],  # 1
-                [-1.0, +1.0, -1.0],  # 2
-                [+1.0, +1.0, -1.0],  # 3
-                [-1.0, -1.0, +1.0],  # 4
-                [-1.0, +1.0, +1.0],  # 5
-                [+1.0, -1.0, +1.0],  # 6
-                [+1.0, +1.0, +1.0],  # 7
+                [-1.0, -1.0, -1.0],
+                [+1.0, -1.0, -1.0],
+                [-1.0, +1.0, -1.0],
+                [+1.0, +1.0, -1.0],
+                [-1.0, -1.0, +1.0],
+                [-1.0, +1.0, +1.0],
+                [+1.0, -1.0, +1.0],
+                [+1.0, +1.0, +1.0],
             ],
             dtype="f",
         )
 
         faces = np.array(
             [
-                # back
                 [1, 0, 2],
                 [1, 2, 3],
-                # right
                 [2, 0, 4],
                 [2, 4, 5],
-                # left
                 [1, 3, 7],
                 [1, 7, 6],
-                # front
                 [5, 4, 6],
                 [5, 6, 7],
-                # bottom
                 [0, 1, 4],
                 [4, 1, 6],
-                # top
                 [2, 5, 3],
                 [5, 7, 3],
             ],
